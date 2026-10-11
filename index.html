@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Future Star League: 7 skill Arenas, 35 hands-on challenges. Find your Superpower.">
+<title>FSL Arena Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: one-column game console, max 760px; each challenge = SVG simulation stage + control strip */
+:root {
+  --bg: #EEF5FB; --surface: #FFFFFF; --ink: #13233A; --muted: #55657C; --line: #D3DEEA;
+  --sky: #F6FAFF; --ground: #B9C9A0; --water: #8ACDF2; --wood: #C98A4B; --metal: #8A97A8; --paper: #FFFFFF;
+  --sun: #FFC93C; --brand: #FF6B1A; --good: #1E9E5A; --bad: #D93A3A;
+  --good-soft: #E1F5EA; --bad-soft: #FBE5E5; --shadow: 0 3px 0 #C3D2E2;
+  --lab: #00A3C4; --logic: #6C4BD8; --build: #E8891A; --vision: #D6418A;
+  --idea: #C99400; --speed: #E5452B; --mission: #2E8B57;
+  --display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D1626; --surface: #16233A; --ink: #EAF1FA; --muted: #9DB0C8; --line: #2A3B57;
+  --sky: #10203A; --ground: #3F5A3A; --water: #2E77A8; --wood: #9A6634; --metal: #6F7E92; --paper: #DCE6F2;
+  --good-soft: #143826; --bad-soft: #3E1A1E; --shadow: 0 3px 0 #08101C; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0D1626; --surface: #16233A; --ink: #EAF1FA; --muted: #9DB0C8; --line: #2A3B57;
+  --sky: #10203A; --ground: #3F5A3A; --water: #2E77A8; --wood: #9A6634; --metal: #6F7E92; --paper: #DCE6F2;
+  --good-soft: #143826; --bad-soft: #3E1A1E; --shadow: 0 3px 0 #08101C; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.badge { font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--brand); color: #fff; padding: 4px 12px; border-radius: 999px; }
+.xp { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); }
+.hero { margin-block: 18px 22px; }
+.hero h1 { font-size: clamp(34px, 8vw, 52px); font-weight: 800; }
+.hero h1 span { color: var(--brand); }
+.hero p { margin: 8px 0 0; color: var(--muted); max-width: 58ch; }
+.name-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.name-row label { font-weight: 800; }
+.name-row input { flex: 1 1 200px; min-width: 0; font: inherit; padding: 10px 14px; border-radius: 12px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.tile { text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: 18px;
+  padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; transition: transform .12s; }
+.tile:hover { transform: translateY(-2px); border-color: var(--c); }
+.glyph { width: 44px; height: 44px; border-radius: 12px; background: var(--c); display: grid; place-items: center; flex: none; }
+.glyph svg { width: 26px; height: 26px; }
+.tile h3 { font-size: 22px; font-weight: 800; }
+.tile .power { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.tile .desc { font-size: 14px; color: var(--muted); }
+.tile .best { font-size: 13px; font-weight: 800; margin-top: auto; padding-top: 6px; font-variant-numeric: tabular-nums; }
+.stars { color: var(--sun); letter-spacing: 2px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+.btn { font-family: var(--display); font-weight: 800; font-size: 18px; border: 0; border-radius: 14px; padding: 10px 20px;
+  background: var(--brand); color: #fff; box-shadow: 0 4px 0 #B84400; }
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #B84400; }
+.btn.ghost { background: var(--surface); color: var(--ink); border: 2px solid var(--line); box-shadow: var(--shadow); }
+.btn.sm { font-size: 15px; padding: 7px 14px; }
+.btn.on { background: var(--c, var(--brand)); color: #fff; border-color: transparent; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.note { font-size: 13px; color: var(--muted); margin-top: 18px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--c); color: #fff;
+  border-radius: 16px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar .glyph { width: 36px; height: 36px; background: rgba(255,255,255,.2); }
+.bar h2 { font-size: 22px; font-weight: 800; flex: 1 1 auto; }
+.bar .meta { font-weight: 800; font-variant-numeric: tabular-nums; }
+.bar .quit { background: rgba(255,255,255,.2); border: 0; border-radius: 10px; padding: 4px 10px; font-weight: 800; color: #fff; }
+.dots { display: flex; gap: 6px; margin: 14px 0 10px; }
+.dot { flex: 1; height: 8px; border-radius: 99px; background: var(--line); }
+.dot.ok { background: var(--good); } .dot.no { background: var(--bad); } .dot.now { background: var(--c); }
+.timer-row { display: flex; align-items: center; gap: 10px; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); }
+.timer { flex: 1; height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--c); transform-origin: left; }
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 20px; padding: 18px; margin-top: 14px; box-shadow: var(--shadow); }
+.story { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.q { font-family: var(--display); font-size: clamp(19px, 4.2vw, 24px); font-weight: 700; margin-top: 4px; }
+.play { margin-top: 12px; display: grid; gap: 12px; }
+.stage { width: 100%; height: auto; display: block; background: var(--sky); border-radius: 14px; border: 2px solid var(--line);
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctrl label { font-weight: 800; font-size: 14px; }
+.ctrl input[type=range], .row input[type=range] { flex: 1 1 180px; min-width: 0; accent-color: var(--c); height: 28px; }
+.msg { font-weight: 800; min-height: 1.5em; font-size: 15px; }
+.msg.good { color: var(--good); } .msg.bad { color: var(--bad); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--bg);
+  font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+.rows { display: grid; gap: 8px; width: 100%; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row .nm { flex: 1 1 120px; font-weight: 800; }
+.clues { display: grid; gap: 4px; font-weight: 700; font-size: 15px; }
+.lbl { fill: var(--ink); font: 700 12px var(--body); pointer-events: none; }
+.lbl.sm { font-size: 10px; } .lbl.big { font: 800 22px var(--display); }
+.tap { cursor: pointer; }
+.cube3d { width: 90px; height: 90px; margin: 10px auto; perspective: 400px; }
+.cube3d .in { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: spin 4s linear infinite; }
+.cube3d .f { position: absolute; inset: 0; border: 3px solid var(--ink); background: color-mix(in srgb, var(--vision) 60%, transparent); }
+@keyframes spin { from { transform: rotateX(-25deg) rotateY(0); } to { transform: rotateX(-25deg) rotateY(360deg); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.shake { animation: shake .3s 2; }
+.explain { margin-top: 14px; border-radius: 14px; padding: 14px 16px; border: 2px dashed var(--c); }
+.explain h4 { margin: 0 0 4px; font-family: var(--display); font-size: 19px; }
+.explain p { margin: 0; }
+.explain .pts { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--good); }
+.next-row { display: flex; justify-content: flex-end; margin-top: 14px; }
+.result-head { text-align: center; margin-top: 18px; }
+.result-head .big { font-family: var(--display); font-size: 64px; font-weight: 800; color: var(--c); line-height: 1; font-variant-numeric: tabular-nums; }
+.result-head .stars { font-size: 34px; }
+.powers { display: grid; gap: 10px; margin-top: 14px; }
+.prow { display: grid; grid-template-columns: 150px 1fr 48px; gap: 10px; align-items: center; font-weight: 800; font-size: 14px; }
+@media (max-width: 460px) { .prow { grid-template-columns: 110px 1fr 40px; font-size: 13px; } }
+.prow .track { height: 14px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.prow .fill { display: block; height: 100%; background: var(--c); border-radius: 99px; }
+.prow .val { text-align: right; font-variant-numeric: tabular-nums; }
+.prow.unplayed { color: var(--muted); }
+.share { font-size: 14px; background: var(--bg); border-radius: 12px; padding: 12px; margin-top: 12px; white-space: pre-wrap; }
+@media (prefers-reduced-motion: reduce) { .tile, .cube3d .in { transition: none; animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function S(p, tag, a = {}, txt) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; if (p) p.appendChild(e); return e; }
+function stage(el, w = 360, h = 220) { return S(el, "svg", { viewBox: `0 0 ${w} ${h}`, class: "stage" }); }
+function T(p, x, y, txt, cls = "lbl", extra = {}) { return S(p, "text", Object.assign({ x, y, class: cls, "text-anchor": "middle" }, extra), txt); }
+function F(c) { return `fill:${c}`; }
+function SK(c, w = 2) { return `stroke:${c};stroke-width:${w};fill:none`; }
+function div(el, cls, html = "") { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; el.appendChild(d); return d; }
+function btn(p, label, cls = "btn sm ghost") { const b = document.createElement("button"); b.className = cls; b.innerHTML = label; p.appendChild(b); return b; }
+function tween(ms, fn) { return new Promise(r => { const t0 = performance.now(); const f = t => { const p = Math.max(0, Math.min(1, (t - t0) / ms)); fn(p); p < 1 ? requestAnimationFrame(f) : r(); }; requestAnimationFrame(f); }); }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+function msg(el) { const m = div(el, "msg"); return (t, k = "") => { m.textContent = t; m.className = "msg " + k; }; }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function ground(s, w = 360, y = 205, h = 20) { S(s, "rect", { x: 0, y, width: w, height: h, style: F("var(--ground)") }); }
+function stepper(p, label, min, max, val) {
+  const r = div(p, "ctrl"); r.innerHTML = `<label>${label}</label>`;
+  const m = btn(r, "−"), c = document.createElement("span"); c.className = "chip"; c.style.minWidth = "44px"; c.style.justifyContent = "center"; r.appendChild(c);
+  const pl = btn(r, "+"); const o = { v: val, el: r, on: null }; const show = () => { c.textContent = o.v; if (o.on) o.on(); }; show();
+  m.onclick = () => { o.v = Math.max(min, o.v - 1); show(); }; pl.onclick = () => { o.v = Math.min(max, o.v + 1); show(); };
+  return o;
+}
+function gearPath(r, teeth) {
+  let d = ""; const n = teeth * 2;
+  for (let i = 0; i < n; i++) { const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, rr = i % 2 ? r - 7 : r;
+    d += (i ? "L" : "M") + (rr * Math.cos(a0)).toFixed(1) + "," + (rr * Math.sin(a0)).toFixed(1) + "L" + (rr * Math.cos(a1)).toFixed(1) + "," + (rr * Math.sin(a1)).toFixed(1); }
+  return d + "Z";
+}
+
+/* ---------- 35 interactive challenges ---------- */
+const ARENAS = [
+{ id: "lab", name: "Crazy Lab", power: "Science Sense", color: "var(--lab)",
+  desc: "Run Amit's experiments. Predict, test and watch what really happens.",
+  icon: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15h9" stroke="#fff" stroke-width="2"/>',
+  qs: [
+  { s: "The Falling Race", t: 40, q: "Amit will open the trapdoor under a heavy bowling ball and a light cricket ball. Predict, then drop!",
+    e: "Gravity speeds up heavy and light things at the same rate. Only air slows very light, fluffy things like feathers.",
+    mount(el, api) {
+      const s = stage(el, 360, 240); ground(s, 360, 220);
+      S(s, "rect", { x: 60, y: 12, width: 8, height: 208, style: F("var(--metal)") });
+      const door = S(s, "rect", { x: 70, y: 38, width: 230, height: 8, rx: 3, style: F("var(--wood)") });
+      const big = S(s, "circle", { cx: 130, cy: 20, r: 18, style: F("var(--ink)") });
+      const sm = S(s, "circle", { cx: 240, cy: 30, r: 8, style: F("var(--speed)") });
+      T(s, 130, 236, "Bowling ball", "lbl sm"); T(s, 240, 236, "Cricket ball", "lbl sm");
+      const c = div(el, "ctrl"), say = msg(el);
+      [["Bowling ball first", "big"], ["Cricket ball first", "small"], ["Same time", "same"]].forEach(([l, k]) => {
+        const b = btn(c, l); b.onclick = async () => {
+          c.querySelectorAll("button").forEach(x => x.disabled = true); b.classList.add("on"); say("Trapdoor opening...");
+          await tween(250, p => door.setAttribute("transform", `rotate(${p * 80} 70 42)`));
+          await tween(900, p => { const d = 182 * p * p; big.setAttribute("cy", 20 + d); sm.setAttribute("cy", 30 + d); });
+          say("Thud! Both landed together.", k === "same" ? "good" : "bad"); await wait(600); api.done(k === "same");
+        };
+      });
+    } },
+  { s: "Shadow Maker", t: 50, q: "Slide the torch so the robot's shadow exactly fills the dotted box on the wall.",
+    e: "The closer the torch is to the robot, the wider the cone of light it blocks, so the shadow grows. Move it away and the shadow shrinks.",
+    mount(el, api) {
+      const s = stage(el, 360, 230), cy = 115, toyX = 220, wallX = 330;
+      S(s, "rect", { x: wallX, y: 10, width: 24, height: 210, style: F("var(--paper)") });
+      const cone = S(s, "polygon", { style: "fill:var(--sun);opacity:.35" });
+      const shadow = S(s, "rect", { x: wallX, width: 8, style: F("var(--ink)") });
+      S(s, "rect", { x: wallX - 2, y: cy - 60, width: 12, height: 120, style: "fill:none;stroke:var(--speed);stroke-width:2;stroke-dasharray:5 4" });
+      S(s, "rect", { x: toyX - 8, y: cy - 20, width: 16, height: 40, rx: 4, style: F("var(--lab)") });
+      const torch = S(s, "g", {}); S(torch, "rect", { x: -26, y: -8, width: 26, height: 16, rx: 3, style: F("var(--metal)") }); S(torch, "rect", { x: -2, y: -11, width: 6, height: 22, style: F("var(--sun)") });
+      T(s, 342, 228, "Wall", "lbl sm");
+      const c = div(el, "ctrl"); c.innerHTML = `<label for="tor">Torch</label><input id="tor" type="range" min="20" max="200" value="40">`;
+      const lock = btn(c, "Lock it", "btn sm"); const say = msg(el); const r = c.querySelector("input");
+      let half = 0;
+      const draw = () => { const tx = +r.value; half = 20 * (wallX - tx) / (toyX - tx);
+        torch.setAttribute("transform", `translate(${tx} ${cy})`);
+        shadow.setAttribute("y", cy - half); shadow.setAttribute("height", 2 * half);
+        cone.setAttribute("points", `${tx + 4},${cy} ${wallX},${cy - half} ${wallX},${cy + half}`);
+        say(`Shadow height: ${Math.round(2 * half)} cm  (target 120 cm)`); };
+      r.oninput = draw; draw();
+      lock.onclick = () => { const ok = Math.abs(half - 60) <= 5; r.disabled = true; lock.disabled = true;
+        say(ok ? "Perfect fit!" : `Shadow is ${Math.round(2 * half)} cm, not 120 cm.`, ok ? "good" : "bad"); setTimeout(() => api.done(ok), 700); };
+    } },
+  { s: "Float or Sink?", t: 60, q: "Sort each object as FLOAT or SINK, then drop them all into the tank to test.",
+    e: "An iron boat floats because its hollow shape pushes aside lots of water. An orange's peel is full of tiny air pockets. A solid nail and coin push aside too little water, so they sink.",
+    mount(el, api) {
+      const items = [{ n: "Iron nail", f: false, col: "var(--metal)" }, { n: "Iron boat", f: true, col: "var(--metal)" }, { n: "Orange", f: true, col: "var(--build)" }, { n: "Steel coin", f: false, col: "var(--sun)" }];
+      const s = stage(el, 360, 220);
+      S(s, "rect", { x: 20, y: 70, width: 320, height: 140, rx: 6, style: "fill:none;stroke:var(--metal);stroke-width:4" });
+      S(s, "rect", { x: 22, y: 100, width: 316, height: 108, style: F("var(--water)") + ";opacity:.75" });
+      const shapes = items.map((it, i) => { const g = S(s, "g", { transform: `translate(${60 + i * 80} 35)` });
+        if (i === 0) S(g, "rect", { x: -3, y: -16, width: 6, height: 32, style: F(it.col) });
+        if (i === 1) S(g, "path", { d: "M-24,-6 L24,-6 L16,10 L-16,10 Z", style: F(it.col) });
+        if (i === 2) S(g, "circle", { r: 13, style: F(it.col) });
+        if (i === 3) S(g, "ellipse", { rx: 10, ry: 4, style: F(it.col) });
+        return g; });
+      items.forEach((it, i) => T(s, 60 + i * 80, 64, it.n, "lbl sm"));
+      const rows = div(el, "rows"), pick = {};
+      items.forEach((it, i) => { const r = div(rows, "row", `<span class="nm">${it.n}</span>`);
+        const a = btn(r, "Float"), b = btn(r, "Sink");
+        a.onclick = () => { pick[i] = true; a.classList.add("on"); b.classList.remove("on"); };
+        b.onclick = () => { pick[i] = false; b.classList.add("on"); a.classList.remove("on"); }; });
+      const c = div(el, "ctrl"), go = btn(c, "Drop into tank", "btn sm"), say = msg(el);
+      go.onclick = async () => {
+        if (Object.keys(pick).length < 4) return say("Sort all 4 objects first.", "bad");
+        rows.querySelectorAll("button").forEach(x => x.disabled = true); go.disabled = true;
+        await tween(1400, p => shapes.forEach((g, i) => { const end = items[i].f ? 98 : 196; const y = 35 + (end - 35) * ease(p); g.setAttribute("transform", `translate(${60 + i * 80} ${y})`); }));
+        const right = items.filter((it, i) => pick[i] === it.f).length;
+        say(`${right} of 4 predictions correct.`, right === 4 ? "good" : "bad"); await wait(700); api.done(right === 4);
+      };
+    } },
+  { s: "The Melting Ice", t: 50, q: "The glass is full and a big ice cube is floating. Drag the marker to where the water will be after the ice melts, then melt it.",
+    e: "Floating ice already pushes aside exactly its own weight of water. When it melts it becomes exactly that much water, so the level stays the same.",
+    mount(el, api) {
+      const s = stage(el, 360, 230), lvl = 70;
+      S(s, "rect", { x: 120, y: 40, width: 120, height: 170, style: "fill:none;stroke:var(--metal);stroke-width:4" });
+      T(s, 100, 44, "Rim", "lbl sm");
+      S(s, "rect", { x: 122, y: lvl, width: 116, height: 138, style: F("var(--water)") + ";opacity:.8" });
+      const ice = S(s, "rect", { x: 150, y: lvl - 14, width: 50, height: 46, rx: 6, style: "fill:var(--paper);stroke:var(--water);stroke-width:2;opacity:.95" });
+      const mk = S(s, "g", {}); S(mk, "line", { x1: 110, x2: 250, y1: 0, y2: 0, style: "stroke:var(--speed);stroke-width:3;stroke-dasharray:6 4" }); S(mk, "text", { x: 256, y: 4, class: "lbl sm" }, "Your guess");
+      const c = div(el, "ctrl"); c.innerHTML = `<label for="lv">Water after melting</label><input id="lv" type="range" min="20" max="125" value="105">`;
+      const go = btn(c, "Melt the ice", "btn sm"), say = msg(el), r = c.querySelector("input");
+      const yOf = () => 140 - (+r.value - 20);
+      const draw = () => { const y = yOf(); mk.setAttribute("transform", `translate(0 ${y})`); say(y < 40 ? "Your guess: water spills over the rim" : y < lvl - 3 ? "Your guess: water rises" : y > lvl + 3 ? "Your guess: water goes down" : "Your guess: level stays the same"); };
+      r.oninput = draw; draw();
+      go.onclick = async () => { r.disabled = true; go.disabled = true; const y = yOf();
+        await tween(1800, p => { ice.setAttribute("height", 46 * (1 - p)); ice.setAttribute("width", 50 * (1 - p)); ice.setAttribute("x", 150 + 25 * p); ice.setAttribute("y", lvl - 14 + 14 * p); ice.style.opacity = 1 - p; });
+        const ok = Math.abs(y - lvl) <= 5; say(ok ? "Spot on! The level did not change." : "Look: the level stayed exactly the same.", ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Balloon Magic", t: 45, q: "Rub the balloon on Amit's hair to charge it, then bring it near the paper bits. Lift all 6 bits!",
+    e: "Rubbing moves tiny charges called electrons onto the balloon. More rubbing means more charge, and a charged balloon pulls light paper towards it. That's static electricity.",
+    mount(el, api) {
+      const s = stage(el, 360, 220); ground(s, 360, 200);
+      S(s, "circle", { cx: 60, cy: 110, r: 30, style: F("var(--build)") });
+      for (let i = 0; i < 9; i++) S(s, "path", { d: `M${36 + i * 6},88 q3,-20 ${6 - i},-26`, style: SK("var(--ink)", 2) });
+      const bal = S(s, "g", { transform: "translate(100 70)" }); S(bal, "ellipse", { rx: 22, ry: 28, style: F("var(--speed)") }); S(bal, "path", { d: "M0,28 q-6,20 4,40", style: SK("var(--ink)", 1.5) });
+      const bits = []; for (let i = 0; i < 6; i++) bits.push(S(s, "rect", { x: 240 + (i % 3) * 22, y: 186 + Math.floor(i / 3) * 7, width: 12, height: 5, style: F("var(--paper)") + ";stroke:var(--metal);stroke-width:1" }));
+      S(s, "rect", { x: 230, y: 20, width: 110, height: 12, rx: 6, style: F("var(--line)") });
+      const meter = S(s, "rect", { x: 230, y: 20, width: 0, height: 12, rx: 6, style: F("var(--lab)") }); T(s, 285, 48, "Charge", "lbl sm");
+      let charge = 0, busy = false; const c = div(el, "ctrl"), rub = btn(c, "Rub on hair"), near = btn(c, "Bring near paper", "btn sm"), say = msg(el);
+      const show = () => meter.setAttribute("width", 110 * charge / 100);
+      api.every(() => { if (!busy && charge > 0) { charge = Math.max(0, charge - 2); show(); } }, 400);
+      rub.onclick = async () => { if (busy) return; charge = Math.min(100, charge + 9); show();
+        await tween(160, p => bal.setAttribute("transform", `translate(${100 + Math.sin(p * Math.PI * 2) * 8} 70)`)); };
+      near.onclick = async () => { if (busy) return; busy = true;
+        await tween(600, p => bal.setAttribute("transform", `translate(${100 + 172 * p} ${70 + 60 * p})`));
+        const lifted = Math.min(6, Math.floor(charge / 15));
+        await tween(500, p => bits.forEach((b, i) => { if (i < lifted) b.setAttribute("transform", `translate(${(272 - (240 + (i % 3) * 22)) * p * .6} ${-50 * p})`); else b.setAttribute("transform", `translate(0 ${-4 * Math.sin(p * Math.PI)})`); }));
+        if (lifted >= 6) { say("All 6 bits are stuck to the balloon!", "good"); await wait(700); return api.done(true); }
+        say(`Only ${lifted} of 6 lifted. Rub more, then try again!`, "bad"); await wait(800);
+        bits.forEach(b => b.removeAttribute("transform")); await tween(400, p => bal.setAttribute("transform", `translate(${272 - 172 * p} ${130 - 60 * p})`)); busy = false; };
+    } }
+  ] },
+
+{ id: "logic", name: "Logic Lock", power: "Smart Logic", color: "var(--logic)",
+  desc: "Crack escape-room puzzles: gears, scales, circuits and code locks.",
+  icon: '<rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#fff"/>',
+  qs: [
+  { s: "Gear Train", t: 50, q: "Gear 1 turns clockwise. Tap gears 2, 3 and 4 to set which way each will spin, then press Spin.",
+    e: "Touching gears always spin in opposite directions, because their teeth push against each other. So every second gear matches gear 1.",
+    mount(el, api) {
+      const s = stage(el, 360, 200), xs = [54, 138, 222, 306], gs = [], set = [1, 0, 0, 0], lab = [];
+      xs.forEach((x, i) => { const g = S(s, "g", { class: i ? "tap" : "", transform: `translate(${x} 92)` }); const inner = S(g, "g", {});
+        S(inner, "path", { d: gearPath(43, 12), style: F(i ? "var(--logic)" : "var(--metal)") }); S(inner, "circle", { r: 10, style: F("var(--sky)") }); S(inner, "rect", { x: -2, y: -36, width: 4, height: 20, style: F("var(--sky)") });
+        if (i % 2) inner.setAttribute("transform", "rotate(15)"); gs.push(inner);
+        lab.push(T(s, x, 172, i ? "Tap gear" : "↻ clockwise", "lbl"));
+        if (i) g.onclick = () => { set[i] = set[i] === 1 ? -1 : 1; lab[i].textContent = set[i] === 1 ? "↻ clockwise" : "↺ anticlockwise"; }; });
+      T(s, 54, 192, "Gear 1", "lbl sm"); T(s, 138, 192, "Gear 2", "lbl sm"); T(s, 222, 192, "Gear 3", "lbl sm"); T(s, 306, 192, "Gear 4", "lbl sm");
+      const c = div(el, "ctrl"), go = btn(c, "Spin!", "btn sm"), say = msg(el);
+      go.onclick = async () => { if (set.slice(1).some(v => !v)) return say("Set gears 2, 3 and 4 first.", "bad"); go.disabled = true;
+        await tween(1800, p => gs.forEach((g, i) => g.setAttribute("transform", `rotate(${(i % 2 ? 15 : 0) + (i % 2 ? -1 : 1) * 180 * p})`)));
+        let ok = true; set.forEach((v, i) => { if (!i) return; const good = v === (i % 2 ? -1 : 1); ok = ok && good; lab[i].style.fill = good ? "var(--good)" : "var(--bad)"; });
+        say(ok ? "All gears predicted!" : "Some gears spun the other way.", ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Fruit Scale", t: 60, q: "1 watermelon = 4 apples. Add apples to the right pan to balance 2 watermelons and 1 apple, then release the scale.",
+    e: "2 watermelons = 8 apples. Plus the 1 apple already on the left makes 9 apples.",
+    mount(el, api) {
+      const s = stage(el, 360, 220); S(s, "polygon", { points: "180,90 165,200 195,200", style: F("var(--metal)") });
+      const beam = S(s, "g", {}); S(beam, "rect", { x: 50, y: 86, width: 260, height: 8, rx: 4, style: F("var(--wood)") });
+      [70, 290].forEach(x => { S(beam, "line", { x1: x, y1: 90, x2: x, y2: 140, style: SK("var(--ink)", 2) }); S(beam, "path", { d: `M${x - 40},140 h80 l-10,14 h-60 z`, style: F("var(--metal)") }); });
+      S(beam, "circle", { cx: 55, cy: 125, r: 14, style: F("var(--mission)") }); S(beam, "circle", { cx: 84, cy: 125, r: 14, style: F("var(--mission)") }); S(beam, "circle", { cx: 70, cy: 104, r: 7, style: F("var(--speed)") });
+      const apples = S(beam, "g", {}); T(s, 70, 180, "2 melons + 1 apple", "lbl sm"); T(s, 290, 180, "Your apples", "lbl sm");
+      const st = stepper(div(el, "ctrl"), "Apples", 0, 16, 0), go = btn(st.el, "Release scale", "btn sm"), say = msg(el);
+      const draw = () => { apples.innerHTML = ""; for (let i = 0; i < st.v; i++) S(apples, "circle", { cx: 262 + (i % 5) * 14, cy: 132 - Math.floor(i / 5) * 12, r: 6, style: F("var(--speed)") }); };
+      st.on = draw; draw();
+      go.onclick = async () => { st.el.querySelectorAll("button").forEach(b => b.disabled = true); const diff = st.v - 9, ang = Math.max(-14, Math.min(14, diff * 3));
+        await tween(900, p => beam.setAttribute("transform", `rotate(${ang * ease(p)} 180 90)`));
+        const ok = diff === 0; say(ok ? "Perfectly balanced!" : diff > 0 ? "Too many apples, the right side dropped." : "Too few apples, the melon side dropped.", ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Pattern Door", t: 50, q: "The door opens only if you complete the arrow pattern. Tap arrows below to fill the two empty slots.",
+    e: "Each arrow turns a quarter turn clockwise: up, right, down, left, and repeat. So after up and right come down and left.",
+    mount(el, api) {
+      const s = stage(el, 360, 170), seq = [0, 90, 180, 270, 0, 90, null, null], slots = [];
+      const door = S(s, "rect", { x: 300, y: 20, width: 50, height: 130, rx: 6, style: F("var(--logic)") });
+      const arrow = (g, deg) => { g.innerHTML = ""; if (deg == null) return; S(g, "path", { d: "M0,-14 L10,0 L4,0 L4,14 L-4,14 L-4,0 L-10,0 Z", transform: `rotate(${deg})`, style: F("var(--ink)") }); };
+      seq.forEach((d, i) => { const x = 22 + i * 35, y = 85; S(s, "rect", { x: x - 15, y: y - 22, width: 30, height: 44, rx: 6, style: d == null ? "fill:var(--surface);stroke:var(--logic);stroke-width:2;stroke-dasharray:4 3" : F("var(--surface)") });
+        const g = S(s, "g", { transform: `translate(${x} ${y})` }); arrow(g, d); if (d == null) slots.push({ g, v: null }); });
+      const c = div(el, "ctrl"), say = msg(el);
+      [["↑", 0], ["→", 90], ["↓", 180], ["←", 270]].forEach(([l, d]) => btn(c, l).onclick = () => { const sl = slots.find(x => x.v == null); if (sl) { sl.v = d; arrow(sl.g, d); } });
+      btn(c, "Clear").onclick = () => slots.forEach(sl => { sl.v = null; arrow(sl.g, null); });
+      const go = btn(c, "Open door", "btn sm");
+      go.onclick = async () => { if (slots.some(x => x.v == null)) return say("Fill both slots first.", "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const ok = slots[0].v === 180 && slots[1].v === 270;
+        if (ok) await tween(800, p => door.setAttribute("height", 130 * (1 - p))); else { s.classList.add("shake"); await wait(600); }
+        say(ok ? "Click! The door slides open." : "Locked. The door didn't budge.", ok ? "good" : "bad"); await wait(600); api.done(ok); };
+    } },
+  { s: "Light the Bulb", t: 60, q: "Switch B is broken. Light the bulb using exactly 2 switches. Tap a switch to open or close it.",
+    e: "Current must flow in one complete loop. Switch A is on the main path, so it must be closed. Then B or C completes a branch, and B is broken, so it's A and C.",
+    mount(el, api) {
+      const s = stage(el, 360, 220), on = { A: false, B: false, C: false };
+      const W = (pts, k) => { const w = S(s, "polyline", { points: pts, style: SK("var(--metal)", 4) }); w.dataset.k = k; return w; };
+      const wires = [W("40,90 40,50 75,50", "m"), W("115,50 190,50", "m"), W("150,50 150,130 190,130", "C"), W("230,50 270,50", "B"), W("230,130 270,130 270,50", "C"), W("270,50 320,50 320,102", "m"), W("320,138 320,190 40,190 40,150", "m")];
+      S(s, "rect", { x: 28, y: 90, width: 24, height: 60, rx: 4, style: F("var(--ink)") }); T(s, 40, 125, "+", "lbl", { style: F("var(--sky)") }); T(s, 40, 168, "Battery", "lbl sm");
+      const bulb = S(s, "circle", { cx: 320, cy: 120, r: 18, style: "fill:var(--line);stroke:var(--ink);stroke-width:2" }); T(s, 320, 210, "Bulb", "lbl sm");
+      const sw = {}; [["A", 75, 50], ["B", 190, 50], ["C", 190, 130]].forEach(([k, x, y]) => {
+        const g = S(s, "g", { class: "tap" }); S(g, "rect", { x: x - 6, y: y - 30, width: 52, height: 46, style: "fill:transparent" });
+        S(g, "circle", { cx: x, cy: y, r: 4, style: F("var(--ink)") }); S(g, "circle", { cx: x + 40, cy: y, r: 4, style: F("var(--ink)") });
+        const lev = S(g, "line", { x1: x, y1: y, x2: x + 40, y2: y, style: SK("var(--ink)", 4) + ";stroke-linecap:round" });
+        T(s, x + 20, y + 22, k === "B" ? "B (broken)" : "Switch " + k, "lbl sm"); sw[k] = { lev, x, y };
+        g.onclick = () => { on[k] = !on[k]; draw(); }; });
+      const draw = () => { const lit = on.A && on.C; for (const k in sw) { const { lev, x, y } = sw[k];
+          lev.setAttribute("transform", `rotate(${on[k] && k !== "B" ? 0 : -35} ${x} ${y})`);
+          lev.style.stroke = on[k] && k === "B" ? "var(--bad)" : "var(--ink)"; }
+        wires.forEach(w => { const k = w.dataset.k; w.style.stroke = lit && (k === "m" || k === "C") ? "var(--sun)" : "var(--metal)"; });
+        bulb.style.fill = lit ? "var(--sun)" : "var(--line)"; };
+      draw(); const c = div(el, "ctrl"), go = btn(c, "Lock answer", "btn sm"), say = msg(el);
+      go.onclick = async () => { const n = Object.values(on).filter(Boolean).length, ok = on.A && on.C && n === 2; go.disabled = true;
+        say(ok ? "Bulb glowing with exactly 2 switches!" : "Not quite: the bulb needs a full loop using exactly 2 switches.", ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Code Lock", t: 75, q: "Use the clues to set the 3-digit code, then open the safe. You have 3 tries.",
+    e: "Call the third digit x. The first is 2x and the second is 2x + 1. They add up to 5x + 1 = 16, so x = 3, giving 6, 7, 3.",
+    mount(el, api) {
+      const s = stage(el, 360, 150);
+      S(s, "rect", { x: 20, y: 15, width: 320, height: 120, rx: 14, style: F("var(--metal)") });
+      const handle = S(s, "g", {}); S(handle, "circle", { cx: 300, cy: 75, r: 18, style: "fill:var(--sky);stroke:var(--ink);stroke-width:3" }); S(handle, "line", { x1: 300, y1: 60, x2: 300, y2: 90, style: SK("var(--ink)", 4) });
+      const d = [0, 0, 0], tx = d.map((_, i) => { S(s, "rect", { x: 50 + i * 70, y: 45, width: 54, height: 60, rx: 8, style: F("var(--surface)") }); return T(s, 77 + i * 70, 86, "0", "lbl big"); });
+      div(el, "clues", `<div>1. The first digit is double the third digit.</div><div>2. The second digit is 1 more than the first digit.</div><div>3. All three digits add up to 16.</div>`);
+      const c = div(el, "ctrl");
+      d.forEach((_, i) => { btn(c, `▲ ${i + 1}`).onclick = () => { d[i] = (d[i] + 1) % 10; tx[i].textContent = d[i]; }; btn(c, `▼ ${i + 1}`).onclick = () => { d[i] = (d[i] + 9) % 10; tx[i].textContent = d[i]; }; });
+      const go = btn(c, "Open safe", "btn sm"), say = msg(el); let tries = 3;
+      go.onclick = async () => { const ok = d.join("") === "673"; tries--;
+        if (ok) { c.querySelectorAll("button").forEach(b => b.disabled = true); await tween(700, p => handle.setAttribute("transform", `rotate(${p * 90} 300 75)`)); say("Clunk! The safe opens.", "good"); await wait(600); return api.done(true); }
+        s.classList.remove("shake"); void s.getBoundingClientRect(); s.classList.add("shake");
+        if (tries <= 0) { c.querySelectorAll("button").forEach(b => b.disabled = true); say("Out of tries. The code was 6 7 3.", "bad"); await wait(900); return api.done(false); }
+        say(`Wrong code. ${tries} ${tries === 1 ? "try" : "tries"} left.`, "bad"); };
+    } }
+  ] },
+
+{ id: "build", name: "Build Battle", power: "Master Builder", color: "var(--build)",
+  desc: "Build bridges, levers, towers and a catapult. Then test them.",
+  icon: '<path d="M3 20h18M5 20V11l7-6 7 6v9" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M5 20l7-9 7 9" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>',
+  qs: [
+  { s: "Bridge Builder", t: 50, q: "Tap each bridge panel to switch between Square and Triangle frames, then drive the truck across.",
+    e: "A triangle can't change shape unless a stick breaks. A square can squash into a slanted shape. That's why real bridges are full of triangles.",
+    mount(el, api) {
+      const s = stage(el, 360, 220); S(s, "rect", { x: 0, y: 100, width: 60, height: 120, style: F("var(--ground)") }); S(s, "rect", { x: 300, y: 100, width: 60, height: 120, style: F("var(--ground)") });
+      const deck = S(s, "rect", { x: 60, y: 96, width: 240, height: 8, style: F("var(--wood)") }); const type = [0, 0, 0], panels = [];
+      for (let i = 0; i < 3; i++) { const g = S(s, "g", { class: "tap" }); panels.push(g); g.onclick = () => { type[i] = 1 - type[i]; drawP(i); }; }
+      const drawP = i => { const g = panels[i], x = 60 + i * 80; g.innerHTML = "";
+        S(g, "rect", { x: x + 2, y: 104, width: 76, height: 56, style: "fill:transparent;stroke:var(--build);stroke-width:4" });
+        if (type[i]) S(g, "path", { d: `M${x + 2},160 L${x + 40},104 L${x + 78},160`, style: SK("var(--build)", 4) });
+        T(g, x + 40, 178, type[i] ? "Triangle" : "Square", "lbl sm"); };
+      [0, 1, 2].forEach(drawP); const truck = S(s, "g", { transform: "translate(-10 70)" });
+      S(truck, "rect", { x: 0, y: 0, width: 44, height: 22, rx: 3, style: F("var(--speed)") }); S(truck, "circle", { cx: 10, cy: 24, r: 5, style: F("var(--ink)") }); S(truck, "circle", { cx: 34, cy: 24, r: 5, style: F("var(--ink)") });
+      const c = div(el, "ctrl"), go = btn(c, "Drive truck", "btn sm"), say = msg(el);
+      go.onclick = async () => { go.disabled = true; panels.forEach(p => p.onclick = null); const weak = type.indexOf(0);
+        const stopX = weak < 0 ? 340 : 60 + weak * 80 + 20;
+        await tween(1600 * (stopX + 10) / 350, p => truck.setAttribute("transform", `translate(${-10 + (stopX + 10) * p} 70)`));
+        if (weak >= 0) { const x0 = 100 + weak * 80;
+          await tween(600, p => { panels[weak].setAttribute("transform", `translate(${x0} 160) skewX(${-25 * p}) translate(${-x0} -160)`); truck.setAttribute("transform", `translate(${stopX} ${70 + 50 * p}) rotate(${30 * p})`); deck.setAttribute("transform", `translate(0 ${10 * p})`); });
+          say("Crunch! The square panel squashed.", "bad"); } else say("The truck crossed safely!", "good");
+        await wait(800); api.done(weak < 0); };
+    } },
+  { s: "The Lever Trick", t: 60, q: "Amit pushes down with 60 N. The rock weighs 300 N. Slide the pivot stone, then push. Lift the rock!",
+    e: "A lever trades distance for force. With the pivot close to the rock, Amit's long side gives him 5 times the push, enough to lift 300 N.",
+    mount(el, api) {
+      const s = stage(el, 360, 220); ground(s, 360, 190, 30);
+      const pv = S(s, "polygon", { style: F("var(--metal)") }); const lev = S(s, "g", {});
+      S(lev, "rect", { x: 30, y: 150, width: 300, height: 8, rx: 3, style: F("var(--wood)") }); S(lev, "path", { d: "M32,150 q4,-40 40,-36 q24,6 18,36 z", style: F("var(--metal)") });
+      T(lev, 60, 108, "300 N", "lbl sm"); S(lev, "path", { d: "M318,118 v24 m-8,-8 l8,8 l8,-8", style: SK("var(--speed)", 3) }); T(lev, 318, 110, "60 N", "lbl sm");
+      const c = div(el, "ctrl"); c.innerHTML = `<label for="pv">Pivot</label><input id="pv" type="range" min="25" max="270" value="150">`;
+      const go = btn(c, "Push!", "btn sm"), say = msg(el), r = c.querySelector("input"); let busy = false;
+      const draw = () => { const f = 30 + +r.value; pv.setAttribute("points", `${f},158 ${f - 16},190 ${f + 16},190`); }; r.oninput = draw; draw();
+      go.onclick = async () => { if (busy) return; busy = true; const f = +r.value, px = 30 + f, lifts = (300 - f) >= 5 * f;
+        const ang = lifts ? 11 : 2; await tween(700, p => lev.setAttribute("transform", `rotate(${ang * Math.sin(p * Math.PI / 2)} ${px} 154)`));
+        if (lifts) { say("The rock is up!", "good"); await wait(700); return api.done(true); }
+        say("Too heavy! Move the pivot and try again.", "bad"); await tween(400, p => lev.setAttribute("transform", `rotate(${ang * (1 - p)} ${px} 154)`)); busy = false; };
+    } },
+  { s: "Egg Drop", t: 45, q: "Pick padding for the egg box, then drop it from the roof.",
+    e: "Soft padding squishes slowly, so the egg stops gently over a longer time. Hard materials stop it in an instant, and that sudden stop cracks it.",
+    mount(el, api) {
+      const s = stage(el, 360, 240); ground(s, 360, 220);
+      S(s, "rect", { x: 10, y: 40, width: 90, height: 180, style: F("var(--metal)") });
+      const box = S(s, "g", { transform: "translate(120 18)" }); S(box, "rect", { x: 0, y: 0, width: 50, height: 40, rx: 4, style: F("var(--wood)") });
+      const pad = S(box, "rect", { x: 4, y: 4, width: 42, height: 32, rx: 3, style: F("var(--sky)") }); S(box, "ellipse", { cx: 25, cy: 20, rx: 9, ry: 12, style: F("var(--paper)") + ";stroke:var(--ink);stroke-width:1.5" });
+      const opts = [["Nothing", "var(--sky)", false], ["Metal plate", "var(--metal)", false], ["Cotton wool", "var(--paper)", true], ["Bubble wrap", "var(--water)", true]];
+      const c = div(el, "ctrl"), say = msg(el); let pick = null;
+      opts.forEach(o => { const b = btn(c, o[0]); b.onclick = () => { pick = o; c.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); pad.style.fill = o[1]; }; });
+      const go = btn(c, "Drop it", "btn sm");
+      go.onclick = async () => { if (!pick) return say("Choose padding first.", "bad"); c.querySelectorAll("button").forEach(x => x.disabled = true);
+        await tween(900, p => box.setAttribute("transform", `translate(120 ${18 + 162 * p * p})`));
+        if (pick[2]) { await tween(300, p => box.setAttribute("transform", `translate(120 ${180 - 10 * Math.sin(p * Math.PI)})`)); say("Boing! The egg is safe.", "good"); }
+        else { S(box, "path", { d: "M17,14 l5,5 l-4,4 l6,4 l-3,5", style: SK("var(--bad)", 2) }); say("Crack! The egg broke.", "bad"); }
+        await wait(800); api.done(pick[2]); };
+    } },
+  { s: "Quake Tower", t: 50, q: "Tap the blocks in the order you want to stack them, bottom first. Then run the earthquake test.",
+    e: "A heavy, wide base keeps the weight low, so the tower is hard to tip over. Light blocks go on top.",
+    mount(el, api) {
+      const s = stage(el, 360, 220); const gr = S(s, "rect", { x: 0, y: 200, width: 360, height: 20, style: F("var(--ground)") });
+      const B = { big: { w: 120, h: 40, n: "Big heavy" }, mid: { w: 86, h: 34, n: "Medium" }, sm: { w: 54, h: 28, n: "Small light" } };
+      const tower = S(s, "g", {}); let order = []; const c = div(el, "ctrl"), say = msg(el);
+      const draw = () => { tower.innerHTML = ""; let y = 200; order.forEach(k => { const b = B[k]; y -= b.h; S(tower, "rect", { x: 180 - b.w / 2, y, width: b.w, height: b.h, rx: 4, style: F(k === "big" ? "var(--ink)" : k === "mid" ? "var(--build)" : "var(--sun)") }); T(tower, 180, y + b.h / 2 + 4, b.n, "lbl sm", { style: F(k === "big" ? "var(--sky)" : "#13233A") }); }); };
+      const bs = Object.keys(B).map(k => { const b = btn(c, B[k].n); b.onclick = () => { if (order.includes(k)) return; order.push(k); b.disabled = true; draw(); }; return b; });
+      btn(c, "Reset").onclick = () => { order = []; bs.forEach(b => b.disabled = false); draw(); };
+      const go = btn(c, "Earthquake!", "btn sm");
+      go.onclick = async () => { if (order.length < 3) return say("Stack all 3 blocks first.", "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const ok = order.join() === "big,mid,sm";
+        await tween(1200, p => { const x = Math.sin(p * 40) * 6 * (1 - p * .3); gr.setAttribute("transform", `translate(${x} 0)`); tower.setAttribute("transform", `translate(${x} 0) rotate(${ok ? Math.sin(p * 40) * 2 : 0} 180 200)`); });
+        if (!ok) await tween(700, p => tower.setAttribute("transform", `rotate(${75 * p * p} 240 200)`));
+        say(ok ? "The tower survived the quake!" : "Timber! The tower fell.", ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Catapult Shot", t: 90, q: "Set the angle and power, then launch the ball over the wall into the basket. You have 4 shots.",
+    e: "A higher angle sends the ball up and over, and more power sends it further. Engineers balance both to land exactly on target.",
+    mount(el, api) {
+      const s = stage(el, 360, 220), gy = 200; ground(s, 360, gy);
+      S(s, "rect", { x: 128, y: 140, width: 14, height: 60, style: F("var(--metal)") });
+      S(s, "path", { d: "M212,200 l6,-26 h36 l6,26 z", style: F("var(--build)") }); T(s, 236, 168, "Basket", "lbl sm");
+      const arm = S(s, "line", { x1: 30, y1: gy, x2: 60, y2: gy - 20, style: SK("var(--wood)", 6) + ";stroke-linecap:round" });
+      const trail = S(s, "polyline", { style: "fill:none;stroke:var(--build);stroke-width:2;stroke-dasharray:3 4" });
+      const ball = S(s, "circle", { cx: 30, cy: gy - 6, r: 6, style: F("var(--speed)") });
+      const c = div(el, "ctrl"); c.innerHTML = `<div class="row" style="width:100%"><label for="ang" style="min-width:90px">Angle <span id="av"></span></label><input id="ang" type="range" min="15" max="75" value="30"></div><div class="row" style="width:100%"><label for="pow" style="min-width:90px">Power <span id="pvv"></span></label><input id="pow" type="range" min="30" max="100" value="60"></div>`;
+      const a = c.querySelector("#ang"), pw = c.querySelector("#pow"), go = btn(c, "Launch", "btn sm"), say = msg(el); let shots = 4, busy = false;
+      const show = () => { c.querySelector("#av").textContent = a.value + "°"; c.querySelector("#pvv").textContent = pw.value; const r = a.value * Math.PI / 180; arm.setAttribute("x2", 30 + 36 * Math.cos(r)); arm.setAttribute("y2", gy - 36 * Math.sin(r)); };
+      a.oninput = pw.oninput = show; show();
+      go.onclick = async () => { if (busy) return; busy = true; const th = a.value * Math.PI / 180, v = pw.value * 1.8, g = 90, T0 = 2 * v * Math.sin(th) / g;
+        const pts = []; let wall = false, lx = 30;
+        await tween(1400, p => { if (wall) return; const t = T0 * p, x = 30 + v * Math.cos(th) * t, y = gy - 6 - (v * Math.sin(th) * t - .5 * g * t * t);
+          if (x >= 122 && x <= 148 && y > 134) { wall = true; return; }
+          ball.setAttribute("cx", x); ball.setAttribute("cy", y); pts.push(x.toFixed(1) + "," + y.toFixed(1)); trail.setAttribute("points", pts.join(" ")); lx = x; });
+        shots--; const hit = !wall && lx >= 216 && lx <= 256;
+        if (hit) { say("Swish! Straight into the basket.", "good"); await wait(700); return api.done(true); }
+        say(wall ? `Bonk! Hit the wall. ${shots} shots left.` : `Landed at ${Math.round(lx - 30)} m. The basket is at 206 m. ${shots} shots left.`, "bad");
+        if (shots <= 0) { go.disabled = true; await wait(900); return api.done(false); }
+        await wait(500); ball.setAttribute("cx", 30); ball.setAttribute("cy", gy - 6); busy = false; };
+    } }
+  ] },
+
+{ id: "vision", name: "Vision Quest", power: "Super Vision", color: "var(--vision)",
+  desc: "Mirror drawing, cube folding, hidden blocks, mazes and rotations.",
+  icon: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#fff"/>',
+  qs: [
+  { s: "Mirror Draw", t: 70, q: "The dotted line is a mirror. Tap squares on the right to draw the exact mirror image of the rocket half.",
+    e: "A mirror image flips left and right across the mirror line. A square touching the mirror stays touching it; one far away stays far away.",
+    mount(el, api) {
+      const L = ["0001", "0011", "0111", "0011", "0101"], cs = 30, s = stage(el, 290, 170), right = L.map(() => [0, 0, 0, 0]);
+      L.forEach((row, r) => [...row].forEach((v, c) => S(s, "rect", { x: 10 + c * cs, y: 10 + r * cs, width: cs - 2, height: cs - 2, rx: 3, style: F(+v ? "var(--vision)" : "var(--line)") })));
+      S(s, "line", { x1: 145, y1: 4, x2: 145, y2: 166, style: "stroke:var(--ink);stroke-width:3;stroke-dasharray:6 4" });
+      right.forEach((row, r) => row.forEach((_, c) => { const q = S(s, "rect", { x: 155 + c * cs, y: 10 + r * cs, width: cs - 2, height: cs - 2, rx: 3, class: "tap", style: F("var(--surface)") + ";stroke:var(--line);stroke-width:1.5" });
+        q.onclick = () => { right[r][c] ^= 1; q.style.fill = right[r][c] ? "var(--vision)" : "var(--surface)"; }; }));
+      const c = div(el, "ctrl"), go = btn(c, "Check mirror", "btn sm"), say = msg(el);
+      go.onclick = async () => { const ok = L.every((row, r) => [...row].every((v, c) => +v === right[r][3 - c])); go.disabled = true;
+        say(ok ? "Perfect reflection!" : "Not quite a mirror image.", ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Box Folder", t: 45, q: "Amit cut three cardboard shapes. Tap the one that folds into a closed cube.",
+    e: "A cube has 6 faces that must not overlap. The cross shape folds perfectly. Any shape with a 2-by-2 block folds some faces on top of each other.",
+    mount(el, api) {
+      const nets = shuffle([{ ok: true, c: [[1, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2]] }, { ok: false, c: [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]] }, { ok: false, c: [[1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1]] }]);
+      const s = stage(el, 360, 140), sq = 22; let done = false; const say = msg(el);
+      nets.forEach((n, i) => { const g = S(s, "g", { class: "tap", transform: `translate(${14 + i * 118} 20)` }); const frame = S(g, "rect", { x: -6, y: -8, width: 104, height: 96, rx: 8, style: F("var(--surface)") + ";stroke:var(--line);stroke-width:2" });
+        n.c.forEach(([x, y]) => S(g, "rect", { x: x * sq, y: y * sq, width: sq, height: sq, style: "fill:var(--vision);opacity:.75;stroke:var(--ink);stroke-width:1.5" }));
+        T(g, 46, 104, "Shape " + "ABC"[i], "lbl sm");
+        g.onclick = async () => { if (done) return; done = true; frame.style.stroke = n.ok ? "var(--good)" : "var(--bad)"; frame.style.strokeWidth = 4;
+          if (n.ok) { div(el, "cube3d", `<div class="in">${[0, 1, 2, 3].map(k => `<div class="f" style="transform:rotateY(${k * 90}deg) translateZ(45px)"></div>`).join("")}<div class="f" style="transform:rotateX(90deg) translateZ(45px)"></div><div class="f" style="transform:rotateX(-90deg) translateZ(45px)"></div></div>`); say("It folds into a perfect cube!", "good"); }
+          else say("Faces would overlap, so that one can't close.", "bad");
+          await wait(1600); api.done(n.ok); }; });
+    } },
+  { s: "Hidden Cubes", t: 60, q: "Count every cube in this tower, including the ones you can't see. Every cube sits on one below it.",
+    e: "Count column by column from the top: 3+2+1, 2+1+1 and 1 = 11. The hidden cubes are under the ones you can see.",
+    mount(el, api) {
+      const H = [[3, 2, 1], [2, 1, 1], [1, 0, 0]], s = stage(el, 360, 200), sz = 26, ox = 160, oy = 95;
+      const P = (x, y, z) => [ox + (x - y) * sz * .866, oy + (x + y) * sz * .5 - z * sz];
+      const cells = []; H.forEach((row, y) => row.forEach((h, x) => { for (let z = 0; z < h; z++) cells.push([x, y, z]); }));
+      cells.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]) || a[2] - b[2]);
+      cells.forEach(([x, y, z]) => { const p = (a, b, c) => P(x + a, y + b, z + c).join(",");
+        S(s, "polygon", { points: [p(0, 0, 1), p(1, 0, 1), p(1, 1, 1), p(0, 1, 1)].join(" "), style: "fill:var(--vision);stroke:var(--ink);stroke-width:1" });
+        S(s, "polygon", { points: [p(0, 1, 1), p(1, 1, 1), p(1, 1, 0), p(0, 1, 0)].join(" "), style: "fill:var(--metal);stroke:var(--ink);stroke-width:1" });
+        S(s, "polygon", { points: [p(1, 0, 1), p(1, 1, 1), p(1, 1, 0), p(1, 0, 0)].join(" "), style: "fill:var(--line);stroke:var(--ink);stroke-width:1" }); });
+      const st = stepper(div(el, "ctrl"), "Cubes", 1, 25, 6), go = btn(st.el, "Check", "btn sm"), say = msg(el);
+      go.onclick = async () => { st.el.querySelectorAll("button").forEach(b => b.disabled = true); const ok = st.v === 11;
+        const g = S(s, "g", { transform: "translate(300 100)" }); T(g, 0, -40, "Top view", "lbl sm");
+        H.forEach((row, y) => row.forEach((h, x) => { S(g, "rect", { x: (x - 1.5) * 22, y: (y - 1.5) * 22, width: 21, height: 21, style: F(h ? "var(--vision)" : "var(--line)") }); T(g, (x - 1) * 22, (y - 1) * 22 + 4, h, "lbl"); }));
+        say(ok ? "11 cubes. Sharp eyes!" : `There are 11 cubes. You said ${st.v}.`, ok ? "good" : "bad"); await wait(1400); api.done(ok); };
+    } },
+  { s: "RC Car Maze", t: 75, q: "Tap squares one by one to draw the SHORTEST road from the car to the school (SCH), then drive.",
+    e: "Shortest-path thinking is how map apps work: look ahead, avoid dead ends and never double back.",
+    mount(el, api) {
+      const M = ["S..#...", ".#.#.#.", ".#...#.", ".####..", ".....#.", "##.#.#.", "...#..G"], N = 7, cs = 30;
+      const wall = (r, c) => M[r][c] === "#";
+      const bfs = () => { const d = M.map(r => [...r].map(() => -1)); d[0][0] = 0; const q = [[0, 0]];
+        while (q.length) { const [r, c] = q.shift(); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, b]) => { const R = r + a, C = c + b; if (R >= 0 && C >= 0 && R < N && C < N && !wall(R, C) && d[R][C] < 0) { d[R][C] = d[r][c] + 1; q.push([R, C]); } }); } return d[N - 1][N - 1]; };
+      const best = bfs(); const s = stage(el, N * cs + 10, N * cs + 10), path = [[0, 0]], rects = {};
+      const paint = (r, c, on) => rects[r + "," + c].style.fill = on ? "color-mix(in srgb, var(--vision) 45%, var(--surface))" : "var(--surface)";
+      M.forEach((row, r) => [...row].forEach((ch, c) => { const q = S(s, "rect", { x: 5 + c * cs, y: 5 + r * cs, width: cs - 2, height: cs - 2, rx: 4, class: ch === "#" ? "" : "tap", style: F(ch === "#" ? "var(--ink)" : "var(--surface)") });
+        rects[r + "," + c] = q; if (ch === "G") T(s, 5 + c * cs + 14, 5 + r * cs + 18, "SCH", "lbl sm");
+        q.onclick = () => { if (ch === "#") return; const [lr, lc] = path[path.length - 1];
+          if (path.length > 1 && path[path.length - 2][0] === r && path[path.length - 2][1] === c) { const [pr, pc] = path.pop(); paint(pr, pc, false); return upd(); }
+          if (Math.abs(lr - r) + Math.abs(lc - c) !== 1 || path.some(([a, b]) => a === r && b === c)) return; path.push([r, c]); paint(r, c, true); upd(); }; }));
+      paint(0, 0, true); const car = S(s, "rect", { x: 9, y: 11, width: 20, height: 14, rx: 4, style: F("var(--speed)") });
+      const c = div(el, "ctrl"), steps = document.createElement("span"); steps.className = "chip"; c.appendChild(steps);
+      const upd = () => steps.textContent = `Steps: ${path.length - 1}`; upd();
+      btn(c, "Clear").onclick = () => { while (path.length > 1) { const [r, cc] = path.pop(); paint(r, cc, false); } upd(); };
+      const go = btn(c, "Drive", "btn sm"), say = msg(el);
+      go.onclick = async () => { const [lr, lc] = path[path.length - 1]; if (lr !== N - 1 || lc !== N - 1) return say("The road must reach the school.", "bad");
+        go.disabled = true; for (let i = 1; i < path.length; i++) { const [a, b] = path[i - 1], [r, cc] = path[i]; await tween(110, p => { car.setAttribute("x", 9 + (b + (cc - b) * p) * cs); car.setAttribute("y", 11 + (a + (r - a) * p) * cs); }); }
+        const ok = path.length - 1 === best; say(ok ? `Shortest road: ${best} steps!` : `You made it in ${path.length - 1} steps, but ${best} was possible.`, ok ? "good" : "bad"); await wait(900); api.done(ok); };
+    } },
+  { s: "Shape Fit", t: 60, q: "Rotate and flip the orange piece so it matches the hole, then drop it in. You get 2 drops.",
+    e: "Imagining a shape turning in your head is called mental rotation. Pilots, surgeons and game designers use it every day.",
+    mount(el, api) {
+      const base = [[0, 0], [1, 0], [0, 1], [0, 2], [0, 3]]; let rot = 0, flip = false;
+      const tf = (cells, r, f) => { let c = cells.map(([x, y]) => [f ? -x : x, y]); for (let i = 0; i < r; i++) c = c.map(([x, y]) => [-y, x]); const mx = Math.min(...c.map(p => p[0])), my = Math.min(...c.map(p => p[1])); return c.map(([x, y]) => [x - mx, y - my]).sort((a, b) => a[0] - b[0] || a[1] - b[1]); };
+      const target = tf(base, 1, true), key = c => JSON.stringify(c), cs = 24;
+      const s = stage(el, 360, 180); T(s, 90, 20, "Your piece", "lbl sm"); T(s, 265, 20, "Hole", "lbl sm");
+      S(s, "rect", { x: 200, y: 32, width: 130, height: 130, rx: 8, style: F("var(--metal)") });
+      target.forEach(([x, y]) => S(s, "rect", { x: 218 + x * cs, y: 70 + y * cs, width: cs, height: cs, style: F("var(--ink)") }));
+      const piece = S(s, "g", {});
+      const draw = () => { piece.innerHTML = ""; tf(base, rot, flip).forEach(([x, y]) => S(piece, "rect", { x: 40 + x * cs, y: 40 + y * cs, width: cs - 2, height: cs - 2, rx: 3, style: F("var(--build)") })); }; draw();
+      const c = div(el, "ctrl"), say = msg(el); let tries = 2;
+      btn(c, "Rotate ↻").onclick = () => { rot = (rot + 1) % 4; draw(); }; btn(c, "Flip ↔").onclick = () => { flip = !flip; draw(); };
+      const go = btn(c, "Drop in", "btn sm");
+      go.onclick = async () => { const ok = key(tf(base, rot, flip)) === key(target); tries--;
+        if (ok) { c.querySelectorAll("button").forEach(b => b.disabled = true); await tween(700, p => piece.setAttribute("transform", `translate(${178 * p} ${30 * p})`)); say("Click! Perfect fit.", "good"); await wait(700); return api.done(true); }
+        await tween(500, p => piece.setAttribute("transform", `translate(${Math.sin(p * Math.PI) * 90} 0)`)); piece.removeAttribute("transform");
+        if (tries <= 0) { c.querySelectorAll("button").forEach(b => b.disabled = true); say("It doesn't fit. Out of drops.", "bad"); await wait(800); return api.done(false); }
+        say("Bounced off! It doesn't fit that way. 1 drop left.", "bad"); };
+    } }
+  ] },
+
+{ id: "idea", name: "Idea Jam", power: "Idea Magic", color: "var(--idea)",
+  desc: "Invent fixes for real problems from a box of parts, then test them.",
+  icon: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>',
+  qs: [] },
+
+{ id: "speed", name: "Speed Run", power: "Rocket Speed", color: "var(--speed)",
+  desc: "Reflex games: catch drones, beat the colour trap, spot changes fast.",
+  icon: '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="#fff"/>',
+  qs: [
+  { s: "Drone Catcher", t: 14, q: "Crazy drones are escaping! Tap 8 drones before time runs out.",
+    e: "Fast, accurate tapping trains hand-eye coordination, the same skill gamers, drivers and cricketers use.",
+    mount(el, api) {
+      const s = stage(el, 360, 220); let hits = 0; const lab = T(s, 320, 20, "0 / 8", "lbl");
+      const spawn = () => { const g = S(s, "g", { class: "tap" }); let x = 30 + Math.random() * 300, y = 40 + Math.random() * 150; const vx = (Math.random() - .5) * 3, vy = (Math.random() - .5) * 2; let alive = true;
+        S(g, "circle", { r: 26, style: "fill:transparent" }); S(g, "rect", { x: -16, y: -6, width: 32, height: 12, rx: 4, style: F("var(--ink)") }); S(g, "line", { x1: -20, y1: -9, x2: -8, y2: -9, style: SK("var(--speed)", 3) }); S(g, "line", { x1: 8, y1: -9, x2: 20, y2: -9, style: SK("var(--speed)", 3) });
+        const mv = () => { if (!alive) return; x += vx; y += vy; if (x < 15 || x > 345 || y < 25 || y > 205) { alive = false; g.remove(); return; } g.setAttribute("transform", `translate(${x} ${y})`); requestAnimationFrame(mv); }; mv();
+        g.addEventListener("pointerdown", () => { if (!alive) return; alive = false; hits++; lab.textContent = `${hits} / 8`; g.remove(); if (hits >= 8) api.done(true); }); };
+      spawn(); spawn(); api.every(spawn, 600);
+    } },
+  { s: "Colour Trap", t: 30, q: "Press Start. Words will flash. Tap MATCH only when the ink colour is the same as the word. Get 10 of 12 right!",
+    e: "Your brain reads words faster than it names colours, so it gets tricked. Stopping yourself in time is called impulse control.",
+    mount(el, api) {
+      const C = [["RED", "#E5452B"], ["BLUE", "#2F6FE0"], ["GREEN", "#1E9E5A"], ["YELLOW", "#E2B400"]];
+      const s = stage(el, 360, 150); const word = T(s, 180, 92, "Ready?", "lbl big"); word.style.fontSize = "44px"; const sc = T(s, 320, 24, "", "lbl");
+      const c = div(el, "ctrl"), start = btn(c, "Start", "btn sm"), tap = btn(c, "MATCH!", "btn"), say = msg(el); tap.disabled = true;
+      start.onclick = async () => { start.disabled = true; let right = 0;
+        for (let i = 0; i < 12; i++) { const w = C[Math.floor(Math.random() * 4)], ink = Math.random() < .45 ? w : C[Math.floor(Math.random() * 4)]; const match = w === ink;
+          word.textContent = w[0]; word.style.fill = ink[1]; let tapped = false; tap.disabled = false; tap.onclick = () => { tapped = true; tap.disabled = true; };
+          await wait(1050); tap.disabled = true; if (tapped === match) right++; sc.textContent = `${right} / ${i + 1}`; word.textContent = ""; await wait(180); }
+        const ok = right >= 10; say(`${right} of 12 correct.`, ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } },
+  { s: "Spot 3 Changes", t: 30, q: "Something changed in Amit's lab! Tap the 3 differences on the RIGHT picture.",
+    e: "Scanning in a pattern, left to right and top to bottom, finds changes faster than looking around at random.",
+    mount(el, api) {
+      const s = stage(el, 360, 170);
+      const scene = (ox, alt) => { const g = S(s, "g", { transform: `translate(${ox} 0)` });
+        S(g, "rect", { x: 4, y: 4, width: 168, height: 162, rx: 8, style: F("var(--surface)") });
+        S(g, "circle", { cx: 140, cy: 30, r: 14, style: F(alt ? "var(--speed)" : "var(--sun)") });
+        S(g, "path", { d: "M30,140 l14,-40 v-30 h12 v30 l14,40 z", style: F("var(--lab)") });
+        S(g, "rect", { x: 90, y: 95, width: 40, height: 50, rx: 4, style: F("var(--metal)") }); S(g, "circle", { cx: 110, cy: 85, r: 10, style: F("var(--metal)") });
+        if (!alt) S(g, "line", { x1: 110, y1: 75, x2: 110, y2: 60, style: SK("var(--ink)", 3) }); S(g, "circle", { cx: 106, cy: 84, r: 2, style: F("var(--ink)") }); S(g, "circle", { cx: 114, cy: 84, r: 2, style: F("var(--ink)") });
+        S(g, "rect", { x: 20, y: 20, width: alt ? 64 : 40, height: 8, style: F("var(--wood)") });
+        S(g, "rect", { x: 4, y: 150, width: 168, height: 16, style: F("var(--ground)") }); return g; };
+      scene(0, false); const R = scene(184, true); const pts = [[140, 30], [110, 66], [68, 24]]; let found = 0; const say = msg(el); say("Found 0 of 3"); const hitDone = [];
+      const hit = S(R, "rect", { x: 4, y: 4, width: 168, height: 162, style: "fill:transparent", class: "tap" });
+      hit.addEventListener("pointerdown", ev => { const pt = s.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; const p = pt.matrixTransform(R.getScreenCTM().inverse());
+        pts.forEach(([x, y], i) => { if (!hitDone[i] && Math.hypot(p.x - x, p.y - y) < 24) { hitDone[i] = true; found++; S(R, "circle", { cx: x, cy: y, r: 18, style: SK("var(--good)", 3) + ";pointer-events:none" }); say(`Found ${found} of 3`, found === 3 ? "good" : ""); if (found === 3) setTimeout(() => api.done(true), 600); } }); });
+    } },
+  { s: "Balloon Count", t: 35, q: "Press Release. Balloons will float up fast. Count only the GREEN ones!",
+    e: "Counting moving things means locking onto one feature (green) and ignoring everything else. Air traffic controllers do this all day.",
+    mount(el, api) {
+      const s = stage(el, 360, 220), cols = ["var(--mission)", "var(--speed)", "var(--logic)", "var(--sun)"];
+      const greens = 4 + Math.floor(Math.random() * 4), list = shuffle([...Array(greens).fill(0), ...Array(14 - greens).fill(0).map(() => 1 + Math.floor(Math.random() * 3))]);
+      const c = div(el, "ctrl"), rel = btn(c, "Release balloons", "btn sm"), say = msg(el);
+      rel.onclick = async () => { rel.disabled = true;
+        const bs = list.map((k, i) => { const g = S(s, "g", { transform: "translate(0 300)" }); S(g, "ellipse", { rx: 12, ry: 15, style: F(cols[k]) }); S(g, "path", { d: "M0,15 q-4,10 2,20", style: SK("var(--ink)", 1) }); return { g, x: 25 + Math.random() * 310, d: i * 220 }; });
+        await tween(4800, p => bs.forEach(b => { const t = Math.max(0, p * 4800 - b.d) / 1500; b.g.setAttribute("transform", `translate(${b.x} ${260 - t * 320})`); }));
+        const st = stepper(div(el, "ctrl"), "Green balloons", 0, 14, 0); const go = btn(st.el, "Check", "btn sm");
+        go.onclick = async () => { go.disabled = true; const ok = st.v === greens; say(ok ? `Yes, ${greens} green!` : `There were ${greens} green balloons.`, ok ? "good" : "bad"); await wait(800); api.done(ok); }; };
+    } },
+  { s: "Parachute Drop", t: 20, q: "Release the drone, then open its parachute while it's inside the green zone. Too early and the wind takes it!",
+    e: "Good timing means watching speed as well as position. The drone speeds up as it falls, so you must act a little early.",
+    mount(el, api) {
+      const s = stage(el, 360, 240); ground(s, 360, 222);
+      S(s, "rect", { x: 0, y: 120, width: 360, height: 45, style: "fill:var(--good);opacity:.22" }); T(s, 320, 146, "Open here", "lbl sm");
+      S(s, "rect", { x: 155, y: 216, width: 50, height: 6, style: F("var(--speed)") });
+      const d = S(s, "g", { transform: "translate(180 20)" }); S(d, "rect", { x: -16, y: -6, width: 32, height: 12, rx: 4, style: F("var(--ink)") });
+      const chute = S(d, "path", { d: "M-26,-10 q26,-34 52,0 z", style: F("var(--speed)") + ";opacity:0" });
+      const c = div(el, "ctrl"), rel = btn(c, "Release drone", "btn sm"), open = btn(c, "Open parachute!", "btn"), say = msg(el); open.disabled = true;
+      let y = 20, v = 0, falling = false, opened = false;
+      rel.onclick = () => { rel.disabled = true; open.disabled = false; falling = true; const step = () => { if (!falling) return; v += .09; y += v; d.setAttribute("transform", `translate(180 ${y})`);
+        if (y >= 210) { falling = false; open.disabled = true; say("Crash! Too late.", "bad"); setTimeout(() => api.done(false), 800); return; } requestAnimationFrame(step); }; step(); };
+      open.onclick = async () => { if (opened) return; opened = true; falling = false; open.disabled = true; chute.style.opacity = 1;
+        const ok = y >= 120 && y <= 165, y0 = y;
+        if (ok) { await tween(1200, p => d.setAttribute("transform", `translate(180 ${y0 + (210 - y0) * p})`)); say("Soft landing on the pad!", "good"); }
+        else { await tween(1200, p => d.setAttribute("transform", `translate(${180 + 200 * p} ${y0 - 20 * p})`)); say("Too early! The wind blew it away.", "bad"); }
+        await wait(700); api.done(ok); };
+    } }
+  ] },
+
+{ id: "mission", name: "Mission Control", power: "Target Focus", color: "var(--mission)",
+  desc: "Plan with limited coins, time and fuel. Then run the mission.",
+  icon: '<circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="1.6" fill="#fff"/>',
+  qs: [
+  { s: "Budget Racer", t: 90, q: "You have 12 Crazy Coins. Buy one of each part so your car can climb the steep ramp, then test drive.",
+    e: "To climb, the car needs grip or power. Big grip wheels are the cheap way to get there. The fast motor works too, but it blows the budget.",
+    mount(el, api) {
+      const P = { Body: [["Plastic", 3], ["Metal", 6]], Wheels: [["Small", 2], ["Big grip", 4]], Motor: [["Slow", 3], ["Fast", 6]], Battery: [["AA cells", 2], ["Power pack", 5]] }, pick = {};
+      const s = stage(el, 360, 170); S(s, "path", { d: "M0,150 H150 L330,70 H360 V170 H0 Z", style: F("var(--ground)") }); S(s, "rect", { x: 330, y: 40, width: 4, height: 30, style: F("var(--ink)") }); S(s, "path", { d: "M334,40 h22 l-6,7 l6,7 h-22 z", style: F("var(--mission)") });
+      const car = S(s, "g", { transform: "translate(40 128)" }); S(car, "rect", { x: 0, y: 0, width: 40, height: 14, rx: 4, style: F("var(--mission)") }); const w1 = S(car, "circle", { cx: 8, cy: 16, r: 6, style: F("var(--ink)") }), w2 = S(car, "circle", { cx: 32, cy: 16, r: 6, style: F("var(--ink)") });
+      const rows = div(el, "rows"), coins = document.createElement("span"); coins.className = "chip";
+      const cost = () => Object.values(pick).reduce((a, p) => a + p[1], 0);
+      const upd = () => { coins.textContent = `Spent ${cost()} of 12 coins`; const big = pick.Wheels && pick.Wheels[0] === "Big grip"; w1.setAttribute("r", big ? 8 : 6); w2.setAttribute("r", big ? 8 : 6); };
+      for (const k in P) { const r = div(rows, "row", `<span class="nm">${k}</span>`); P[k].forEach(([n, c]) => { const b = btn(r, `${n} · ${c}`); b.onclick = () => { pick[k] = [n, c]; r.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); upd(); }; }); }
+      const c = div(el, "ctrl"); c.appendChild(coins); const go = btn(c, "Test drive", "btn sm"), say = msg(el); let busy = false; upd();
+      go.onclick = async () => { if (busy) return; if (Object.keys(pick).length < 4) return say("Buy all 4 parts first.", "bad"); if (cost() > 12) return say(`The shopkeeper says no: that's ${cost()} coins and you only have 12.`, "bad");
+        busy = true; const climbs = pick.Wheels[0] === "Big grip" || pick.Motor[0] === "Fast";
+        await tween(1000, p => car.setAttribute("transform", `translate(${40 + 110 * p} 128)`));
+        if (climbs) { await tween(1200, p => car.setAttribute("transform", `translate(${150 + 160 * p} ${128 - 71 * p}) rotate(-24)`)); say("Flag reached, on budget!", "good"); await wait(700); return api.done(true); }
+        await tween(800, p => car.setAttribute("transform", `translate(${150 + 50 * Math.sin(p * Math.PI)} ${128 - 22 * Math.sin(p * Math.PI)}) rotate(${-24 * Math.sin(p * Math.PI)})`));
+        say("The wheels spun and the car slid back. Change a part.", "bad"); car.setAttribute("transform", "translate(40 128)"); busy = false; };
+    } },
+  { s: "Charging Queue", t: 60, q: "One charger, three flat drones. Tap the drones in the order you'd charge them so the team waits the least time overall.",
+    e: "Shortest job first! Charging the quickest drone first gets drones flying sooner, so the total waiting time is smallest. Shops and hospitals use this trick too.",
+    mount(el, api) {
+      const D = { A: 30, B: 10, C: 20 }, order = [], s = stage(el, 360, 130), bars = S(s, "g", {});
+      const c = div(el, "ctrl"), say = msg(el), wt = document.createElement("span"); wt.className = "chip";
+      const draw = () => { bars.innerHTML = ""; let t = 0; order.forEach((k, i) => { S(bars, "rect", { x: 20 + t * 4, y: 18 + i * 32, width: D[k] * 4, height: 24, rx: 5, style: F("var(--mission)") }); T(bars, 20 + t * 4 + D[k] * 2, 34 + i * 32, k, "lbl", { style: F("#fff") }); T(bars, 26 + (t + D[k]) * 4, 34 + i * 32, `ready at ${t + D[k]} min`, "lbl sm", { "text-anchor": "start" }); t += D[k]; });
+        let tt = 0, sum = 0; order.forEach(k => { tt += D[k]; sum += tt; }); wt.textContent = order.length === 3 ? `Total waiting: ${sum} min` : `${order.length} of 3 in queue`; };
+      Object.keys(D).forEach(k => { const b = btn(c, `Drone ${k} · ${D[k]} min`); b.onclick = () => { if (order.includes(k)) return; order.push(k); b.disabled = true; draw(); }; });
+      btn(c, "Reset").onclick = () => { order.length = 0; c.querySelectorAll("button").forEach(b => b.disabled = false); draw(); };
+      c.appendChild(wt); const go = btn(c, "Start charging", "btn sm"); draw();
+      go.onclick = async () => { if (order.length < 3) return say("Queue all 3 drones.", "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const ok = order.join("") === "BCA"; say(ok ? "Smallest total wait: 100 minutes!" : "That works, but the team waits longer than needed. The best is 100 min.", ok ? "good" : "bad"); await wait(900); api.done(ok); };
+    } },
+  { s: "School Tour", t: 70, q: "Amit's van must visit all 3 schools and come back to the lab. Tap schools in the order to visit, using the least fuel.",
+    e: "Planning a route before driving saves fuel. Delivery companies solve this puzzle every morning with thousands of stops.",
+    mount(el, api) {
+      const H = [40, 180], Sc = { A: [110, 40], B: [310, 50], C: [250, 180] }, s = stage(el, 360, 220), order = [];
+      const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]) / 10;
+      const tour = o => { const pts = [H, ...o.map(k => Sc[k]), H]; let d = 0; for (let i = 1; i < pts.length; i++) d += dist(pts[i - 1], pts[i]); return d; };
+      const best = Math.min(...["ABC", "ACB", "BAC", "BCA", "CAB", "CBA"].map(o => tour([...o])));
+      const line = S(s, "polyline", { style: "fill:none;stroke:var(--mission);stroke-width:3;stroke-dasharray:6 4" });
+      S(s, "rect", { x: H[0] - 16, y: H[1] - 12, width: 32, height: 24, rx: 4, style: F("var(--ink)") }); T(s, H[0], H[1] + 26, "Lab", "lbl sm");
+      const c = div(el, "ctrl"), fuel = document.createElement("span"); fuel.className = "chip";
+      const draw = () => { line.setAttribute("points", [H, ...order.map(k => Sc[k]), ...(order.length === 3 ? [H] : [])].map(p => p.join(",")).join(" ")); fuel.textContent = order.length === 3 ? `Route: ${tour(order).toFixed(1)} km` : `Order: ${order.join(" → ") || "tap the schools"}`; };
+      Object.entries(Sc).forEach(([k, [x, y]]) => { const g = S(s, "g", { class: "tap" }); S(g, "circle", { cx: x, cy: y, r: 18, style: F("var(--mission)") }); T(g, x, y + 5, k, "lbl", { style: F("#fff") });
+        g.onclick = () => { if (order.includes(k)) return; order.push(k); draw(); }; });
+      const van = S(s, "rect", { x: H[0] - 10, y: H[1] - 7, width: 20, height: 14, rx: 3, style: F("var(--speed)") });
+      btn(c, "Reset").onclick = () => { order.length = 0; draw(); }; c.appendChild(fuel); const go = btn(c, "Drive", "btn sm"), say = msg(el); draw();
+      go.onclick = async () => { if (order.length < 3) return say("Pick all 3 schools.", "bad"); go.disabled = true; const pts = [H, ...order.map(k => Sc[k]), H];
+        for (let i = 1; i < pts.length; i++) await tween(500, p => { van.setAttribute("x", pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * p - 10); van.setAttribute("y", pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * p - 7); });
+        const ok = tour(order) <= best + .05; say(ok ? `Best route! ${best.toFixed(1)} km.` : `${tour(order).toFixed(1)} km. The best route is ${best.toFixed(1)} km.`, ok ? "good" : "bad"); await wait(900); api.done(ok); };
+    } },
+  { s: "Rocket Countdown", t: 60, q: "Tap the 5 launch steps in the right order, then launch Amit's bottle rocket.",
+    e: "Water is the fuel, air pressure is the push and the cork keeps the pressure in. Safety comes just before launch. Good planners get the order right before they start.",
+    mount(el, api) {
+      const steps = ["Fill bottle 1/3 with water", "Push in the cork nozzle", "Place it on the launch pad", "Pump air in", "Stand back and launch"], order = [];
+      const s = stage(el, 360, 200); ground(s, 360, 185); S(s, "path", { d: "M160,185 l20,-20 l20,20", style: SK("var(--metal)", 4) });
+      const rk = S(s, "g", { transform: "translate(180 140)" }); S(rk, "rect", { x: -12, y: -40, width: 24, height: 60, rx: 10, style: F("var(--paper)") + ";stroke:var(--ink);stroke-width:2" }); S(rk, "rect", { x: -11, y: 0, width: 22, height: 18, style: F("var(--water)") }); S(rk, "path", { d: "M-12,-30 l12,-22 l12,22 z", style: F("var(--speed)") });
+      const list = div(el, "rows"), c = div(el, "ctrl"), say = msg(el);
+      shuffle(steps).forEach(st => { const b = btn(list, st); b.style.textAlign = "left"; b.onclick = () => { if (order.includes(st)) return; order.push(st); b.disabled = true; b.innerHTML = `<b>${order.length}.</b> ${esc(st)}`; }; });
+      btn(c, "Reset").onclick = () => { order.length = 0; list.querySelectorAll("button").forEach(b => { b.disabled = false; b.textContent = b.textContent.replace(/^\d\.\s*/, ""); }); };
+      const go = btn(c, "Launch!", "btn sm");
+      go.onclick = async () => { if (order.length < 5) return say("Order all 5 steps first.", "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const ok = order.every((x, i) => x === steps[i]);
+        if (ok) { const spray = S(s, "path", { d: "M180,160 l-10,25 h20 z", style: F("var(--water)") }); await tween(1300, p => { rk.setAttribute("transform", `translate(180 ${140 - 220 * p * p})`); spray.setAttribute("transform", `translate(0 ${-220 * p * p})`); }); say("Liftoff!", "good"); }
+        else { await tween(600, p => rk.setAttribute("transform", `translate(180 140) rotate(${Math.sin(p * 20) * 6})`)); say("Fizzle... the steps were out of order.", "bad"); }
+        await wait(800); api.done(ok); };
+    } },
+  { s: "Team Planner", t: 70, q: "Amit and Robo must finish 4 lab jobs. Give each job to Amit or Robo so both are done as early as possible.",
+    e: "Split the work so both finish together: 40 + 10 and 30 + 20 both make 50 minutes. Balancing the load is how managers finish projects on time.",
+    mount(el, api) {
+      const J = [["Paint model", 40], ["Charge drone", 30], ["Test circuit", 20], ["Write report", 10]], who = [0, 0, 0, 0];
+      const load = w => J.reduce((a, [, m], i) => a + (who[i] === w ? m : 0), 0);
+      const s = stage(el, 360, 130), g = S(s, "g", {}); const c = div(el, "rows"), say = msg(el);
+      const draw = () => { g.innerHTML = ""; ["Amit", "Robo"].forEach((n, w) => { T(g, 30, 42 + w * 46, n, "lbl"); let t = 0; J.forEach(([, m], i) => { if (who[i] !== w + 1) return; S(g, "rect", { x: 60 + t * 2.6, y: 24 + w * 46, width: m * 2.6 - 2, height: 28, rx: 5, style: F(w ? "var(--logic)" : "var(--mission)") }); T(g, 60 + t * 2.6 + m * 1.3, 42 + w * 46, `${m}`, "lbl sm", { style: F("#fff") }); t += m; }); T(g, 335, 42 + w * 46, t + " min", "lbl sm"); });
+        T(g, 180, 122, "Both done at: " + Math.max(load(1), load(2)) + " min", "lbl"); };
+      J.forEach(([n, m], i) => { const r = div(c, "row", `<span class="nm">${n} · ${m} min</span>`); const a = btn(r, "Amit"), b = btn(r, "Robo");
+        a.onclick = () => { who[i] = 1; a.classList.add("on"); b.classList.remove("on"); draw(); }; b.onclick = () => { who[i] = 2; b.classList.add("on"); a.classList.remove("on"); draw(); }; });
+      draw(); const go = btn(div(el, "ctrl"), "Start jobs", "btn sm");
+      go.onclick = async () => { if (who.includes(0)) return say("Give every job to someone.", "bad"); go.disabled = true; c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const fin = Math.max(load(1), load(2)), ok = fin === 50;
+        say(ok ? "Both finish at 50 minutes. Perfect split!" : `Done at ${fin} minutes. A fairer split finishes at 50.`, ok ? "good" : "bad"); await wait(900); api.done(ok); };
+    } }
+  ] }
+];
+
+/* Idea Jam: five invention kits built on one engine */
+const KITS = [
+  { s: "Holiday Plant Saver", q: "The school plants dry up during the 6-week summer holiday. Build a watering gadget: pick a water tank and a way to deliver the water.",
+    slots: { Tank: "Water tank", Flow: "Delivery" },
+    parts: [["Old plastic bottle", "Tank", 0, true], ["Bucket", "Tank", 50, true], ["Ice cubes", "Tank", 10, false, "ice melts away in a day."], ["Cotton string wick", "Flow", 2, true], ["Pin-hole drip", "Flow", 0, true], ["Garden hose", "Flow", 200, false, "a hose needs someone to turn on the tap."]],
+    e: "A bottle with a pin-hole or a cotton wick drips a little water every day for weeks, using waste plastic. Great ideas are cheap, simple and fix the real problem." },
+  { s: "Secret Door Alarm", q: "Amit wants to know if someone opens his lab door while he's away. Build an alarm: a trigger and a signal.",
+    slots: { Trigger: "Trigger", Signal: "Signal" },
+    parts: [["Thread across the gap", "Trigger", 1, true], ["Foil pressure pad", "Trigger", 15, true], ["Sticker on the wall", "Trigger", 5, false, "a sticker doesn't notice the door moving."], ["Bell on a string", "Signal", 20, true], ["Spoons that clang", "Signal", 0, true], ["Torch that turns off", "Signal", 30, false, "nobody is there to see a torch turn off."]],
+    e: "When the door moves, the trigger changes and the signal tells you. Inventors look for tiny changes that tell a big story." },
+  { s: "Rainy Bus Stop", q: "Kids get soaked at the bus stop. Build a quick shelter: a roof and something to hold it up.",
+    slots: { Roof: "Roof", Support: "Support" },
+    parts: [["Old tin sheet", "Roof", 100, true], ["Plastic tarp", "Roof", 60, true], ["Newspaper", "Roof", 5, false, "newspaper turns to mush in the rain."], ["Bamboo poles", "Support", 80, true], ["Brick pillars", "Support", 400, true], ["Umbrella sticks", "Support", 40, false, "they're too thin and snap in the wind."]],
+    e: "Use what's nearby, build it fast and make it last. That's how real inventors in villages and cities solve everyday problems." },
+  { s: "Dog-Proof Dustbin", q: "Street dogs knock over the dustbin every night. Build a fix: a lid and a way for people to open it.",
+    slots: { Lid: "Lid", Open: "Opener" },
+    parts: [["Heavy lid", "Lid", 40, true], ["Clip-on lid", "Lid", 25, true], ["No lid", "Lid", 0, false, "dogs can still get in."], ["Foot pedal", "Open", 60, true], ["Lever handle", "Open", 30, true], ["Padlock", "Open", 50, false, "people can't open it to throw rubbish."]],
+    e: "The best fix keeps the bin easy for people and hard for dogs. Good inventions solve the problem without creating a new one." },
+  { s: "Cool Classroom", q: "The classroom is boiling and there's no AC. Build a cooling system: something to move air and something to cool it.",
+    slots: { Air: "Air mover", Cool: "Cooler" },
+    parts: [["Toy motor bottle fan", "Air", 30, true], ["Open windows both sides", "Air", 0, true], ["Close all curtains", "Air", 0, false, "closed curtains stop the breeze."], ["Wet jute curtain", "Cool", 20, true], ["White roof paint", "Cool", 150, true], ["Black roof paint", "Cool", 150, false, "black soaks up the sun's heat."]],
+    e: "Moving air plus evaporating water cools a room, which is how a desert cooler works. White surfaces bounce sunlight away. No electricity bill needed." }
+];
+ARENAS.find(a => a.id === "idea").qs = KITS.map(k => ({ s: k.s, q: k.q, e: k.e, t: 75,
+  mount(el, api) {
+    const pick = {}, s = stage(el, 360, 140), keys = Object.keys(k.slots), boxes = {};
+    keys.forEach((key, i) => { const x = 30 + i * 170; const r = S(s, "rect", { x, y: 20, width: 130, height: 80, rx: 10, style: "fill:var(--surface);stroke:var(--idea);stroke-width:3;stroke-dasharray:6 4" }); T(s, x + 65, 120, k.slots[key], "lbl"); boxes[key] = { r, t: T(s, x + 65, 65, "Tap a part below", "lbl sm") }; });
+    T(s, 180, 68, "+", "lbl big");
+    const rows = div(el, "rows"), cost = document.createElement("span"); cost.className = "chip";
+    const upd = () => cost.textContent = `Cost: ₹${Object.values(pick).reduce((a, p) => a + p[2], 0)}`;
+    keys.forEach(key => { const r = div(rows, "row", `<span class="nm">${k.slots[key]}</span>`);
+      k.parts.filter(p => p[1] === key).forEach(p => { const b = btn(r, `${p[0]} · ₹${p[2]}`); b.onclick = () => { pick[key] = p; r.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); boxes[key].t.textContent = p[0]; upd(); }; }); });
+    const c = div(el, "ctrl"); c.appendChild(cost); const go = btn(c, "Test invention", "btn sm"), say = msg(el); upd();
+    go.onclick = async () => { if (keys.some(x => !pick[x])) return say("Choose a part for each slot.", "bad"); go.disabled = true; rows.querySelectorAll("button").forEach(b => b.disabled = true);
+      say("Testing...");
+      await tween(1200, p => s.style.transform = `rotate(${Math.sin(p * 30) * (1 - p) * 1.5}deg)`); s.style.transform = "";
+      keys.forEach(x => { boxes[x].r.style.stroke = pick[x][3] ? "var(--good)" : "var(--bad)"; boxes[x].r.style.strokeDasharray = "0"; });
+      const bad = keys.map(x => pick[x]).find(p => !p[3]);
+      say(bad ? `It failed: ${bad[4]}` : "It works! Your invention passed the test.", bad ? "bad" : "good"); await wait(1200); api.done(!bad); };
+  } }));
+
+/* ---------- game shell ---------- */
+const KEY = "fsl-arena-v2";
+let save = { name: "", best: {}, xp: 0 };
+try { const raw = localStorage.getItem(KEY); if (raw) save = Object.assign(save, JSON.parse(raw)); } catch (e) {}
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} }
+const app = document.getElementById("app");
+let run = null, tick = null, timers = [];
+function clearAll() { clearInterval(tick); timers.forEach(t => clearInterval(t)); timers = []; }
+function starsFor(c) { const n = c >= 5 ? 3 : c >= 4 ? 2 : c >= 2 ? 1 : 0; return "★".repeat(n) + "☆".repeat(3 - n); }
+function glyph(a) { return `<span class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true">${a.icon}</svg></span>`; }
+
+function home() {
+  clearAll(); if (run) run.locked = true; const played = ARENAS.filter(a => save.best[a.id]).length;
+  app.innerHTML = `
+    <div class="top"><span class="badge">Future Star League</span><span class="xp">${save.xp} XP</span></div>
+    <div class="hero"><h1>Find your <span>Superpower</span></h1>
+      <p>7 Arenas, 5 hands-on challenges each. Run experiments, build, solve and race the clock. Finish fast for bonus points and see which Superpower is your strongest.</p>
+      <div class="name-row"><label for="pname">Player name</label><input id="pname" maxlength="24" placeholder="Type your name" value="${esc(save.name)}"></div></div>
+    <div class="grid">${ARENAS.map(a => { const b = save.best[a.id];
+      return `<button class="tile" style="--c:${a.color}" data-arena="${a.id}">${glyph(a)}<span class="power">${a.power}</span><h3>${a.name}</h3><span class="desc">${a.desc}</span>
+        <span class="best">${b ? `<span class="stars">${starsFor(b.correct)}</span> Best ${b.score} pts` : "Not played yet"}</span></button>`; }).join("")}</div>
+    <div class="actions"><button class="btn" id="go">Play all 7 Arenas</button>
+      <button class="btn ghost" id="card" ${played ? "" : "disabled"}>My Superpowers card (${played}/7)</button></div>
+    <p class="note">Demo set pitched at Grades 5 to 8. Progress is saved on this device only.</p>`;
+  const n = document.getElementById("pname"); n.addEventListener("input", () => { save.name = n.value.trim(); persist(); });
+  app.querySelectorAll("[data-arena]").forEach(b => b.onclick = () => start([b.dataset.arena]));
+  document.getElementById("go").onclick = () => start(ARENAS.map(a => a.id));
+  document.getElementById("card").onclick = card;
+}
+function start(queue) { run = { queue, ai: 0 }; beginArena(); }
+function beginArena() { run.arena = ARENAS.find(x => x.id === run.queue[run.ai]); run.qi = 0; run.score = 0; run.correct = 0; run.streak = 0; run.marks = []; ask(); }
+
+function ask() {
+  clearAll(); const a = run.arena, item = a.qs[run.qi]; run.locked = false; run.t0 = performance.now(); const myRun = run, myQ = run.qi;
+  app.innerHTML = `
+    <div class="bar" style="--c:${a.color}">${glyph(a)}<h2>${a.name}</h2><span class="meta">${run.score} pts${run.streak > 1 ? ` · ${run.streak} streak` : ""}</span><button class="quit" id="quit">Exit</button></div>
+    <div style="--c:${a.color}">
+      <div class="dots">${a.qs.map((_, i) => `<span class="dot ${run.marks[i] === true ? "ok" : run.marks[i] === false ? "no" : i === run.qi ? "now" : ""}"></span>`).join("")}</div>
+      <div class="timer-row"><span id="secs">${item.t}s</span><div class="timer"><i id="tbar"></i></div></div>
+      <div class="card"><div class="story">Challenge ${run.qi + 1} of 5 · ${esc(item.s)}</div><div class="q">${esc(item.q)}</div><div class="play" id="play"></div><div id="fb"></div></div>
+    </div>`;
+  document.getElementById("quit").onclick = home;
+  const live = () => run === myRun && run.qi === myQ && !run.locked;
+  const api = { done: ok => { if (live()) finish(ok); }, every: (fn, ms) => timers.push(setInterval(() => { if (live()) fn(); }, ms)) };
+  item.mount(document.getElementById("play"), api);
+  const bar = document.getElementById("tbar"), secs = document.getElementById("secs");
+  tick = setInterval(() => { const left = Math.max(0, item.t - (performance.now() - run.t0) / 1000);
+    bar.style.transform = `scaleX(${left / item.t})`; secs.textContent = Math.ceil(left) + "s"; if (left <= 0) finish(false, true); }, 100);
+}
+
+function finish(ok, timeout) {
+  if (run.locked) return; run.locked = true; clearAll();
+  const a = run.arena, item = a.qs[run.qi], used = (performance.now() - run.t0) / 1000; let pts = 0, line;
+  if (ok) { run.correct++; run.streak++; const speed = Math.round(50 * Math.max(0, 1 - used / item.t)), sb = run.streak > 1 ? (run.streak - 1) * 10 : 0; pts = 100 + speed + sb;
+    line = `<span class="pts">+${pts} pts</span> (100 solved, +${speed} speed${sb ? `, +${sb} streak` : ""})`; }
+  else { run.streak = 0; line = timeout ? "Time's up!" : "Not this time."; }
+  run.score += pts; run.marks[run.qi] = ok;
+  document.getElementById("play").querySelectorAll("button,input").forEach(b => b.disabled = true);
+  const last = run.qi === a.qs.length - 1;
+  document.getElementById("fb").innerHTML = `<div class="explain"><h4>${ok ? "Solved!" : "Amit explains"}</h4><p>${line}</p><p style="margin-top:6px">${esc(item.e)}</p></div>
+    <div class="next-row"><button class="btn" id="next">${last ? "See Arena result" : "Next challenge"}</button></div>`;
+  const nx = document.getElementById("next"); nx.focus({ preventScroll: true }); nx.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  nx.onclick = () => { if (last) arenaDone(); else { run.qi++; ask(); window.scrollTo({ top: 0 }); } };
+}
+
+function arenaDone() {
+  const a = run.arena, prev = save.best[a.id], isBest = !prev || run.score > prev.score;
+  if (isBest) save.best[a.id] = { score: run.score, correct: run.correct }; save.xp += run.score; persist();
+  const more = run.ai < run.queue.length - 1;
+  app.innerHTML = `<div class="bar" style="--c:${a.color}">${glyph(a)}<h2>${a.name} complete</h2><span class="meta">${a.power}</span></div>
+    <div class="result-head" style="--c:${a.color}"><div class="stars">${starsFor(run.correct)}</div><div class="big">${run.score}</div><p><b>${run.correct} of 5 solved</b>${isBest && prev ? " · New best!" : ""}</p></div>
+    <div class="actions" style="justify-content:center">${more ? `<button class="btn" id="cont">Next Arena: ${ARENAS.find(x => x.id === run.queue[run.ai + 1]).name}</button>` : `<button class="btn" id="cardb">See my Superpowers</button>`}
+      <button class="btn ghost" id="again">Play again</button><button class="btn ghost" id="homeb">All Arenas</button></div>`;
+  window.scrollTo({ top: 0 });
+  if (more) document.getElementById("cont").onclick = () => { run.ai++; beginArena(); }; else document.getElementById("cardb").onclick = card;
+  document.getElementById("again").onclick = () => start([a.id]); document.getElementById("homeb").onclick = home;
+}
+
+function card() {
+  clearAll(); const vals = ARENAS.map(a => ({ a, v: save.best[a.id] ? save.best[a.id].correct * 20 : null })), pl = vals.filter(x => x.v !== null);
+  const top = pl.slice().sort((x, y) => y.v - x.v || save.best[y.a.id].score - save.best[x.a.id].score)[0], who = save.name || "Future Star";
+  const shareText = `${who}'s Superpowers on Future Star League\nTop power: ${top ? top.a.power : "-"}\n` + pl.map(x => `${x.a.power}: ${x.v}/100`).join("\n") + `\nTotal: ${save.xp} XP`;
+  app.innerHTML = `<div class="top"><span class="badge">Superpowers card</span><span class="xp">${save.xp} XP</span></div>
+    <div class="card" style="--c:${top ? top.a.color : "var(--brand)"}"><div class="story">${esc(who)}</div>
+      <h2 style="font-size:32px;margin-top:4px">Top power: <span style="color:var(--c)">${top ? top.a.power : "Play an Arena"}</span></h2>
+      <div class="powers">${vals.map(({ a, v }) => `<div class="prow ${v === null ? "unplayed" : ""}" style="--c:${a.color}"><span>${a.power}</span><span class="track"><span class="fill" style="width:${v || 0}%"></span></span><span class="val">${v === null ? "–" : v}</span></div>`).join("")}</div>
+      <div class="share" id="sharetext">${esc(shareText)}</div>
+      <div class="actions"><button class="btn" id="copy">Copy for WhatsApp</button><button class="btn ghost" id="homeb">All Arenas</button></div>
+      <p class="note" id="copied" hidden>Copied. Paste it into WhatsApp.</p></div>`;
+  window.scrollTo({ top: 0 });
+  document.getElementById("homeb").onclick = home;
+  const sel = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("sharetext")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  document.getElementById("copy").onclick = () => { try { navigator.clipboard.writeText(shareText).then(() => document.getElementById("copied").hidden = false, sel); } catch (e) { sel(); } };
+}
+home();
+</script>
+</body>
+</html>
