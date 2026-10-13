@@ -1,0 +1,837 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FSL Thinking Check</title>
+<meta name="description" content="Future Star League Thinking Check: 4 Arenas, 16 hands-on challenges in Hindi and English. Find your Superpower.">
+<meta name="theme-color" content="#FF6B1A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: one-column game console (max 760px). Screens: language → profile → Arena path → challenge (SVG stage + controls) → Star Card */
+:root {
+  --bg: #EEF5FB; --surface: #FFFFFF; --ink: #13233A; --muted: #55657C; --line: #D3DEEA;
+  --sky: #F6FAFF; --ground: #B9C9A0; --water: #8ACDF2; --wood: #C98A4B; --metal: #8A97A8; --paper: #FFFFFF;
+  --sun: #FFC93C; --brand: #FF6B1A; --brand-deep: #B84400; --good: #1E9E5A; --bad: #D93A3A;
+  --good-soft: #E1F5EA; --bad-soft: #FBE5E5; --shadow: 0 3px 0 #C3D2E2;
+  --lab: #00A3C4; --logic: #6C4BD8; --bazaar: #D9772B; --mission: #2E8B57; --speed: #E5452B;
+  --display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", "Baloo 2", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D1626; --surface: #16233A; --ink: #EAF1FA; --muted: #9DB0C8; --line: #2A3B57;
+  --sky: #10203A; --ground: #3F5A3A; --water: #2E77A8; --wood: #9A6634; --metal: #6F7E92; --paper: #DCE6F2;
+  --good-soft: #143826; --bad-soft: #3E1A1E; --shadow: 0 3px 0 #08101C; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0D1626; --surface: #16233A; --ink: #EAF1FA; --muted: #9DB0C8; --line: #2A3B57;
+  --sky: #10203A; --ground: #3F5A3A; --water: #2E77A8; --wood: #9A6634; --metal: #6F7E92; --paper: #DCE6F2;
+  --good-soft: #143826; --bad-soft: #3E1A1E; --shadow: 0 3px 0 #08101C; color-scheme: dark;
+}
+html[lang="hi"] { --body: "Baloo 2", "Nirmala UI", "Noto Sans Devanagari", system-ui, sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+html[lang="hi"] body { font-size: 17px; }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 48px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.badge { font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--brand); color: #fff; padding: 4px 12px; border-radius: 999px; }
+.top-right { display: flex; gap: 8px; align-items: center; }
+.pill { font-weight: 800; font-size: 13px; border: 2px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 12px; color: var(--ink); }
+.pill.net { color: var(--muted); }
+.pill.net.off { color: var(--bad); border-color: var(--bad); }
+.hero { margin-block: 18px 18px; display: grid; gap: 8px; }
+.hero h1 { font-size: clamp(32px, 8vw, 48px); font-weight: 800; }
+.hero h1 span { color: var(--brand); }
+.hero p { color: var(--muted); max-width: 58ch; }
+
+.langs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 8px; }
+.lang-card { text-align: left; background: var(--surface); border: 3px solid var(--line); border-radius: 20px; padding: 18px 20px; box-shadow: var(--shadow); display: grid; gap: 2px; }
+.lang-card:hover { border-color: var(--brand); }
+.lang-card b { font-family: var(--display); font-size: 34px; font-weight: 800; line-height: 1.1; }
+.lang-card span { color: var(--muted); font-weight: 700; }
+
+.form { display: grid; gap: 16px; margin-top: 6px; }
+.field { display: grid; gap: 6px; }
+.field > label, .field > .lbl-h { font-weight: 800; }
+.field input[type=text] { font: inherit; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); min-width: 0; }
+.grades { display: flex; gap: 8px; flex-wrap: wrap; }
+.grades button { min-width: 64px; }
+.consent { display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.consent input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--brand); flex: none; }
+.consent small { display: block; color: var(--muted); font-size: 13px; }
+.hint { font-size: 13px; color: var(--muted); }
+
+.path { display: grid; gap: 12px; margin-top: 6px; }
+.stop { display: grid; grid-template-columns: 52px 1fr auto; gap: 14px; align-items: center; background: var(--surface); border: 2px solid var(--line);
+  border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); }
+.stop.locked { opacity: .6; box-shadow: none; }
+.stop.now { border-color: var(--c); border-width: 3px; }
+.stop .num { width: 52px; height: 52px; border-radius: 14px; background: var(--c); display: grid; place-items: center; }
+.stop .num svg { width: 30px; height: 30px; }
+.stop h3 { font-size: 21px; font-weight: 800; }
+.stop .skill { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.stop .state { font-weight: 800; font-size: 14px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.stop .state.done { color: var(--good); }
+@media (max-width: 460px) { .stop { grid-template-columns: 44px 1fr; } .stop .num { width: 44px; height: 44px; } .stop .state { grid-column: 2; text-align: left; } }
+
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+.btn { font-family: var(--display); font-weight: 800; font-size: 18px; border: 0; border-radius: 14px; padding: 10px 20px;
+  background: var(--brand); color: #fff; box-shadow: 0 4px 0 var(--brand-deep); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--brand-deep); }
+.btn.ghost { background: var(--surface); color: var(--ink); border: 2px solid var(--line); box-shadow: var(--shadow); }
+.btn.wa { background: #1E9E5A; box-shadow: 0 4px 0 #126A3B; }
+.btn.sm { font-size: 15px; padding: 7px 14px; }
+.btn.on { background: var(--c, var(--brand)); color: #fff; border-color: transparent; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.linkish { background: none; border: 0; padding: 0; font-weight: 800; color: var(--muted); text-decoration: underline; font-size: 14px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 16px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--c); color: #fff;
+  border-radius: 16px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.glyph { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,.2); display: grid; place-items: center; flex: none; }
+.glyph svg { width: 22px; height: 22px; }
+.bar h2 { font-size: 22px; font-weight: 800; flex: 1 1 auto; }
+.bar .meta { font-weight: 800; font-variant-numeric: tabular-nums; }
+.bar .quit { background: rgba(255,255,255,.2); border: 0; border-radius: 10px; padding: 4px 10px; font-weight: 800; color: #fff; }
+.dots { display: flex; gap: 6px; margin: 14px 0 10px; }
+.dot { flex: 1; height: 8px; border-radius: 99px; background: var(--line); }
+.dot.done { background: var(--c); opacity: .55; } .dot.now { background: var(--c); }
+.timer-row { display: flex; align-items: center; gap: 10px; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); }
+.timer { flex: 1; height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--c); transform-origin: left; }
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 20px; padding: 18px; margin-top: 14px; box-shadow: var(--shadow); }
+.story { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.q { font-family: var(--display); font-size: clamp(19px, 4.2vw, 23px); font-weight: 700; margin-top: 4px; }
+.play { margin-top: 12px; display: grid; gap: 12px; }
+.stage { width: 100%; height: auto; display: block; background: var(--sky); border-radius: 14px; border: 2px solid var(--line);
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctrl label { font-weight: 800; font-size: 14px; }
+.ctrl input[type=range] { flex: 1 1 180px; min-width: 0; accent-color: var(--c); height: 28px; }
+.msg { font-weight: 800; min-height: 1.5em; font-size: 15px; }
+.msg.good { color: var(--good); } .msg.bad { color: var(--bad); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--bg);
+  font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+.rows { display: grid; gap: 8px; width: 100%; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row .nm { flex: 1 1 120px; font-weight: 800; }
+@media (max-width: 460px) { .row .nm { flex-basis: 100%; } }
+.clues { display: grid; gap: 4px; font-weight: 700; font-size: 15px; }
+.lbl { fill: var(--ink); font: 700 12px var(--body); pointer-events: none; }
+.lbl.sm { font-size: 10.5px; } .lbl.big { font: 800 22px var(--display); }
+.tap { cursor: pointer; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.shake { animation: shake .3s 2; }
+.explain { margin-top: 14px; border-radius: 14px; padding: 14px 16px; border: 2px dashed var(--c); display: grid; gap: 6px; }
+.explain h4 { margin: 0; font-family: var(--display); font-size: 19px; }
+.next-row { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+.intro { display: grid; gap: 12px; margin-top: 16px; }
+.intro .big-glyph { width: 72px; height: 72px; border-radius: 20px; background: var(--c); display: grid; place-items: center; }
+.intro .big-glyph svg { width: 42px; height: 42px; }
+.intro ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; font-weight: 700; }
+.feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.feel button { background: var(--surface); border: 3px solid var(--line); border-radius: 16px; padding: 14px 8px; font-family: var(--display); font-weight: 800; font-size: 19px; box-shadow: var(--shadow); }
+.feel button:hover { border-color: var(--c); }
+.feel button small { display: block; font-family: var(--body); font-weight: 700; font-size: 12px; color: var(--muted); }
+
+.result-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 14px; align-items: start; }
+@media (max-width: 640px) { .result-grid { grid-template-columns: 1fr; } }
+.starcard { width: 100%; max-width: 100%; border-radius: 18px; box-shadow: var(--shadow); display: block; aspect-ratio: 1; background: #13233A; }
+.levels { display: grid; gap: 10px; }
+.lv { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; }
+.lv .nm { font-weight: 800; }
+.lv .st { color: var(--sun); letter-spacing: 2px; font-size: 20px; }
+.lv .wd { grid-column: 1 / -1; font-size: 13px; color: var(--muted); font-weight: 700; }
+.lv .track { grid-column: 1 / -1; height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.lv .track i { display: block; height: 100%; background: var(--c); border-radius: 99px; }
+.habits { display: grid; gap: 8px; margin-top: 4px; }
+.habit { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; font-size: 14px; }
+.habit b { font-weight: 800; }
+.tag { font-size: 12px; font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--good-soft); color: var(--good); }
+.tag.mid { background: var(--bg); color: var(--muted); }
+.locked-report { position: relative; border-radius: 14px; border: 2px solid var(--line); padding: 14px; overflow: hidden; }
+.locked-report .blur { filter: blur(4px); user-select: none; pointer-events: none; display: grid; gap: 6px; color: var(--muted); }
+.locked-report .over { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 14px; background: color-mix(in srgb, var(--surface) 55%, transparent); }
+.parent-box { background: var(--bg); border-radius: 12px; padding: 12px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; }
+.kv dt { font-weight: 800; } .kv dd { margin: 0; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.confirm { border: 2px solid var(--bad); background: var(--bad-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head><body>
+
+<div class="wrap" id="app"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function S(p, tag, a = {}, txt) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; if (p) p.appendChild(e); return e; }
+function stage(el, w = 360, h = 220) { return S(el, "svg", { viewBox: `0 0 ${w} ${h}`, class: "stage" }); }
+function T(p, x, y, txt, cls = "lbl", extra = {}) { return S(p, "text", Object.assign({ x, y, class: cls, "text-anchor": "middle" }, extra), txt); }
+function F(c) { return `fill:${c}`; }
+function SK(c, w = 2) { return `stroke:${c};stroke-width:${w};fill:none`; }
+function div(el, cls, html = "") { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; el.appendChild(d); return d; }
+function btn(p, label, cls = "btn sm ghost") { const b = document.createElement("button"); b.type = "button"; b.className = cls; b.innerHTML = label; p.appendChild(b); return b; }
+function tween(ms, fn) { return new Promise(r => { const t0 = performance.now(); const f = t => { const p = Math.max(0, Math.min(1, (t - t0) / ms)); fn(p); p < 1 ? requestAnimationFrame(f) : r(); }; requestAnimationFrame(f); }); }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function msg(el) { const m = div(el, "msg"); m.setAttribute("aria-live", "polite"); return (t, k = "") => { m.textContent = t; m.className = "msg " + k; }; }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function ground(s, w = 360, y = 205, h = 20) { S(s, "rect", { x: 0, y, width: w, height: h, style: F("var(--ground)") }); }
+function stepper(p, label, min, max, val, step = 1, fmt = v => v) {
+  const r = div(p, "ctrl"); r.innerHTML = `<label>${label}</label>`;
+  const m = btn(r, "−"), c = document.createElement("span"); c.className = "chip"; c.style.minWidth = "56px"; c.style.justifyContent = "center"; r.appendChild(c);
+  const pl = btn(r, "+"); const o = { v: val, el: r, on: null }; const show = () => { c.textContent = fmt(o.v); if (o.on) o.on(); }; show();
+  m.onclick = () => { o.v = Math.max(min, o.v - step); show(); }; pl.onclick = () => { o.v = Math.min(max, o.v + step); show(); };
+  return o;
+}
+function gearPath(r, teeth) {
+  let d = ""; const n = teeth * 2;
+  for (let i = 0; i < n; i++) { const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, rr = i % 2 ? r - 7 : r;
+    d += (i ? "L" : "M") + (rr * Math.cos(a0)).toFixed(1) + "," + (rr * Math.sin(a0)).toFixed(1) + "L" + (rr * Math.cos(a1)).toFixed(1) + "," + (rr * Math.sin(a1)).toFixed(1); }
+  return d + "Z";
+}
+
+/* ---------- language ---------- */
+const KEY = "fsl-thinking-check-v1";
+let st = { lang: null, profile: null, results: {}, reflect: {}, events: [], synced: 0, sid: null };
+try { const raw = localStorage.getItem(KEY); if (raw) st = Object.assign(st, JSON.parse(raw)); } catch (e) {}
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+let LANG = st.lang || "en";
+const X = (en, hi) => LANG === "hi" ? hi : en;
+const tx = p => Array.isArray(p) ? p[LANG === "hi" ? 1 : 0] : p;
+function setLang(l) { LANG = l; st.lang = l; document.documentElement.lang = l; log("lang", { lang: l }); persist(); }
+document.documentElement.lang = LANG;
+function log(type, data = {}) { st.events.push(Object.assign({ t: Date.now(), sid: st.sid, type }, data)); if (st.events.length > 4000) st.events.splice(0, st.events.length - 4000); }
+
+/* ---------- 4 Arenas x 4 challenges ---------- */
+const ARENAS = [
+{ id: "logic", name: ["Logic Lock", "लॉजिक लॉक"], skill: ["Logical Thinking", "तार्किक सोच"], hero: ["Code Breaker", "कोड ब्रेकर"], color: "var(--logic)", hex: "#6C4BD8",
+  desc: ["Crack patterns, gears, scales and a code lock.", "पैटर्न, गियर, तराज़ू और कोड वाला ताला खोलो।"],
+  icon: '<rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#fff"/>',
+  qs: [
+  { s: ["Pattern Door", "पैटर्न वाला दरवाज़ा"], t: 50,
+    q: ["The door opens only if you complete the arrow pattern. Tap the arrows below to fill the two empty slots.", "दरवाज़ा तभी खुलेगा जब तुम तीरों का पैटर्न पूरा करोगे। नीचे के तीर दबाकर दोनों खाली खाने भरो।"],
+    e: ["Each arrow turns a quarter turn clockwise: up, right, down, left, and repeat. So after up and right come down and left.", "हर तीर एक चौथाई चक्कर घड़ी की दिशा में घूमता है: ऊपर, दाएँ, नीचे, बाएँ, फिर दोबारा। इसलिए ऊपर और दाएँ के बाद नीचे और बाएँ आते हैं।"],
+    mount(el, api) {
+      const s = stage(el, 360, 170), seq = [0, 90, 180, 270, 0, 90, null, null], slots = [];
+      const door = S(s, "rect", { x: 300, y: 20, width: 50, height: 130, rx: 6, style: F("var(--logic)") });
+      const arrow = (g, deg) => { g.innerHTML = ""; if (deg == null) return; S(g, "path", { d: "M0,-14 L10,0 L4,0 L4,14 L-4,14 L-4,0 L-10,0 Z", transform: `rotate(${deg})`, style: F("var(--ink)") }); };
+      seq.forEach((d, i) => { const x = 22 + i * 35, y = 85; S(s, "rect", { x: x - 15, y: y - 22, width: 30, height: 44, rx: 6, style: d == null ? "fill:var(--surface);stroke:var(--logic);stroke-width:2;stroke-dasharray:4 3" : F("var(--surface)") });
+        const g = S(s, "g", { transform: `translate(${x} ${y})` }); arrow(g, d); if (d == null) slots.push({ g, v: null }); });
+      const c = div(el, "ctrl"), say = msg(el);
+      [["↑", 0], ["→", 90], ["↓", 180], ["←", 270]].forEach(([l, d]) => btn(c, l).onclick = () => { const sl = slots.find(x => x.v == null); if (sl) { sl.v = d; arrow(sl.g, d); } });
+      btn(c, X("Clear", "मिटाओ")).onclick = () => slots.forEach(sl => { sl.v = null; arrow(sl.g, null); });
+      const go = btn(c, X("Open door", "दरवाज़ा खोलो"), "btn sm");
+      go.onclick = async () => { if (slots.some(x => x.v == null)) return say(X("Fill both slots first.", "पहले दोनों खाने भरो।"), "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const right = (slots[0].v === 180) + (slots[1].v === 270), ok = right === 2;
+        if (ok) await tween(800, p => door.setAttribute("height", 130 * (1 - p))); else { s.classList.add("shake"); await wait(600); }
+        say(ok ? X("Click! The door slides open.", "क्लिक! दरवाज़ा खुल गया।") : X("Locked. The door didn't budge.", "दरवाज़ा बंद ही रहा।"), ok ? "good" : "bad"); await wait(600); api.done(ok, right / 2); };
+    } },
+  { s: ["Gear Train", "गियर की रेल"], t: 50,
+    q: ["Gear 1 turns clockwise. Tap gears 2, 3 and 4 to set which way each will spin, then press Spin.", "गियर 1 घड़ी की दिशा में घूमता है। गियर 2, 3 और 4 पर टैप करके बताओ कि हर एक किस तरफ़ घूमेगा, फिर घुमाओ दबाओ।"],
+    e: ["Touching gears always spin in opposite directions, because their teeth push against each other. So every second gear matches gear 1.", "आपस में जुड़े गियर हमेशा उलटी दिशा में घूमते हैं, क्योंकि उनके दाँत एक-दूसरे को धकेलते हैं। इसलिए हर दूसरा गियर गियर 1 की तरह घूमता है।"],
+    mount(el, api) {
+      const s = stage(el, 360, 200), xs = [54, 138, 222, 306], gs = [], set = [1, 0, 0, 0], lab = [];
+      const cw = X("↻ clockwise", "↻ घड़ी की दिशा"), acw = X("↺ anticlockwise", "↺ उलटी दिशा");
+      xs.forEach((x, i) => { const g = S(s, "g", { class: i ? "tap" : "", transform: `translate(${x} 92)` }); const inner = S(g, "g", {});
+        S(inner, "path", { d: gearPath(43, 12), style: F(i ? "var(--logic)" : "var(--metal)") }); S(inner, "circle", { r: 10, style: F("var(--sky)") }); S(inner, "rect", { x: -2, y: -36, width: 4, height: 20, style: F("var(--sky)") });
+        if (i % 2) inner.setAttribute("transform", "rotate(15)"); gs.push(inner);
+        lab.push(T(s, x, 172, i ? X("Tap gear", "टैप करो") : cw, "lbl sm"));
+        if (i) g.onclick = () => { set[i] = set[i] === 1 ? -1 : 1; lab[i].textContent = set[i] === 1 ? cw : acw; }; });
+      xs.forEach((x, i) => T(s, x, 192, X("Gear ", "गियर ") + (i + 1), "lbl sm"));
+      const c = div(el, "ctrl"), go = btn(c, X("Spin!", "घुमाओ!"), "btn sm"), say = msg(el);
+      go.onclick = async () => { if (set.slice(1).some(v => !v)) return say(X("Set gears 2, 3 and 4 first.", "पहले गियर 2, 3 और 4 सेट करो।"), "bad"); go.disabled = true;
+        await tween(1800, p => gs.forEach((g, i) => g.setAttribute("transform", `rotate(${(i % 2 ? 15 : 0) + (i % 2 ? -1 : 1) * 180 * p})`)));
+        let right = 0; set.forEach((v, i) => { if (!i) return; const good = v === (i % 2 ? -1 : 1); right += good; lab[i].style.fill = good ? "var(--good)" : "var(--bad)"; });
+        const ok = right === 3; say(ok ? X("All gears predicted!", "सभी गियर सही!") : X("Some gears spun the other way.", "कुछ गियर दूसरी तरफ़ घूमे।"), ok ? "good" : "bad"); await wait(800); api.done(ok, right / 3); };
+    } },
+  { s: ["Fruit Scale", "फलों का तराज़ू"], t: 60,
+    q: ["1 watermelon = 4 apples. Add apples to the right pan to balance 2 watermelons and 1 apple, then release the scale. You have 3 tries.", "1 तरबूज़ = 4 सेब। बाएँ पलड़े में 2 तरबूज़ और 1 सेब है। दाएँ पलड़े में इतने सेब रखो कि तराज़ू बराबर हो जाए, फिर तराज़ू छोड़ो। तुम्हारे पास 3 मौके हैं।"],
+    e: ["2 watermelons = 8 apples. Plus the 1 apple already on the left makes 9 apples.", "2 तरबूज़ = 8 सेब। बाईं ओर पहले से रखा 1 सेब जोड़ो, तो 9 सेब।"],
+    mount(el, api) {
+      const s = stage(el, 360, 220); S(s, "polygon", { points: "180,90 165,200 195,200", style: F("var(--metal)") });
+      const beam = S(s, "g", {}); S(beam, "rect", { x: 50, y: 86, width: 260, height: 8, rx: 4, style: F("var(--wood)") });
+      [70, 290].forEach(x => { S(beam, "line", { x1: x, y1: 90, x2: x, y2: 140, style: SK("var(--ink)", 2) }); S(beam, "path", { d: `M${x - 40},140 h80 l-10,14 h-60 z`, style: F("var(--metal)") }); });
+      S(beam, "circle", { cx: 55, cy: 125, r: 14, style: F("var(--mission)") }); S(beam, "circle", { cx: 84, cy: 125, r: 14, style: F("var(--mission)") }); S(beam, "circle", { cx: 70, cy: 104, r: 7, style: F("var(--speed)") });
+      const apples = S(beam, "g", {}); T(s, 70, 180, X("2 melons + 1 apple", "2 तरबूज़ + 1 सेब"), "lbl sm"); T(s, 290, 180, X("Your apples", "तुम्हारे सेब"), "lbl sm");
+      const st2 = stepper(div(el, "ctrl"), X("Apples", "सेब"), 0, 16, 0), go = btn(st2.el, X("Release scale", "तराज़ू छोड़ो"), "btn sm"), say = msg(el);
+      const draw = () => { apples.innerHTML = ""; for (let i = 0; i < st2.v; i++) S(apples, "circle", { cx: 262 + (i % 5) * 14, cy: 132 - Math.floor(i / 5) * 12, r: 6, style: F("var(--speed)") }); };
+      st2.on = draw; draw(); let tries = 3, busy = false;
+      go.onclick = async () => { if (busy) return; busy = true; tries--; api.retry(); const diff = st2.v - 9, ang = Math.max(-14, Math.min(14, diff * 3));
+        await tween(900, p => beam.setAttribute("transform", `rotate(${ang * ease(p)} 180 90)`));
+        if (diff === 0) { say(X("Perfectly balanced!", "एकदम बराबर!"), "good"); await wait(800); return api.done(true, 1); }
+        say((diff > 0 ? X("Too many apples, the right side dropped.", "सेब ज़्यादा हैं, दायाँ पलड़ा नीचे गया।") : X("Too few apples, the melon side dropped.", "सेब कम हैं, तरबूज़ वाला पलड़ा नीचे गया।")) + (tries ? X(` ${tries} left.`, ` ${tries} मौके बचे।`) : ""), "bad");
+        if (!tries) { st2.el.querySelectorAll("button").forEach(b => b.disabled = true); await wait(900); return api.done(false, Math.abs(diff) === 1 ? .3 : 0); }
+        await wait(700); await tween(400, p => beam.setAttribute("transform", `rotate(${ang * (1 - p)} 180 90)`)); busy = false; };
+    } },
+  { s: ["Code Lock", "कोड वाला ताला"], t: 75,
+    q: ["Use the clues to set the 3-digit code, then open the safe. You have 3 tries.", "सुराग़ों से 3 अंकों का कोड बनाओ, फिर तिजोरी खोलो। तुम्हारे पास 3 मौके हैं।"],
+    e: ["Call the third digit x. The first is 2x and the second is 2x + 1. They add up to 5x + 1 = 16, so x = 3, giving 6, 7, 3.", "तीसरे अंक को x मानो। पहला 2x और दूसरा 2x + 1 है। जोड़ 5x + 1 = 16, तो x = 3। कोड है 6, 7, 3।"],
+    mount(el, api) {
+      const s = stage(el, 360, 150);
+      S(s, "rect", { x: 20, y: 15, width: 320, height: 120, rx: 14, style: F("var(--metal)") });
+      const handle = S(s, "g", {}); S(handle, "circle", { cx: 300, cy: 75, r: 18, style: "fill:var(--sky);stroke:var(--ink);stroke-width:3" }); S(handle, "line", { x1: 300, y1: 60, x2: 300, y2: 90, style: SK("var(--ink)", 4) });
+      const d = [0, 0, 0], tt = d.map((_, i) => { S(s, "rect", { x: 50 + i * 70, y: 45, width: 54, height: 60, rx: 8, style: F("var(--surface)") }); return T(s, 77 + i * 70, 86, "0", "lbl big"); });
+      div(el, "clues", X("<div>1. The first digit is double the third digit.</div><div>2. The second digit is 1 more than the first digit.</div><div>3. All three digits add up to 16.</div>",
+        "<div>1. पहला अंक तीसरे अंक का दोगुना है।</div><div>2. दूसरा अंक पहले अंक से 1 ज़्यादा है।</div><div>3. तीनों अंकों का जोड़ 16 है।</div>"));
+      const c = div(el, "ctrl");
+      d.forEach((_, i) => { btn(c, `▲ ${i + 1}`).onclick = () => { d[i] = (d[i] + 1) % 10; tt[i].textContent = d[i]; }; btn(c, `▼ ${i + 1}`).onclick = () => { d[i] = (d[i] + 9) % 10; tt[i].textContent = d[i]; }; });
+      const go = btn(c, X("Open safe", "तिजोरी खोलो"), "btn sm"), say = msg(el); let tries = 3;
+      go.onclick = async () => { const ok = d.join("") === "673"; tries--; api.retry();
+        if (ok) { c.querySelectorAll("button").forEach(b => b.disabled = true); await tween(700, p => handle.setAttribute("transform", `rotate(${p * 90} 300 75)`)); say(X("Clunk! The safe opens.", "खट! तिजोरी खुल गई।"), "good"); await wait(600); return api.done(true, 1); }
+        s.classList.remove("shake"); void s.getBoundingClientRect(); s.classList.add("shake");
+        const near = [6, 7, 3].filter((v, i) => d[i] === v).length;
+        if (tries <= 0) { c.querySelectorAll("button").forEach(b => b.disabled = true); say(X("Out of tries. The code was 6 7 3.", "मौके ख़त्म। कोड 6 7 3 था।"), "bad"); await wait(900); return api.done(false, near / 6); }
+        say(X(`Wrong code. ${tries} ${tries === 1 ? "try" : "tries"} left.`, `गलत कोड। ${tries} मौके बचे।`), "bad"); };
+    } }
+  ] },
+
+{ id: "bazaar", name: ["Smart Bazaar", "स्मार्ट बाज़ार"], skill: ["Everyday Maths", "रोज़ का गणित"], hero: ["Hisaab Master", "हिसाब मास्टर"], color: "var(--bazaar)", hex: "#D9772B",
+  desc: ["Shop, compare offers, scale a recipe and read a train timetable.", "ख़रीदारी करो, ऑफ़र मिलाओ, रेसिपी बढ़ाओ और ट्रेन का समय निकालो।"],
+  icon: '<path d="M4 9h16l-1.5 10a2 2 0 0 1-2 1.7h-9A2 2 0 0 1 5.5 19z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="#fff" stroke-width="2"/><path d="M10 13h4M10 16h4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
+  qs: [
+  { s: ["Mela Shopping", "मेले की ख़रीदारी"], t: 75, maxA: 30,
+    q: ["You have exactly ₹100 at the mela. Buy 1 snack, 1 drink and 1 toy so you spend all ₹100, not a rupee more or less.", "मेले में तुम्हारे पास ठीक ₹100 हैं। 1 नाश्ता, 1 ड्रिंक और 1 खिलौना ऐसे ख़रीदो कि पूरे ₹100 ख़र्च हों, एक रुपया भी कम या ज़्यादा नहीं।"],
+    e: ["Several baskets make exactly ₹100, like Jalebi 25 + Lassi 30 + Ball 45, or Jalebi 25 + Juice 35 + Kite 40. Good shoppers add as they go and change one item at a time.", "कई टोकरियाँ ठीक ₹100 बनाती हैं, जैसे जलेबी 25 + लस्सी 30 + गेंद 45, या जलेबी 25 + जूस 35 + पतंग 40। अच्छे ख़रीदार साथ-साथ जोड़ते हैं और एक बार में एक चीज़ बदलते हैं।"],
+    mount(el, api) {
+      const P = [[["Snack", "नाश्ता"], [[["Samosa", "समोसा"], 15], [["Chips", "चिप्स"], 20], [["Jalebi", "जलेबी"], 25]]],
+                 [["Drink", "ड्रिंक"], [[["Water", "पानी"], 10], [["Lassi", "लस्सी"], 30], [["Juice", "जूस"], 35]]],
+                 [["Toy", "खिलौना"], [[["Whistle", "सीटी"], 20], [["Kite", "पतंग"], 40], [["Ball", "गेंद"], 45]]]];
+      const pick = [null, null, null], s = stage(el, 360, 150), sx = v => 30 + v * 2.5;
+      S(s, "rect", { x: 30, y: 30, width: 300, height: 26, rx: 13, style: F("var(--line)") });
+      const fill = S(s, "rect", { x: 30, y: 30, width: 0, height: 26, rx: 13, style: F("var(--bazaar)") });
+      S(s, "line", { x1: sx(100), x2: sx(100), y1: 22, y2: 64, style: SK("var(--ink)", 3) }); T(s, sx(100), 16, "₹100", "lbl");
+      const amt = T(s, 180, 80, "₹0", "lbl big");
+      S(s, "path", { d: "M70,100 h220 l-18,44 h-184 z", style: F("var(--wood)") });
+      const inB = [0, 1, 2].map(i => T(s, 125 + i * 55, 126, "", "lbl", { style: F("#fff") }));
+      const rows = div(el, "rows"), chip = document.createElement("span"); chip.className = "chip";
+      const total = () => pick.reduce((a, p) => a + (p ? p[1] : 0), 0);
+      const upd = () => { const tt = total(); fill.setAttribute("width", Math.min(300, tt * 2.5)); fill.style.fill = tt > 100 ? "var(--bad)" : tt === 100 ? "var(--good)" : "var(--bazaar)";
+        amt.textContent = "₹" + tt; pick.forEach((p, i) => inB[i].textContent = p ? tx(p[0]) : ""); chip.textContent = X(`Basket: ₹${tt} of ₹100`, `टोकरी: ₹100 में से ₹${tt}`); };
+      P.forEach(([cat, items], ci) => { const r = div(rows, "row", `<span class="nm">${tx(cat)}</span>`);
+        shuffle(items).forEach(it => { const b = btn(r, `${tx(it[0])} · ₹${it[1]}`); b.onclick = () => { pick[ci] = it; r.querySelectorAll("button").forEach(x => x.classList.remove("on")); b.classList.add("on"); upd(); }; }); });
+      const c = div(el, "ctrl"); c.appendChild(chip); const go = btn(c, X("Pay at counter", "काउंटर पर पैसे दो"), "btn sm"), say = msg(el); upd();
+      go.onclick = async () => { if (pick.some(p => !p)) return say(X("Pick 1 snack, 1 drink and 1 toy first.", "पहले 1 नाश्ता, 1 ड्रिंक और 1 खिलौना चुनो।"), "bad");
+        const tt = total(); api.retry();
+        if (tt === 100) { rows.querySelectorAll("button").forEach(b => b.disabled = true); go.disabled = true; say(X("Exactly ₹100. The shopkeeper smiles!", "ठीक ₹100। दुकानदार खुश!"), "good"); await wait(800); return api.done(true, 1); }
+        if (tt > 100) { s.classList.remove("shake"); void s.getBoundingClientRect(); s.classList.add("shake"); return say(X(`That's ₹${tt}. You only have ₹100. Swap something.`, `यह ₹${tt} है। तुम्हारे पास सिर्फ़ ₹100 हैं। कुछ बदलो।`), "bad"); }
+        api.progress(tt >= 90 ? .5 : .25); say(X(`₹${tt} spent, ₹${100 - tt} left over. Make it exactly ₹100.`, `₹${tt} ख़र्च, ₹${100 - tt} बचे। ठीक ₹100 बनाओ।`), "bad"); };
+    } },
+  { s: ["Best Deal", "सबसे अच्छा सौदा"], t: 60,
+    q: ["The same school bag costs ₹800 at three shops, each with a different offer. Tap the shop where it costs the least, then buy.", "एक ही स्कूल बैग तीन दुकानों पर ₹800 का है, हर दुकान का ऑफ़र अलग है। जिस दुकान पर सबसे सस्ता पड़े, उस पर टैप करो, फिर ख़रीदो।"],
+    e: ["Shop A: 25% of 800 is 200, so ₹600. Shop B: 800 − 180 = ₹620. Shop C: 20% off makes ₹640, then ₹30 less is ₹610. The offer that sounds biggest isn't always the cheapest.", "दुकान A: 800 का 25% = 200, तो ₹600। दुकान B: 800 − 180 = ₹620। दुकान C: 20% छूट से ₹640, फिर ₹30 कम = ₹610। जो ऑफ़र सबसे बड़ा लगे, वह हमेशा सबसे सस्ता नहीं होता।"],
+    mount(el, api) {
+      const shops = [["A", ["25% off", "25% छूट"], 600], ["B", ["₹180 off", "₹180 की छूट"], 620], ["C", ["20% off + ₹30 more off", "20% छूट + ₹30 और छूट"], 610]];
+      const s = stage(el, 360, 190); let chosen = null; const g = {};
+      shops.forEach(([k, off], i) => { const x = 14 + i * 116, grp = S(s, "g", { class: "tap" });
+        const box = S(grp, "rect", { x, y: 20, width: 104, height: 156, rx: 10, style: "fill:var(--surface);stroke:var(--line);stroke-width:3" });
+        S(grp, "path", { d: `M${x},20 h104 v26 h-104 z`, style: F("var(--bazaar)") }); T(grp, x + 52, 38, X("Shop ", "दुकान ") + k, "lbl", { style: F("#fff") });
+        S(grp, "path", { d: `M${x + 30},70 h44 v40 a6 6 0 0 1 -6 6 h-32 a6 6 0 0 1 -6 -6 z M${x + 40},70 v-6 a12 12 0 0 1 24 0 v6`, style: "fill:var(--logic);stroke:var(--ink);stroke-width:1.5" });
+        T(grp, x + 52, 134, "₹800", "lbl"); const of = tx(off), cut = of.length > 14 ? of.lastIndexOf(" ", 14) : -1;
+        const o1 = T(grp, x + 52, 152, cut > 0 ? of.slice(0, cut) : of, "lbl sm", { style: F("var(--bazaar)") }); if (cut > 0) T(grp, x + 52, 166, of.slice(cut + 1), "lbl sm", { style: F("var(--bazaar)") });
+        g[k] = { box, price: null, x };
+        grp.onclick = () => { if (go.disabled) return; chosen = k; shops.forEach(([kk]) => g[kk].box.style.stroke = kk === k ? "var(--bazaar)" : "var(--line)"); say(X(`Shop ${k} picked.`, `दुकान ${k} चुनी।`)); }; });
+      const c = div(el, "ctrl"), go = btn(c, X("Buy here", "यहाँ ख़रीदो"), "btn sm"), say = msg(el);
+      go.onclick = async () => { if (!chosen) return say(X("Tap a shop first.", "पहले एक दुकान चुनो।"), "bad"); go.disabled = true;
+        for (const [k, , p] of shops) { const { x } = g[k]; S(s, "rect", { x: x + 18, y: 80, width: 68, height: 26, rx: 6, style: F(k === "A" ? "var(--good)" : "var(--ink)") }); T(s, x + 52, 98, "₹" + p, "lbl", { style: F(k === "A" ? "#fff" : "var(--bg)") }); await wait(250); }
+        const paid = shops.find(x => x[0] === chosen)[2], ok = paid === 600;
+        say(ok ? X("Cheapest! You paid ₹600.", "सबसे सस्ता! तुमने ₹600 दिए।") : X(`You paid ₹${paid}. Shop A was ₹600.`, `तुमने ₹${paid} दिए। दुकान A पर ₹600 था।`), ok ? "good" : "bad"); await wait(1000); api.done(ok, ok ? 1 : paid === 610 ? .3 : 0); };
+    } },
+  { s: ["Lemonade Stall", "नींबू पानी का ठेला"], t: 60,
+    q: ["This recipe makes 4 glasses: 2 lemons and 8 spoons of sugar. Set the lemons and sugar for 6 glasses, then mix. You have 2 tries.", "यह रेसिपी 4 गिलास बनाती है: 2 नींबू और 8 चम्मच चीनी। 6 गिलास के लिए नींबू और चीनी सेट करो, फिर मिलाओ। तुम्हारे पास 2 मौके हैं।"],
+    e: ["6 glasses is 1½ times 4 glasses, so use 1½ times everything: 2 × 1½ = 3 lemons and 8 × 1½ = 12 spoons. Same taste, more glasses.", "6 गिलास, 4 गिलास का डेढ़ गुना है। तो सब कुछ डेढ़ गुना: 2 × 1½ = 3 नींबू और 8 × 1½ = 12 चम्मच। स्वाद वही, गिलास ज़्यादा।"],
+    mount(el, api) {
+      const s = stage(el, 360, 170);
+      S(s, "path", { d: "M40,40 h80 l-8,110 h-64 z", style: "fill:var(--surface);stroke:var(--metal);stroke-width:3" });
+      const juice = S(s, "rect", { x: 49, y: 150, width: 62, height: 0, style: F("var(--sun)") + ";opacity:.85" });
+      const lem = S(s, "g", {}), sug = S(s, "g", {}); T(s, 80, 166, X("Jug", "जग"), "lbl sm");
+      for (let i = 0; i < 6; i++) S(s, "path", { d: `M${150 + i * 34},104 h24 l-3,40 h-18 z`, style: "fill:none;stroke:var(--metal);stroke-width:2" });
+      T(s, 251, 162, X("6 glasses to fill", "6 गिलास भरने हैं"), "lbl sm");
+      const L = stepper(div(el, "ctrl"), X("Lemons", "नींबू"), 0, 10, 2), G = stepper(div(el, "ctrl"), X("Sugar spoons", "चीनी (चम्मच)"), 0, 24, 8);
+      const draw = () => { lem.innerHTML = ""; sug.innerHTML = ""; for (let i = 0; i < L.v; i++) S(lem, "ellipse", { cx: 160 + (i % 5) * 26, cy: 26 + Math.floor(i / 5) * 22, rx: 10, ry: 8, style: F("var(--sun)") + ";stroke:var(--wood);stroke-width:1.5" });
+        for (let i = 0; i < G.v; i++) S(sug, "rect", { x: 152 + (i % 12) * 16, y: 62 + Math.floor(i / 12) * 14, width: 10, height: 10, rx: 2, style: "fill:var(--paper);stroke:var(--metal);stroke-width:1.5" }); };
+      L.on = draw; G.on = draw; draw();
+      const c = div(el, "ctrl"), go = btn(c, X("Mix and taste", "मिलाओ और चखो"), "btn sm"), say = msg(el); let tries = 2;
+      go.onclick = async () => { go.disabled = true; tries--; api.retry(); const l = L.v === 3, g2 = G.v === 12;
+        await tween(900, p => { juice.setAttribute("y", 150 - 90 * p); juice.setAttribute("height", 90 * p); });
+        if (l && g2) { say(X("Perfect taste for 6 glasses!", "6 गिलास के लिए एकदम सही स्वाद!"), "good"); await wait(800); return api.done(true, 1); }
+        say((l ? X("The lemons are right, but the sugar is off.", "नींबू सही हैं, पर चीनी गलत है।") : g2 ? X("The sugar is right, but the lemons are off.", "चीनी सही है, पर नींबू गलत हैं।") : X("Both are off. Think: how many times bigger is 6 than 4?", "दोनों गलत। सोचो: 6, 4 का कितना गुना है?")), "bad");
+        if (!tries) { L.el.querySelectorAll("button").forEach(b => b.disabled = true); G.el.querySelectorAll("button").forEach(b => b.disabled = true); await wait(1000); return api.done(false, (l || g2) ? .5 : 0); }
+        api.progress((l || g2) ? .5 : 0); await wait(600); juice.setAttribute("height", 0); juice.setAttribute("y", 150); go.disabled = false; };
+    } },
+  { s: ["Train Time", "ट्रेन का समय"], t: 75,
+    q: ["The Intercity leaves Indore at 10:45 AM. The journey takes 2 hours 50 minutes. Set the clock to when it reaches Bhopal, then run the train.", "इंटरसिटी इंदौर से सुबह 10:45 बजे चलती है। सफ़र 2 घंटे 50 मिनट का है। घड़ी को उस समय पर सेट करो जब वह भोपाल पहुँचेगी, फिर ट्रेन चलाओ।"],
+    e: ["10:45 + 2 hours = 12:45. Then 50 more minutes: 15 minutes takes you to 1:00, and 35 more makes 1:35 PM.", "10:45 + 2 घंटे = 12:45। फिर 50 मिनट और: 15 मिनट में 1:00 बजते हैं, और 35 मिनट में दोपहर 1:35।"],
+    mount(el, api) {
+      const fmt = (h, m) => { const h12 = ((h + 11) % 12) + 1, mm = String(m).padStart(2, "0");
+        return LANG === "hi" ? `${h < 12 ? "सुबह" : h < 16 ? "दोपहर" : "शाम"} ${h12}:${mm}` : `${h12}:${mm} ${h < 12 ? "AM" : "PM"}`; };
+      const s = stage(el, 360, 190), cx = 180, cy = 70;
+      S(s, "circle", { cx, cy, r: 52, style: "fill:var(--surface);stroke:var(--ink);stroke-width:3" });
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; S(s, "line", { x1: cx + 44 * Math.sin(a), y1: cy - 44 * Math.cos(a), x2: cx + 50 * Math.sin(a), y2: cy - 50 * Math.cos(a), style: SK("var(--ink)", 2) }); }
+      const hh = S(s, "line", { x1: cx, y1: cy, x2: cx, y2: cy - 28, style: SK("var(--ink)", 5) + ";stroke-linecap:round" });
+      const mh = S(s, "line", { x1: cx, y1: cy, x2: cx, y2: cy - 42, style: SK("var(--bazaar)", 3) + ";stroke-linecap:round" });
+      S(s, "line", { x1: 30, x2: 330, y1: 160, y2: 160, style: SK("var(--metal)", 4) });
+      for (let x = 34; x < 330; x += 14) S(s, "line", { x1: x, x2: x, y1: 155, y2: 165, style: SK("var(--wood)", 2) });
+      T(s, 40, 182, X("Indore 10:45 AM", "इंदौर सुबह 10:45"), "lbl sm", { "text-anchor": "start" }); T(s, 320, 182, X("Bhopal ?", "भोपाल ?"), "lbl sm", { "text-anchor": "end" });
+      const train = S(s, "g", { transform: "translate(30 136)" }); S(train, "rect", { x: 0, y: 0, width: 54, height: 20, rx: 5, style: F("var(--bazaar)") }); S(train, "rect", { x: 6, y: 4, width: 10, height: 8, style: F("var(--sky)") }); S(train, "rect", { x: 22, y: 4, width: 10, height: 8, style: F("var(--sky)") });
+      const H = stepper(div(el, "ctrl"), X("Hour", "घंटा"), 10, 16, 10, 1, v => ((v + 11) % 12) + 1), M = stepper(div(el, "ctrl"), X("Minutes", "मिनट"), 0, 55, 45, 5, v => String(v).padStart(2, "0"));
+      const show = document.createElement("span"); show.className = "chip"; H.el.appendChild(show);
+      const draw = () => { const ha = ((H.v % 12) + M.v / 60) * 30, ma = M.v * 6; hh.setAttribute("transform", `rotate(${ha} ${cx} ${cy})`); mh.setAttribute("transform", `rotate(${ma} ${cx} ${cy})`); show.textContent = fmt(H.v, M.v); };
+      H.on = draw; M.on = draw; draw();
+      const c = div(el, "ctrl"), go = btn(c, X("Run the train", "ट्रेन चलाओ"), "btn sm"), say = msg(el);
+      go.onclick = async () => { go.disabled = true; [H, M].forEach(o => o.el.querySelectorAll("button").forEach(b => b.disabled = true));
+        await tween(1500, p => train.setAttribute("transform", `translate(${30 + 246 * ease(p)} 136)`));
+        const mins = H.v * 60 + M.v, ok = mins === 13 * 60 + 35;
+        say(ok ? X("On time! It reached at 1:35 PM.", "बिल्कुल सही! ट्रेन दोपहर 1:35 पर पहुँची।") : X(`The train reached at 1:35 PM, not ${fmt(H.v, M.v)}.`, `ट्रेन दोपहर 1:35 पर पहुँची, ${fmt(H.v, M.v)} पर नहीं।`), ok ? "good" : "bad");
+        await wait(900); api.done(ok, ok ? 1 : Math.abs(mins - 815) <= 10 ? .5 : Math.abs(mins - 815) === 60 ? .3 : 0); };
+    } }
+  ] },
+
+{ id: "lab", name: ["Crazy Lab", "क्रेज़ी लैब"], skill: ["Science Inquiry", "वैज्ञानिक खोज"], hero: ["Young Scientist", "युवा वैज्ञानिक"], color: "var(--lab)", hex: "#00A3C4",
+  desc: ["Predict, run the experiment, and see what really happens.", "अंदाज़ा लगाओ, प्रयोग करो और देखो असल में क्या होता है।"],
+  icon: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15h9" stroke="#fff" stroke-width="2"/>',
+  qs: [
+  { s: ["The Falling Race", "गिरने की रेस"], t: 40,
+    q: ["Amit will open the trapdoor under a heavy bowling ball and a light cricket ball. Predict which lands first, then drop!", "अमित एक भारी बॉलिंग बॉल और एक हल्की क्रिकेट बॉल के नीचे का दरवाज़ा खोलेगा। अंदाज़ा लगाओ कौन पहले गिरेगी, फिर गिराओ!"],
+    e: ["Gravity speeds up heavy and light things at the same rate. Only air slows very light, fluffy things like feathers.", "गुरुत्व भारी और हल्की चीज़ों को एक ही रफ़्तार से तेज़ करता है। सिर्फ़ पंख जैसी बहुत हल्की चीज़ें हवा से धीमी होती हैं।"],
+    mount(el, api) {
+      const s = stage(el, 360, 240); ground(s, 360, 220);
+      S(s, "rect", { x: 60, y: 12, width: 8, height: 208, style: F("var(--metal)") });
+      const door = S(s, "rect", { x: 70, y: 38, width: 230, height: 8, rx: 3, style: F("var(--wood)") });
+      const big = S(s, "circle", { cx: 130, cy: 20, r: 18, style: F("var(--ink)") });
+      const sm = S(s, "circle", { cx: 240, cy: 30, r: 8, style: F("var(--speed)") });
+      T(s, 130, 236, X("Bowling ball", "बॉलिंग बॉल"), "lbl sm"); T(s, 240, 236, X("Cricket ball", "क्रिकेट बॉल"), "lbl sm");
+      const c = div(el, "ctrl"), say = msg(el);
+      [[X("Bowling ball first", "बॉलिंग बॉल पहले"), "big"], [X("Cricket ball first", "क्रिकेट बॉल पहले"), "small"], [X("Same time", "दोनों साथ"), "same"]].forEach(([l, k]) => {
+        const b = btn(c, l); b.onclick = async () => {
+          c.querySelectorAll("button").forEach(x => x.disabled = true); b.classList.add("on"); say(X("Trapdoor opening...", "दरवाज़ा खुल रहा है..."));
+          await tween(250, p => door.setAttribute("transform", `rotate(${p * 80} 70 42)`));
+          await tween(900, p => { const d = 182 * p * p; big.setAttribute("cy", 20 + d); sm.setAttribute("cy", 30 + d); });
+          say(X("Thud! Both landed together.", "धप! दोनों एक साथ गिरीं।"), k === "same" ? "good" : "bad"); await wait(600); api.done(k === "same");
+        };
+      });
+    } },
+  { s: ["Float or Sink?", "तैरेगी या डूबेगी?"], t: 60,
+    q: ["Sort each object as FLOAT or SINK, then drop them all into the tank to test.", "हर चीज़ को तैरेगी या डूबेगी में बाँटो, फिर सबको टैंक में डालकर जाँचो।"],
+    e: ["An iron boat floats because its hollow shape pushes aside lots of water. An orange's peel is full of tiny air pockets. A solid nail and coin push aside too little water, so they sink.", "लोहे की नाव इसलिए तैरती है क्योंकि उसका खोखला आकार बहुत सारा पानी हटाता है। संतरे के छिलके में हवा के छोटे-छोटे बुलबुले होते हैं। ठोस कील और सिक्का कम पानी हटाते हैं, इसलिए डूब जाते हैं।"],
+    mount(el, api) {
+      const items = [{ n: ["Iron nail", "लोहे की कील"], f: false, col: "var(--metal)" }, { n: ["Iron boat", "लोहे की नाव"], f: true, col: "var(--metal)" }, { n: ["Orange", "संतरा"], f: true, col: "var(--bazaar)" }, { n: ["Steel coin", "स्टील का सिक्का"], f: false, col: "var(--sun)" }];
+      const s = stage(el, 360, 220);
+      S(s, "rect", { x: 20, y: 70, width: 320, height: 140, rx: 6, style: "fill:none;stroke:var(--metal);stroke-width:4" });
+      S(s, "rect", { x: 22, y: 100, width: 316, height: 108, style: F("var(--water)") + ";opacity:.75" });
+      const shapes = items.map((it, i) => { const g = S(s, "g", { transform: `translate(${60 + i * 80} 35)` });
+        if (i === 0) S(g, "rect", { x: -3, y: -16, width: 6, height: 32, style: F(it.col) });
+        if (i === 1) S(g, "path", { d: "M-24,-6 L24,-6 L16,10 L-16,10 Z", style: F(it.col) });
+        if (i === 2) S(g, "circle", { r: 13, style: F(it.col) });
+        if (i === 3) S(g, "ellipse", { rx: 10, ry: 4, style: F(it.col) });
+        return g; });
+      items.forEach((it, i) => T(s, 60 + i * 80, 64, tx(it.n), "lbl sm"));
+      const rows = div(el, "rows"), pick = {};
+      items.forEach((it, i) => { const r = div(rows, "row", `<span class="nm">${tx(it.n)}</span>`);
+        const a = btn(r, X("Float", "तैरेगी")), b = btn(r, X("Sink", "डूबेगी"));
+        a.onclick = () => { pick[i] = true; a.classList.add("on"); b.classList.remove("on"); };
+        b.onclick = () => { pick[i] = false; b.classList.add("on"); a.classList.remove("on"); }; });
+      const c = div(el, "ctrl"), go = btn(c, X("Drop into tank", "टैंक में डालो"), "btn sm"), say = msg(el);
+      go.onclick = async () => {
+        if (Object.keys(pick).length < 4) return say(X("Sort all 4 objects first.", "पहले चारों चीज़ें बाँटो।"), "bad");
+        rows.querySelectorAll("button").forEach(x => x.disabled = true); go.disabled = true;
+        await tween(1400, p => shapes.forEach((g, i) => { const end = items[i].f ? 98 : 196; const y = 35 + (end - 35) * ease(p); g.setAttribute("transform", `translate(${60 + i * 80} ${y})`); }));
+        const right = items.filter((it, i) => pick[i] === it.f).length;
+        say(X(`${right} of 4 predictions correct.`, `4 में से ${right} अंदाज़े सही।`), right === 4 ? "good" : "bad"); await wait(700); api.done(right === 4, right / 4);
+      };
+    } },
+  { s: ["Shadow Maker", "परछाईं बनाओ"], t: 50, maxA: 40,
+    q: ["Slide the torch so the robot's shadow exactly fills the dotted box on the wall.", "टॉर्च खिसकाओ ताकि रोबोट की परछाईं दीवार पर बने बिंदु वाले डिब्बे को ठीक से भर दे।"],
+    e: ["The closer the torch is to the robot, the wider the cone of light it blocks, so the shadow grows. Move it away and the shadow shrinks.", "टॉर्च रोबोट के जितना पास होगी, रोशनी उतनी ज़्यादा रुकेगी, इसलिए परछाईं बड़ी होगी। टॉर्च दूर ले जाओ तो परछाईं छोटी होगी।"],
+    mount(el, api) {
+      const s = stage(el, 360, 230), cy = 115, toyX = 220, wallX = 330;
+      S(s, "rect", { x: wallX, y: 10, width: 24, height: 210, style: F("var(--paper)") });
+      const cone = S(s, "polygon", { style: "fill:var(--sun);opacity:.35" });
+      const shadow = S(s, "rect", { x: wallX, width: 8, style: F("var(--ink)") });
+      S(s, "rect", { x: wallX - 2, y: cy - 60, width: 12, height: 120, style: "fill:none;stroke:var(--speed);stroke-width:2;stroke-dasharray:5 4" });
+      S(s, "rect", { x: toyX - 8, y: cy - 20, width: 16, height: 40, rx: 4, style: F("var(--lab)") });
+      const torch = S(s, "g", {}); S(torch, "rect", { x: -26, y: -8, width: 26, height: 16, rx: 3, style: F("var(--metal)") }); S(torch, "rect", { x: -2, y: -11, width: 6, height: 22, style: F("var(--sun)") });
+      T(s, 342, 228, X("Wall", "दीवार"), "lbl sm");
+      const c = div(el, "ctrl"); c.innerHTML = `<label for="tor">${X("Torch", "टॉर्च")}</label><input id="tor" type="range" min="20" max="200" value="40">`;
+      const lock = btn(c, X("Lock it", "पक्का करो"), "btn sm"); const say = msg(el); const r = c.querySelector("input");
+      let half = 0;
+      const draw = () => { const t2 = +r.value; half = 20 * (wallX - t2) / (toyX - t2);
+        torch.setAttribute("transform", `translate(${t2} ${cy})`);
+        shadow.setAttribute("y", cy - half); shadow.setAttribute("height", 2 * half);
+        cone.setAttribute("points", `${t2 + 4},${cy} ${wallX},${cy - half} ${wallX},${cy + half}`);
+        say(X(`Shadow height: ${Math.round(2 * half)} cm (target 120 cm)`, `परछाईं की ऊँचाई: ${Math.round(2 * half)} सेमी (लक्ष्य 120 सेमी)`)); };
+      r.oninput = draw; draw();
+      lock.onclick = () => { const err = Math.abs(half - 60), ok = err <= 5; r.disabled = true; lock.disabled = true;
+        say(ok ? X("Perfect fit!", "एकदम फ़िट!") : X(`Shadow is ${Math.round(2 * half)} cm, not 120 cm.`, `परछाईं ${Math.round(2 * half)} सेमी है, 120 सेमी नहीं।`), ok ? "good" : "bad"); setTimeout(() => api.done(ok, ok ? 1 : err <= 12 ? .5 : 0), 700); };
+    } },
+  { s: ["The Melting Ice", "पिघलती बर्फ़"], t: 50,
+    q: ["The glass is full and a big ice cube is floating. Drag the marker to where the water will be after the ice melts, then melt it.", "गिलास भरा है और उसमें बर्फ़ का बड़ा टुकड़ा तैर रहा है। मार्कर को वहाँ रखो जहाँ बर्फ़ पिघलने के बाद पानी होगा, फिर बर्फ़ पिघलाओ।"],
+    e: ["Floating ice already pushes aside exactly its own weight of water. When it melts it becomes exactly that much water, so the level stays the same.", "तैरती बर्फ़ पहले से ही अपने वज़न जितना पानी हटा रही होती है। पिघलकर वह ठीक उतना ही पानी बनती है, इसलिए पानी का स्तर वही रहता है।"],
+    mount(el, api) {
+      const s = stage(el, 360, 230), lvl = 70;
+      S(s, "rect", { x: 120, y: 40, width: 120, height: 170, style: "fill:none;stroke:var(--metal);stroke-width:4" });
+      T(s, 98, 44, X("Rim", "किनारा"), "lbl sm");
+      S(s, "rect", { x: 122, y: lvl, width: 116, height: 138, style: F("var(--water)") + ";opacity:.8" });
+      const ice = S(s, "rect", { x: 150, y: lvl - 14, width: 50, height: 46, rx: 6, style: "fill:var(--paper);stroke:var(--water);stroke-width:2;opacity:.95" });
+      const mk = S(s, "g", {}); S(mk, "line", { x1: 110, x2: 250, y1: 0, y2: 0, style: "stroke:var(--speed);stroke-width:3;stroke-dasharray:6 4" }); S(mk, "text", { x: 256, y: 4, class: "lbl sm" }, X("Your guess", "तुम्हारा अंदाज़ा"));
+      const c = div(el, "ctrl"); c.innerHTML = `<label for="lv">${X("Water after melting", "पिघलने के बाद पानी")}</label><input id="lv" type="range" min="20" max="125" value="105">`;
+      const go = btn(c, X("Melt the ice", "बर्फ़ पिघलाओ"), "btn sm"), say = msg(el), r = c.querySelector("input");
+      const yOf = () => 140 - (+r.value - 20);
+      const draw = () => { const y = yOf(); mk.setAttribute("transform", `translate(0 ${y})`);
+        say(y < 40 ? X("Your guess: water spills over the rim", "अंदाज़ा: पानी बाहर गिरेगा") : y < lvl - 3 ? X("Your guess: water rises", "अंदाज़ा: पानी ऊपर जाएगा") : y > lvl + 3 ? X("Your guess: water goes down", "अंदाज़ा: पानी नीचे जाएगा") : X("Your guess: level stays the same", "अंदाज़ा: स्तर वही रहेगा")); };
+      r.oninput = draw; draw();
+      go.onclick = async () => { r.disabled = true; go.disabled = true; const y = yOf();
+        await tween(1800, p => { ice.setAttribute("height", 46 * (1 - p)); ice.setAttribute("width", 50 * (1 - p)); ice.setAttribute("x", 150 + 25 * p); ice.setAttribute("y", lvl - 14 + 14 * p); ice.style.opacity = 1 - p; });
+        const ok = Math.abs(y - lvl) <= 5; say(ok ? X("Spot on! The level did not change.", "बिल्कुल सही! स्तर नहीं बदला।") : X("Look: the level stayed exactly the same.", "देखो: स्तर बिल्कुल वही रहा।"), ok ? "good" : "bad"); await wait(800); api.done(ok); };
+    } }
+  ] },
+
+{ id: "mission", name: ["Mission Control", "मिशन कंट्रोल"], skill: ["Focus & Planning", "फोकस और प्लानिंग"], hero: ["Mission Planner", "मिशन प्लानर"], color: "var(--mission)", hex: "#2E8B57",
+  desc: ["Plan the order, the route and the team. Then run the mission.", "क्रम, रास्ता और टीम प्लान करो। फिर मिशन चलाओ।"],
+  icon: '<circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="1.6" fill="#fff"/>',
+  qs: [
+  { s: ["Rocket Countdown", "रॉकेट काउंटडाउन"], t: 60,
+    q: ["Tap the 5 launch steps in the right order, then launch Amit's bottle rocket.", "लॉन्च के 5 कदम सही क्रम में टैप करो, फिर अमित का बोतल रॉकेट उड़ाओ।"],
+    e: ["Water is the fuel, air pressure is the push and the cork keeps the pressure in. Safety comes just before launch. Good planners get the order right before they start.", "पानी ईंधन है, हवा का दबाव धक्का देता है और कॉर्क दबाव को अंदर रखता है। सुरक्षा लॉन्च से ठीक पहले आती है। अच्छे प्लानर शुरू करने से पहले क्रम सही करते हैं।"],
+    mount(el, api) {
+      const steps = [["Fill the bottle 1/3 with water", "बोतल में 1/3 पानी भरो"], ["Push in the cork nozzle", "कॉर्क वाला नोज़ल लगाओ"], ["Place it on the launch pad", "लॉन्च पैड पर रखो"], ["Pump air in", "हवा पंप करो"], ["Stand back and launch", "दूर हटो और लॉन्च करो"]], order = [];
+      const s = stage(el, 360, 200); ground(s, 360, 185); S(s, "path", { d: "M160,185 l20,-20 l20,20", style: SK("var(--metal)", 4) });
+      const rk = S(s, "g", { transform: "translate(180 140)" }); S(rk, "rect", { x: -12, y: -40, width: 24, height: 60, rx: 10, style: F("var(--paper)") + ";stroke:var(--ink);stroke-width:2" }); S(rk, "rect", { x: -11, y: 0, width: 22, height: 18, style: F("var(--water)") }); S(rk, "path", { d: "M-12,-30 l12,-22 l12,22 z", style: F("var(--speed)") });
+      const list = div(el, "rows"), c = div(el, "ctrl"), say = msg(el);
+      shuffle(steps.map((_, i) => i)).forEach(i => { const b = btn(list, esc(tx(steps[i]))); b.style.textAlign = "left"; b.dataset.i = i;
+        b.onclick = () => { if (order.includes(i)) return; order.push(i); b.disabled = true; b.innerHTML = `<b>${order.length}.</b> ${esc(tx(steps[i]))}`; }; });
+      btn(c, X("Reset", "फिर से")).onclick = () => { order.length = 0; list.querySelectorAll("button").forEach(b => { b.disabled = false; b.textContent = tx(steps[+b.dataset.i]); }); };
+      const go = btn(c, X("Launch!", "लॉन्च!"), "btn sm");
+      go.onclick = async () => { if (order.length < 5) return say(X("Order all 5 steps first.", "पहले पाँचों कदम क्रम में लगाओ।"), "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const right = order.filter((x, i) => x === i).length, ok = right === 5;
+        if (ok) { const spray = S(s, "path", { d: "M180,160 l-10,25 h20 z", style: F("var(--water)") }); await tween(1300, p => { rk.setAttribute("transform", `translate(180 ${140 - 220 * p * p})`); spray.setAttribute("transform", `translate(0 ${-220 * p * p})`); }); say(X("Liftoff!", "उड़ान!"), "good"); }
+        else { await tween(600, p => rk.setAttribute("transform", `translate(180 140) rotate(${Math.sin(p * 20) * 6})`)); say(X("Fizzle... the steps were out of order.", "फुस्स... कदम गलत क्रम में थे।"), "bad"); }
+        await wait(800); api.done(ok, right / 5); };
+    } },
+  { s: ["Charging Queue", "चार्जिंग की लाइन"], t: 60,
+    q: ["One charger, three flat drones. Tap the drones in the order you'd charge them so the team waits the least time overall.", "एक चार्जर, तीन खाली ड्रोन। ड्रोन उस क्रम में टैप करो जिसमें तुम उन्हें चार्ज करोगे, ताकि पूरी टीम कुल मिलाकर सबसे कम इंतज़ार करे।"],
+    e: ["Shortest job first! Charging the quickest drone first gets drones flying sooner, so the total waiting time is smallest. Shops and hospitals use this trick too.", "सबसे छोटा काम पहले! सबसे जल्दी चार्ज होने वाला ड्रोन पहले चार्ज करने से कुल इंतज़ार सबसे कम होता है। दुकानें और अस्पताल भी यही तरीका अपनाते हैं।"],
+    mount(el, api) {
+      const D = { A: 30, B: 10, C: 20 }, order = [], s = stage(el, 360, 130), bars = S(s, "g", {});
+      const c = div(el, "ctrl"), say = msg(el), wt = document.createElement("span"); wt.className = "chip";
+      const sum = () => { let tt = 0, sm = 0; order.forEach(k => { tt += D[k]; sm += tt; }); return sm; };
+      const draw = () => { bars.innerHTML = ""; let t = 0; order.forEach((k, i) => { S(bars, "rect", { x: 20 + t * 4, y: 18 + i * 32, width: D[k] * 4, height: 24, rx: 5, style: F("var(--mission)") }); T(bars, 20 + t * 4 + D[k] * 2, 34 + i * 32, k, "lbl", { style: F("#fff") }); T(bars, 26 + (t + D[k]) * 4, 34 + i * 32, X(`ready at ${t + D[k]} min`, `${t + D[k]} मिनट पर तैयार`), "lbl sm", { "text-anchor": "start" }); t += D[k]; });
+        wt.textContent = order.length === 3 ? X(`Total waiting: ${sum()} min`, `कुल इंतज़ार: ${sum()} मिनट`) : X(`${order.length} of 3 in queue`, `3 में से ${order.length} लाइन में`); };
+      Object.keys(D).forEach(k => { const b = btn(c, X(`Drone ${k} · ${D[k]} min`, `ड्रोन ${k} · ${D[k]} मिनट`)); b.dataset.d = k; b.onclick = () => { if (order.includes(k)) return; order.push(k); b.disabled = true; draw(); }; });
+      btn(c, X("Reset", "फिर से")).onclick = () => { order.length = 0; c.querySelectorAll("button[data-d]").forEach(b => b.disabled = false); draw(); };
+      c.appendChild(wt); const go = btn(c, X("Start charging", "चार्जिंग शुरू"), "btn sm"); draw();
+      go.onclick = async () => { if (order.length < 3) return say(X("Queue all 3 drones.", "तीनों ड्रोन लाइन में लगाओ।"), "bad"); c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const ok = order.join("") === "BCA"; say(ok ? X("Smallest total wait: 100 minutes!", "सबसे कम कुल इंतज़ार: 100 मिनट!") : X("That works, but the team waits longer than needed. The best is 100 min.", "ठीक है, पर टीम ज़रूरत से ज़्यादा इंतज़ार करती है। सबसे अच्छा 100 मिनट है।"), ok ? "good" : "bad"); await wait(900); api.done(ok, ok ? 1 : sum() <= 110 ? .5 : 0); };
+    } },
+  { s: ["School Tour", "स्कूलों का दौरा"], t: 70,
+    q: ["Amit's van must visit all 3 schools and come back to the lab. Tap the schools in the order to visit, using the least fuel.", "अमित की वैन को तीनों स्कूल जाकर लैब लौटना है। स्कूलों को उस क्रम में टैप करो जिससे सबसे कम ईंधन लगे।"],
+    e: ["Planning a route before driving saves fuel. Delivery companies solve this puzzle every morning with thousands of stops.", "चलने से पहले रास्ता प्लान करने से ईंधन बचता है। डिलीवरी कंपनियाँ रोज़ सुबह हज़ारों स्टॉप के साथ यही पहेली हल करती हैं।"],
+    mount(el, api) {
+      const H = [40, 180], Sc = { A: [110, 40], B: [310, 50], C: [250, 180] }, s = stage(el, 360, 220), order = [];
+      const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]) / 10;
+      const tour = o => { const pts = [H, ...o.map(k => Sc[k]), H]; let d = 0; for (let i = 1; i < pts.length; i++) d += dist(pts[i - 1], pts[i]); return d; };
+      const best = Math.min(...["ABC", "ACB", "BAC", "BCA", "CAB", "CBA"].map(o => tour([...o])));
+      const line = S(s, "polyline", { style: "fill:none;stroke:var(--mission);stroke-width:3;stroke-dasharray:6 4" });
+      S(s, "rect", { x: H[0] - 16, y: H[1] - 12, width: 32, height: 24, rx: 4, style: F("var(--ink)") }); T(s, H[0], H[1] + 26, X("Lab", "लैब"), "lbl sm");
+      const c = div(el, "ctrl"), fuel = document.createElement("span"); fuel.className = "chip";
+      const draw = () => { line.setAttribute("points", [H, ...order.map(k => Sc[k]), ...(order.length === 3 ? [H] : [])].map(p => p.join(",")).join(" "));
+        fuel.textContent = order.length === 3 ? X(`Route: ${tour(order).toFixed(1)} km`, `रास्ता: ${tour(order).toFixed(1)} किमी`) : X(`Order: ${order.join(" → ") || "tap the schools"}`, `क्रम: ${order.join(" → ") || "स्कूलों पर टैप करो"}`); };
+      Object.entries(Sc).forEach(([k, [x, y]]) => { const g = S(s, "g", { class: "tap" }); S(g, "circle", { cx: x, cy: y, r: 18, style: F("var(--mission)") }); T(g, x, y + 5, k, "lbl", { style: F("#fff") });
+        g.onclick = () => { if (order.includes(k) || go.disabled) return; order.push(k); draw(); }; });
+      const van = S(s, "rect", { x: H[0] - 10, y: H[1] - 7, width: 20, height: 14, rx: 3, style: F("var(--speed)") });
+      btn(c, X("Reset", "फिर से")).onclick = () => { order.length = 0; draw(); }; c.appendChild(fuel); const go = btn(c, X("Drive", "चलो"), "btn sm"), say = msg(el); draw();
+      go.onclick = async () => { if (order.length < 3) return say(X("Pick all 3 schools.", "तीनों स्कूल चुनो।"), "bad"); go.disabled = true; const pts = [H, ...order.map(k => Sc[k]), H];
+        for (let i = 1; i < pts.length; i++) await tween(500, p => { van.setAttribute("x", pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * p - 10); van.setAttribute("y", pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * p - 7); });
+        const ok = tour(order) <= best + .05; say(ok ? X(`Best route! ${best.toFixed(1)} km.`, `सबसे अच्छा रास्ता! ${best.toFixed(1)} किमी।`) : X(`${tour(order).toFixed(1)} km. The best route is ${best.toFixed(1)} km.`, `${tour(order).toFixed(1)} किमी। सबसे अच्छा रास्ता ${best.toFixed(1)} किमी है।`), ok ? "good" : "bad"); await wait(900); api.done(ok); };
+    } },
+  { s: ["Team Planner", "टीम प्लानर"], t: 70,
+    q: ["Amit and Robo must finish 4 lab jobs. Give each job to Amit or Robo so both are done as early as possible.", "अमित और रोबो को लैब के 4 काम पूरे करने हैं। हर काम अमित या रोबो को दो ताकि दोनों जितनी जल्दी हो सके काम ख़त्म करें।"],
+    e: ["Split the work so both finish together: 40 + 10 and 30 + 20 both make 50 minutes. Balancing the load is how managers finish projects on time.", "काम ऐसे बाँटो कि दोनों साथ ख़त्म करें: 40 + 10 और 30 + 20, दोनों 50 मिनट। काम का बराबर बँटवारा ही प्रोजेक्ट समय पर पूरा करवाता है।"],
+    mount(el, api) {
+      const J = [[["Paint model", "मॉडल रंगना"], 40], [["Charge drone", "ड्रोन चार्ज करना"], 30], [["Test circuit", "सर्किट जाँचना"], 20], [["Write report", "रिपोर्ट लिखना"], 10]], who = [0, 0, 0, 0];
+      const load = w => J.reduce((a, [, m], i) => a + (who[i] === w ? m : 0), 0), names = [X("Amit", "अमित"), X("Robo", "रोबो")];
+      const s = stage(el, 360, 130), g = S(s, "g", {}); const c = div(el, "rows"), say = msg(el);
+      const draw = () => { g.innerHTML = ""; names.forEach((n, w) => { T(g, 30, 42 + w * 46, n, "lbl"); let t = 0; J.forEach(([, m], i) => { if (who[i] !== w + 1) return; S(g, "rect", { x: 60 + t * 2.6, y: 24 + w * 46, width: m * 2.6 - 2, height: 28, rx: 5, style: F(w ? "var(--logic)" : "var(--mission)") }); T(g, 60 + t * 2.6 + m * 1.3, 42 + w * 46, `${m}`, "lbl sm", { style: F("#fff") }); t += m; }); T(g, 335, 42 + w * 46, t + X(" min", " मिनट"), "lbl sm"); });
+        T(g, 180, 122, X("Both done at: ", "दोनों का काम ख़त्म: ") + Math.max(load(1), load(2)) + X(" min", " मिनट"), "lbl"); };
+      J.forEach(([n, m], i) => { const r = div(c, "row", `<span class="nm">${esc(tx(n))} · ${m} ${X("min", "मिनट")}</span>`); const a = btn(r, names[0]), b = btn(r, names[1]);
+        a.onclick = () => { who[i] = 1; a.classList.add("on"); b.classList.remove("on"); draw(); }; b.onclick = () => { who[i] = 2; b.classList.add("on"); a.classList.remove("on"); draw(); }; });
+      draw(); const go = btn(div(el, "ctrl"), X("Start jobs", "काम शुरू"), "btn sm");
+      go.onclick = async () => { if (who.includes(0)) return say(X("Give every job to someone.", "हर काम किसी को दो।"), "bad"); go.disabled = true; c.querySelectorAll("button").forEach(b => b.disabled = true);
+        const fin = Math.max(load(1), load(2)), ok = fin === 50;
+        say(ok ? X("Both finish at 50 minutes. Perfect split!", "दोनों 50 मिनट में ख़त्म। एकदम सही बँटवारा!") : X(`Done at ${fin} minutes. A fairer split finishes at 50.`, `${fin} मिनट में ख़त्म। बेहतर बँटवारे से 50 में हो जाता।`), ok ? "good" : "bad"); await wait(900); api.done(ok, ok ? 1 : fin <= 60 ? .5 : 0); };
+    } }
+  ] }
+];
+
+/* ---------- scoring ---------- */
+const TOTAL = ARENAS.reduce((a, x) => a + x.qs.length, 0);
+const idOf = (a, i) => `${a.id}-${i}`;
+function scoreItem(r, item) {
+  const maxA = item.maxA || 25;
+  const think = r.first == null ? 0 : clamp(r.first / 4000, 0, 1);
+  const calm = r.actions === 0 ? 0 : r.actions <= maxA ? 1 : Math.max(.3, maxA / r.actions);
+  const process = .5 * think + .5 * calm;
+  const speed = r.ok ? clamp(1.25 - r.used / item.t, 0, 1) : 0;
+  return { think, calm, process, speed, score: Math.round(100 * (.6 * r.frac + .25 * process + .15 * speed)) };
+}
+function skillScore(a) { const rs = a.qs.map((_, i) => st.results[idOf(a, i)]).filter(Boolean); if (rs.length < a.qs.length) return null; return Math.round(rs.reduce((s, r) => s + r.score, 0) / rs.length); }
+function starLevel(v) { return v < 30 ? 1 : v < 45 ? 2 : v < 60 ? 3 : v < 78 ? 4 : 5; }
+const LEVEL_WORD = [null, ["Starting", "शुरुआत"], ["Growing", "बढ़ रहे हो"], ["Good", "अच्छा"], ["Strong", "मज़बूत"], ["Superstar", "सुपरस्टार"]];
+const doneCount = a => a.qs.filter((_, i) => st.results[idOf(a, i)]).length;
+const allDone = () => ARENAS.every(a => doneCount(a) === a.qs.length);
+function habits() {
+  const rs = Object.values(st.results); if (!rs.length) return null; const avg = f => rs.reduce((s, r) => s + f(r), 0) / rs.length;
+  const solved = rs.filter(r => r.ok);
+  return { think: avg(r => r.think), finish: rs.filter(r => !r.timeout).length / rs.length, fast: solved.length ? solved.reduce((s, r) => s + r.speed, 0) / solved.length : 0 };
+}
+
+/* ---------- app shell ---------- */
+const app = document.getElementById("app");
+let run = null, tick = null, timers = [];
+function clearAll() { clearInterval(tick); timers.forEach(t => clearInterval(t)); timers = []; }
+function glyph(a, cls = "glyph") { return `<span class="${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${a.icon}</svg></span>`; }
+function netPill() { const on = navigator.onLine !== false; return `<span class="pill net ${on ? "" : "off"}" id="net">${on ? X("Online", "ऑनलाइन") : X("Offline · saved on phone", "ऑफ़लाइन · फ़ोन में सेव")}</span>`; }
+function topBar(withLang = true) {
+  return `<div class="top"><span class="badge">Future Star League</span><div class="top-right">${netPill()}${withLang ? `<button class="pill" id="langsw" type="button">${LANG === "hi" ? "English" : "हिंदी"}</button>` : ""}</div></div>`;
+}
+function wireTop(rerender) { const b = document.getElementById("langsw"); if (b) b.onclick = () => { setLang(LANG === "hi" ? "en" : "hi"); persist(); rerender(); }; }
+addEventListener("online", () => { const n = document.getElementById("net"); if (n) n.outerHTML = netPill(); log("online"); });
+addEventListener("offline", () => { const n = document.getElementById("net"); if (n) n.outerHTML = netPill(); log("offline"); });
+
+function route() {
+  clearAll();
+  if (!st.lang) return welcome();
+  if (!st.profile) return profile();
+  return journey();
+}
+
+function welcome() {
+  app.innerHTML = `${topBar(false)}
+    <div class="hero"><h1>FSL <span>Thinking Check</span></h1><p>Pick your language · अपनी भाषा चुनो</p></div>
+    <div class="langs"><button class="lang-card" data-l="hi" type="button"><b>हिंदी</b><span>हिंदी में खेलो</span></button>
+      <button class="lang-card" data-l="en" type="button"><b>English</b><span>Play in English</span></button></div>`;
+  app.querySelectorAll("[data-l]").forEach(b => b.onclick = () => { setLang(b.dataset.l); route(); });
+}
+
+function profile() {
+  const p = { name: "", grade: null, school: "", consent: false };
+  const render = () => {
+    app.innerHTML = `${topBar()}
+      <div class="hero"><h1>${X("Find your <span>Superpower</span>", "अपनी <span>सुपरपावर</span> खोजो")}</h1>
+        <p>${X("4 Arenas, 16 hands-on challenges, about 20 minutes. There are no marks here, only what you're good at.", "4 एरीना, 16 मज़ेदार चुनौतियाँ, लगभग 20 मिनट। यहाँ नंबर नहीं, सिर्फ़ यह पता चलेगा कि तुम किसमें अच्छे हो।")}</p></div>
+      <form class="form" id="pf" novalidate>
+        <div class="field"><label for="pname">${X("Your first name", "तुम्हारा पहला नाम")}</label><input type="text" id="pname" maxlength="24" autocomplete="off" value="${esc(p.name)}" placeholder="${X("e.g. Aarav", "जैसे आरव")}"></div>
+        <div class="field"><span class="lbl-h">${X("Your grade", "तुम्हारी कक्षा")}</span><div class="grades">${[5, 6, 7, 8].map(g => `<button type="button" class="btn sm ghost ${p.grade === g ? "on" : ""}" data-g="${g}">${X("Grade", "कक्षा")} ${g}</button>`).join("")}</div></div>
+        <div class="field"><label for="pschool">${X("School code (from your teacher, optional)", "स्कूल कोड (टीचर से, ज़रूरी नहीं)")}</label><input type="text" id="pschool" maxlength="10" autocomplete="off" value="${esc(p.school)}" placeholder="${X("e.g. IND-042", "जैसे IND-042")}"></div>
+        <label class="consent" for="pcons"><input type="checkbox" id="pcons" ${p.consent ? "checked" : ""}><span><b>${X("My parent or guardian said yes", "मेरे माता-पिता या अभिभावक ने हाँ कहा है")}</b>
+          <small>${X("In the real app your parent confirms by OTP on their phone. FSL keeps only your first name, grade and school, and uses your play only to make your Star Card and report. No ads.", "असली ऐप में माता-पिता अपने फ़ोन पर OTP से हाँ कहते हैं। FSL सिर्फ़ तुम्हारा पहला नाम, कक्षा और स्कूल रखता है, और तुम्हारे खेल का इस्तेमाल सिर्फ़ स्टार कार्ड और रिपोर्ट के लिए करता है। कोई विज्ञापन नहीं।")}</small></span></label>
+        <div class="actions"><button class="btn" id="pgo" type="submit" ${p.name && p.grade && p.consent ? "" : "disabled"}>${X("Start my Thinking Check", "थिंकिंग चेक शुरू करो")}</button></div>
+      </form>`;
+    wireTop(render);
+    const nm = document.getElementById("pname"), sc = document.getElementById("pschool"), cs = document.getElementById("pcons"), go = document.getElementById("pgo");
+    const ready = () => go.disabled = !(p.name && p.grade && p.consent);
+    nm.oninput = () => { p.name = nm.value.trim(); ready(); }; sc.oninput = () => { p.school = sc.value.trim().toUpperCase(); }; cs.onchange = () => { p.consent = cs.checked; ready(); };
+    app.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { p.grade = +b.dataset.g; app.querySelectorAll("[data-g]").forEach(x => x.classList.toggle("on", x === b)); ready(); });
+    document.getElementById("pf").onsubmit = e => { e.preventDefault(); if (go.disabled) return;
+      st.sid = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      st.profile = { name: p.name, grade: p.grade, school: p.school || null, consentAt: new Date().toISOString(), consentBy: "demo-checkbox" };
+      log("consent", { by: "demo-checkbox" }); log("signup", { grade: p.grade, school: p.school || null, lang: LANG }); persist(); journey(); };
+  };
+  render();
+}
+
+function journey() {
+  clearAll();
+  const cur = ARENAS.findIndex(a => doneCount(a) < a.qs.length), done = Object.keys(st.results).length;
+  app.innerHTML = `${topBar()}
+    <div class="hero"><h1>${X("Hi", "नमस्ते")} ${esc(st.profile.name)}!</h1>
+      <p>${done === 0 ? X("Play the 4 Arenas in order. Each challenge has a timer, but thinking first is smart: it counts too.", "चारों एरीना क्रम से खेलो। हर चुनौती में टाइमर है, पर पहले सोचना समझदारी है: उसके भी पॉइंट मिलते हैं।")
+        : cur < 0 ? X("All 4 Arenas done. Your Star Card is ready!", "चारों एरीना पूरे। तुम्हारा स्टार कार्ड तैयार है!") : X(`${done} of ${TOTAL} challenges done. Keep going!`, `${TOTAL} में से ${done} चुनौतियाँ पूरी। आगे बढ़ो!`)}</p></div>
+    <div class="path">${ARENAS.map((a, i) => { const n = doneCount(a), state = n === a.qs.length ? "done" : i === cur ? "now" : "locked";
+      return `<div class="stop ${state}" style="--c:${a.color}">${glyph(a, "num")}<div style="min-width:0"><span class="skill">${tx(a.skill)}</span><h3>${tx(a.name)}</h3><p class="hint">${tx(a.desc)}</p></div>
+        <span class="state ${state === "done" ? "done" : ""}">${state === "done" ? X("Done ✓", "पूरा ✓") : state === "now" ? (n ? X(`${n} of 4`, `4 में से ${n}`) : X("Next", "अगला")) : X("Locked", "बंद")}</span></div>`; }).join("")}</div>
+    <div class="actions">${cur < 0 ? `<button class="btn" id="cardb" type="button">${X("See my Star Card", "मेरा स्टार कार्ड देखो")}</button>` : `<button class="btn" id="go" type="button">${done ? X("Continue", "आगे खेलो") : X("Start Arena 1", "एरीना 1 शुरू करो")}</button>`}
+      <button class="linkish" id="mydata" type="button">${X("My data", "मेरा डेटा")}</button></div>
+    <p class="note">${X("Progress saves on this phone after every challenge, so you can stop and continue later, even without internet.", "हर चुनौती के बाद प्रगति इसी फ़ोन में सेव होती है, तो तुम रुककर बाद में, बिना इंटरनेट के भी, आगे खेल सकते हो।")}</p>`;
+  wireTop(journey);
+  if (cur < 0) document.getElementById("cardb").onclick = results; else document.getElementById("go").onclick = () => arenaIntro(ARENAS[cur]);
+  document.getElementById("mydata").onclick = myData;
+}
+
+function arenaIntro(a) {
+  clearAll(); window.scrollTo({ top: 0 });
+  const next = a.qs.findIndex((_, i) => !st.results[idOf(a, i)]);
+  app.innerHTML = `${topBar()}
+    <div class="intro" style="--c:${a.color}">${glyph(a, "big-glyph")}<span class="story">${X("Arena", "एरीना")} ${ARENAS.indexOf(a) + 1} · ${tx(a.skill)}</span><h1 style="font-size:40px">${tx(a.name)}</h1><p>${tx(a.desc)}</p>
+      <ol>${a.qs.map((q, i) => `<li>${esc(tx(q.s))}${st.results[idOf(a, i)] ? " ✓" : ""}</li>`).join("")}</ol></div>
+    <div class="actions"><button class="btn" id="go" type="button">${next > 0 ? X("Continue", "आगे खेलो") : X("Let's go", "चलो शुरू करें")}</button><button class="btn ghost" id="back" type="button">${X("Back", "वापस")}</button></div>`;
+  wireTop(() => arenaIntro(a));
+  document.getElementById("go").onclick = () => { run = { arena: a, qi: next }; log("arena_start", { arena: a.id }); ask(); };
+  document.getElementById("back").onclick = journey;
+}
+
+function ask() {
+  clearAll(); const a = run.arena, item = a.qs[run.qi], myRun = run, myQ = run.qi; window.scrollTo({ top: 0 });
+  run.locked = false; run.t0 = performance.now(); run.cur = { first: null, actions: 0, tries: 0, best: 0, lastInput: 0 };
+  app.innerHTML = `
+    <div class="bar" style="--c:${a.color}">${glyph(a)}<h2>${tx(a.name)}</h2><span class="meta">${run.qi + 1} / ${a.qs.length}</span><button class="quit" id="quit" type="button">${X("Pause", "रुको")}</button></div>
+    <div style="--c:${a.color}">
+      <div class="dots">${a.qs.map((_, i) => `<span class="dot ${st.results[idOf(a, i)] ? "done" : i === run.qi ? "now" : ""}"></span>`).join("")}</div>
+      <div class="timer-row"><span id="secs">${item.t}s</span><div class="timer"><i id="tbar"></i></div></div>
+      <div class="card"><div class="story">${X("Challenge", "चुनौती")} ${run.qi + 1} · ${esc(tx(item.s))}</div><div class="q">${esc(tx(item.q))}</div><div class="play" id="play"></div><div id="fb"></div></div>
+    </div>`;
+  document.getElementById("quit").onclick = () => { log("pause", { item: idOf(a, run.qi) }); persist(); run.locked = true; journey(); };
+  const live = () => run === myRun && run.qi === myQ && !run.locked;
+  const play = document.getElementById("play");
+  const act = kind => { if (!live()) return; const c = run.cur; c.actions++; if (c.first == null) { c.first = performance.now() - run.t0; } log("act", { item: idOf(a, run.qi), k: kind, ms: Math.round(performance.now() - run.t0) }); };
+  play.addEventListener("click", e => { const b = e.target.closest("button, .tap"); if (b) act(b.tagName === "BUTTON" ? "btn" : "tap"); });
+  play.addEventListener("input", () => { const now = performance.now(); if (now - run.cur.lastInput > 350) act("slide"); run.cur.lastInput = now; });
+  const api = { done: (ok, frac) => { if (live()) finish(!!ok, frac == null ? (ok ? 1 : 0) : frac, false); },
+    progress: f => { if (live()) run.cur.best = Math.max(run.cur.best, f); },
+    retry: () => { if (live()) run.cur.tries++; },
+    every: (fn, ms) => timers.push(setInterval(() => { if (live()) fn(); }, ms)) };
+  log("item_start", { item: idOf(a, run.qi), lang: LANG });
+  item.mount(play, api);
+  const bar = document.getElementById("tbar"), secs = document.getElementById("secs");
+  tick = setInterval(() => { const left = Math.max(0, item.t - (performance.now() - run.t0) / 1000);
+    bar.style.transform = `scaleX(${left / item.t})`; secs.textContent = Math.ceil(left) + "s"; if (left <= 0 && live()) finish(false, run.cur.best, true); }, 100);
+}
+
+function finish(ok, frac, timeout) {
+  if (run.locked) return; run.locked = true; clearAll();
+  const a = run.arena, item = a.qs[run.qi], c = run.cur, used = (performance.now() - run.t0) / 1000;
+  const r = { ok, frac: ok ? 1 : clamp(frac, 0, .9), used: Math.round(used * 10) / 10, first: c.first == null ? null : Math.round(c.first), actions: c.actions, tries: c.tries, timeout, lang: LANG };
+  Object.assign(r, scoreItem(r, item)); st.results[idOf(a, run.qi)] = r;
+  log("item_end", { item: idOf(a, run.qi), ok, frac: r.frac, used: r.used, first: r.first, actions: r.actions, tries: r.tries, timeout, score: r.score }); persist();
+  document.getElementById("play").querySelectorAll("button,input").forEach(b => b.disabled = true);
+  const last = run.qi === a.qs.length - 1 || a.qs.slice(run.qi + 1).every((_, j) => st.results[idOf(a, run.qi + 1 + j)]);
+  const head = ok ? X("Solved!", "हल कर लिया!") : timeout ? X("Time's up! Here's the trick", "समय ख़त्म! तरीका यह है") : r.frac > 0 ? X("Nearly there! Here's the trick", "लगभग सही! तरीका यह है") : X("Here's the trick", "तरीका यह है");
+  document.getElementById("fb").innerHTML = `<div class="explain"><h4>${head}</h4><p>${esc(tx(item.e))}</p></div>
+    <div class="next-row"><button class="btn" id="next" type="button">${last ? X("Finish Arena", "एरीना पूरा करो") : X("Next challenge", "अगली चुनौती")}</button></div>`;
+  const nx = document.getElementById("next"); nx.focus({ preventScroll: true }); nx.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  nx.onclick = () => { if (last) reflect(a); else { run.qi = a.qs.findIndex((_, i) => !st.results[idOf(a, i)]); ask(); } };
+}
+
+function reflect(a) {
+  clearAll(); window.scrollTo({ top: 0 });
+  app.innerHTML = `${topBar(false)}
+    <div class="intro" style="--c:${a.color}">${glyph(a, "big-glyph")}<span class="story">${tx(a.name)} ${X("complete", "पूरा")}</span><h1 style="font-size:34px">${X("How did that feel?", "यह कैसा लगा?")}</h1>
+      <div class="feel">${[["easy", X("Easy", "आसान"), X("I knew it", "मुझे आता था")], ["ok", X("Okay", "ठीक-ठाक"), X("Had to think", "सोचना पड़ा")], ["hard", X("Hard", "मुश्किल"), X("Tough one", "कठिन था")]]
+        .map(([k, l, s]) => `<button type="button" data-f="${k}">${l}<small>${s}</small></button>`).join("")}</div></div>`;
+  app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { st.reflect[a.id] = b.dataset.f; log("reflect", { arena: a.id, feel: b.dataset.f }); persist(); allDone() ? results() : journey(); });
+}
+
+/* ---------- Star Card ---------- */
+function topArena() { return ARENAS.map(a => ({ a, v: skillScore(a) })).filter(x => x.v != null).sort((x, y) => y.v - x.v)[0]; }
+async function drawCard() {
+  const W = 1080, cv = document.createElement("canvas"); cv.width = W; cv.height = W; const g = cv.getContext("2d");
+  if (!g.roundRect) g.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
+  try { await Promise.all([document.fonts.load('800 80px "Baloo 2"'), document.fonts.load('700 40px "Baloo 2"'), document.fonts.load('800 40px Nunito')]); } catch (e) {}
+  const top = topArena(), hi = LANG === "hi", disp = '"Baloo 2", "Nirmala UI", sans-serif', body = hi ? disp : 'Nunito, "Baloo 2", sans-serif';
+  g.fillStyle = "#13233A"; g.fillRect(0, 0, W, W);
+  g.fillStyle = top.a.hex; g.globalAlpha = .22; g.beginPath(); g.arc(W - 90, 120, 330, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+  g.fillStyle = "#FF6B1A"; const bw = 440; g.beginPath(); g.roundRect(72, 72, bw, 58, 29); g.fill();
+  g.fillStyle = "#fff"; g.font = `800 30px ${disp}`; g.textBaseline = "middle"; g.fillText("FUTURE STAR LEAGUE", 100, 103);
+  g.textBaseline = "alphabetic"; g.fillStyle = "#9DB0C8"; g.font = `700 32px ${body}`; g.fillText(hi ? "थिंकिंग चेक · सीज़न 0" : "Thinking Check · Season 0", 72, 196);
+  g.fillStyle = "#fff"; g.font = `800 92px ${disp}`; const nm = st.profile.name.length > 14 ? st.profile.name.slice(0, 14) + "…" : st.profile.name; g.fillText(nm, 72, 300);
+  g.fillStyle = "#C9D6E6"; g.font = `700 34px ${body}`; g.fillText((hi ? "कक्षा " : "Grade ") + st.profile.grade + (st.profile.school ? "  ·  " + st.profile.school : ""), 72, 352);
+  g.fillStyle = "#FFC93C"; g.font = `800 36px ${disp}`; g.fillText(hi ? "मेरी सुपरपावर" : "MY SUPERPOWER", 72, 440);
+  g.fillStyle = "#fff"; g.font = `800 78px ${disp}`; g.fillText(tx(top.a.hero), 72, 516);
+  let y = 610;
+  ARENAS.forEach(a => { const v = skillScore(a), lv = starLevel(v);
+    g.fillStyle = a.hex; g.beginPath(); g.roundRect(72, y - 34, 14, 46, 7); g.fill();
+    g.fillStyle = "#fff"; g.font = `800 40px ${body}`; g.fillText(tx(a.skill), 108, y);
+    g.font = `46px ${disp}`; for (let i = 0; i < 5; i++) { g.fillStyle = i < lv ? "#FFC93C" : "#3A4D6B"; g.fillText("★", W - 72 - 5 * 50 + i * 50, y + 4); }
+    g.fillStyle = "#9DB0C8"; g.font = `700 26px ${body}`; g.fillText(tx(LEVEL_WORD[lv]), 108, y + 36);
+    y += 100; });
+  g.fillStyle = "#9DB0C8"; g.font = `700 28px ${body}`; g.fillText(hi ? "अपनी सुपरपावर खोजो · #FutureStarLeague" : "Find your Superpower · #FutureStarLeague", 72, W - 60);
+  return cv;
+}
+
+async function results() {
+  clearAll(); window.scrollTo({ top: 0 });
+  if (!st.cardLogged) { st.cardLogged = true; log("card_view"); persist(); }
+  const top = topArena(), hb = habits(), name = st.profile.name;
+  const tagFor = v => v >= .7 ? `<span class="tag">${X("Strong", "मज़बूत")}</span>` : v >= .4 ? `<span class="tag mid">${X("Good", "अच्छा")}</span>` : `<span class="tag mid">${X("Growing", "बढ़ रहा है")}</span>`;
+  const lines = ARENAS.map(a => `${tx(a.skill)}: ${"★".repeat(starLevel(skillScore(a)))}${"☆".repeat(5 - starLevel(skillScore(a)))}`).join("\n");
+  const share = X(`${name} (Grade ${st.profile.grade}) took the FSL Thinking Check!\nSuperpower: ${tx(top.a.hero)}\n${lines}\nFind your child's Superpower with Future Star League.`,
+    `${name} (कक्षा ${st.profile.grade}) ने FSL थिंकिंग चेक दिया!\nसुपरपावर: ${tx(top.a.hero)}\n${lines}\nअपने बच्चे की सुपरपावर खोजिए, Future Star League के साथ।`);
+  const parentMsg = X(`Hi! I finished the FSL Thinking Check. My Superpower is ${tx(top.a.hero)}. My full Thinking Report shows what I'm good at, with proof from my games, and 3 activities we can do at home. Can you unlock it for ₹299?`,
+    `नमस्ते! मैंने FSL थिंकिंग चेक पूरा कर लिया। मेरी सुपरपावर ${tx(top.a.hero)} है। मेरी पूरी थिंकिंग रिपोर्ट बताएगी कि मैं किसमें अच्छा हूँ, मेरे खेल के सबूत के साथ, और घर पर करने की 3 गतिविधियाँ। क्या आप ₹299 में इसे खोल देंगे?`);
+  app.innerHTML = `${topBar()}
+    <div class="hero" style="margin-bottom:4px"><h1>${X("Your Superpower:", "तुम्हारी सुपरपावर:")} <span>${tx(top.a.hero)}</span></h1>
+      <p>${X(`You were strongest in ${tx(top.a.skill)}. Every skill can grow, and next round you can beat your own stars.`, `तुम ${tx(top.a.skill)} में सबसे मज़बूत रहे। हर स्किल बढ़ सकती है, और अगले राउंड में तुम अपने ही स्टार से आगे जा सकते हो।`)}</p></div>
+    <div class="result-grid">
+      <div><img class="starcard" id="cardimg" alt="${X("Star Card", "स्टार कार्ड")}: ${esc(name)}, ${esc(tx(top.a.hero))}">
+        <p class="hint" style="margin-top:8px">${X("Long-press the card to save it to your phone.", "कार्ड को सेव करने के लिए उस पर देर तक दबाओ।")}</p></div>
+      <div class="card" style="margin-top:0;display:grid;gap:14px">
+        <div class="levels">${ARENAS.map(a => { const v = skillScore(a), lv = starLevel(v);
+          return `<div class="lv" style="--c:${a.color}"><span class="nm">${tx(a.skill)}</span><span class="st" aria-label="${lv} / 5">${"★".repeat(lv)}<span style="color:var(--line)">${"★".repeat(5 - lv)}</span></span>
+            <span class="track"><i style="width:${lv * 20}%"></i></span><span class="wd">${X("Star Level", "स्टार लेवल")} ${lv} · ${tx(LEVEL_WORD[lv])}</span></div>`; }).join("")}</div>
+        <div><b>${X("How you play", "तुम कैसे खेलते हो")}</b><div class="habits">
+          <div class="habit"><span>${X("Thinks before acting", "पहले सोचते हो, फिर करते हो")}</span>${tagFor(hb.think)}</div>
+          <div class="habit"><span>${X("Finishes before the timer", "टाइमर से पहले पूरा करते हो")}</span>${tagFor(hb.finish)}</div>
+          <div class="habit"><span>${X("Fast and correct", "तेज़ और सही")}</span>${tagFor(hb.fast)}</div></div></div>
+      </div>
+    </div>
+    <div class="actions"><a class="btn wa" id="wa" href="https://wa.me/?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">${X("Share on WhatsApp", "WhatsApp पर भेजो")}</a>
+      <button class="btn ghost" id="shareimg" type="button" hidden>${X("Share card image", "कार्ड की फ़ोटो भेजो")}</button></div>
+    <div class="card" style="--c:var(--brand)"><div class="story">${X("For your parent", "माता-पिता के लिए")}</div>
+      <h2 style="font-size:24px;margin-top:2px">${X("Your full Thinking Report", "तुम्हारी पूरी थिंकिंग रिपोर्ट")}</h2>
+      <div class="locked-report" style="margin-top:10px"><div class="blur" aria-hidden="true"><b>${X("Page 1 · Your strengths, with proof", "पेज 1 · तुम्हारी ताक़त, सबूत के साथ")}</b><span>${X("In Train Time you set the clock after checking the minutes twice...", "ट्रेन के समय में तुमने मिनट दो बार जाँचकर घड़ी सेट की...")}</span><b>${X("Page 3 · 3 activities for home", "पेज 3 · घर के लिए 3 गतिविधियाँ")}</b><span>${X("Plan a family shopping trip with a ₹200 budget...", "₹200 के बजट में परिवार की ख़रीदारी प्लान करो...")}</span></div>
+        <div class="over"><div style="display:grid;gap:8px;justify-items:center"><b>${X("4 pages · ₹299 for parents", "4 पेज · माता-पिता के लिए ₹299")}</b><button class="btn sm" id="askp" type="button">${X("Ask my parent", "माता-पिता से कहो")}</button></div></div></div>
+      <div id="pbox" hidden style="margin-top:12px;display:grid;gap:10px"><div class="parent-box" id="ptext">${esc(parentMsg)}</div>
+        <div class="actions" style="margin-top:0"><a class="btn wa sm" href="https://wa.me/?text=${encodeURIComponent(parentMsg)}" target="_blank" rel="noopener">${X("Send on WhatsApp", "WhatsApp पर भेजो")}</a><button class="btn ghost sm" id="copyp" type="button">${X("Copy message", "मैसेज कॉपी करो")}</button></div>
+        <p class="hint" id="copied" hidden>${X("Copied. Paste it in WhatsApp.", "कॉपी हो गया। WhatsApp में पेस्ट करो।")}</p></div></div>
+    <div class="actions"><button class="btn ghost" id="homeb" type="button">${X("Back to Arenas", "एरीना पर वापस")}</button><button class="linkish" id="mydata" type="button">${X("My data", "मेरा डेटा")}</button></div>`;
+  wireTop(results);
+  document.getElementById("homeb").onclick = journey; document.getElementById("mydata").onclick = myData;
+  document.getElementById("wa").onclick = () => { log("share", { via: "wa_text" }); persist(); };
+  document.getElementById("askp").onclick = () => { document.getElementById("pbox").hidden = false; log("ask_parent"); persist(); };
+  document.getElementById("copyp").onclick = () => { const done = () => document.getElementById("copied").hidden = false;
+    const sel = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("ptext")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    try { navigator.clipboard.writeText(parentMsg).then(done, sel); } catch (e) { sel(); } };
+  const cv = await drawCard(), img = document.getElementById("cardimg"); if (!img) return; img.src = cv.toDataURL("image/png");
+  cv.toBlob(b => { try { const f = new File([b], "fsl-star-card.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { const sb = document.getElementById("shareimg"); if (!sb) return; sb.hidden = false;
+      sb.onclick = () => navigator.share({ files: [f], text: share }).then(() => { log("share", { via: "image" }); persist(); }).catch(() => {}); } } catch (e) {} });
+}
+
+/* ---------- my data (DPDP: see, copy, delete) ---------- */
+function myData() {
+  clearAll(); window.scrollTo({ top: 0 });
+  const pend = st.events.length - (st.synced || 0), p = st.profile || {};
+  app.innerHTML = `${topBar()}
+    <div class="hero"><h1>${X("My data", "मेरा डेटा")}</h1><p>${X("Everything FSL knows about this player is listed here. This demo keeps it only on this phone. Nothing is sent anywhere.", "इस खिलाड़ी के बारे में FSL जो भी जानता है, यहाँ है। यह डेमो सब कुछ सिर्फ़ इसी फ़ोन में रखता है। कुछ भी कहीं नहीं भेजा जाता।")}</p></div>
+    <div class="card"><dl class="kv">
+      <dt>${X("Name", "नाम")}</dt><dd>${esc(p.name || "-")}</dd><dt>${X("Grade", "कक्षा")}</dt><dd>${p.grade || "-"}</dd><dt>${X("School code", "स्कूल कोड")}</dt><dd>${esc(p.school || "-")}</dd>
+      <dt>${X("Parent said yes", "अभिभावक की हाँ")}</dt><dd>${p.consentAt ? new Date(p.consentAt).toLocaleString() : "-"}</dd>
+      <dt>${X("Challenges played", "खेली गई चुनौतियाँ")}</dt><dd>${Object.keys(st.results).length} / ${TOTAL}</dd>
+      <dt>${X("Play events recorded", "दर्ज खेल-घटनाएँ")}</dt><dd>${st.events.length}</dd>
+      <dt>${X("Waiting to upload", "अपलोड बाकी")}</dt><dd>${pend} ${X("(uploads to FSL in the real app)", "(असली ऐप में FSL पर अपलोड होंगी)")}</dd></dl>
+      <div class="actions"><button class="btn ghost sm" id="copyd" type="button">${X("Copy my data", "मेरा डेटा कॉपी करो")}</button><button class="btn ghost sm" id="del" type="button" style="color:var(--bad)">${X("Delete everything", "सब कुछ मिटाओ")}</button></div>
+      <p class="hint" id="copied" hidden>${X("Copied as JSON.", "JSON के रूप में कॉपी हो गया।")}</p><div id="confirm"></div></div>
+    <div class="actions"><button class="btn" id="back" type="button">${X("Back", "वापस")}</button></div>`;
+  wireTop(myData);
+  document.getElementById("back").onclick = route;
+  document.getElementById("copyd").onclick = () => { const json = JSON.stringify({ profile: st.profile, results: st.results, reflect: st.reflect, events: st.events }, null, 1);
+    try { navigator.clipboard.writeText(json).then(() => document.getElementById("copied").hidden = false, () => {}); } catch (e) {} };
+  document.getElementById("del").onclick = () => { const c = document.getElementById("confirm");
+    c.innerHTML = `<div class="confirm" style="margin-top:12px"><b>${X("Delete this player's name, scores and all play events from this phone? This can't be undone.", "क्या इस खिलाड़ी का नाम, स्कोर और सारी खेल-घटनाएँ इस फ़ोन से मिटा दें? यह वापस नहीं होगा।")}</b>
+      <div class="actions" style="margin-top:0"><button class="btn sm" id="yes" type="button" style="background:var(--bad);box-shadow:none">${X("Yes, delete", "हाँ, मिटाओ")}</button><button class="btn ghost sm" id="no" type="button">${X("Cancel", "रद्द करो")}</button></div></div>`;
+    document.getElementById("no").onclick = () => c.innerHTML = "";
+    document.getElementById("yes").onclick = () => { const l = st.lang; st = { lang: l, profile: null, results: {}, reflect: {}, events: [], synced: 0, sid: null }; persist(); route(); }; };
+}
+
+route();
+</script>
+</body></html>
