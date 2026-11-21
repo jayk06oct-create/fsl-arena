@@ -1,0 +1,1409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="FSL Round 2 mission (Band S): survive a Thar-style desert, do 6 hands-on survival jobs and reach the rescue camp by helicopter or on foot.">
+</head>
+<body>
+<title>Desert Survival Show</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: full-screen 3D desert. TV-show HUD on top (timer, score, LIVE, Survival Meter), station bar at the bottom,
+   a job panel slides up while the 3D stays visible; learn cards and results use a centred card. One warm "desert dusk" look by design. */
+:root{
+  color-scheme:dark;
+  --space:#1B1220; --panel:#3A2419; --panel2:#4D3122; --raise:#6B4430; --deep:#25160F;
+  --ink:#FFF6EA; --muted:#E2C9AB; --line:rgba(255,236,210,.16);
+  --sun:#FFB627; --good:#3DDC97; --bad:#FF5D73; --water:#4EC3FF; --energy:#FFD23F; --batt:#9BE564;
+  --sp1:#FFC83D; --sp2:#B39BFF; --sp3:#2ED3C0; --sp4:#FF8A5C; --sp5:#4EA8FF; --sp6:#FF7EC8;
+  --font:'Baloo 2','Nirmala UI','Noto Sans Devanagari','Mangal',system-ui,sans-serif;
+}
+html,body{height:100%}
+body{margin:0;background:var(--space);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-size:16px;line-height:1.3;touch-action:none}
+button{font-family:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud{position:fixed;left:0;right:0;top:0;z-index:5;padding-top:calc(env(safe-area-inset-top,0px) + 8px);padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:5px;pointer-events:none;max-width:600px;margin:0 auto}
+.hrow{display:flex;align-items:center;gap:4px}
+.hud .hrow>*{pointer-events:auto}
+.chip{display:inline-flex;align-items:center;gap:4px;background:rgba(37,22,15,.88);border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-weight:800;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.low{background:var(--bad);border-color:var(--bad)}
+.chip.streak{background:linear-gradient(90deg,#FF7A3D,#FF3D7F);border:0}
+.live{background:#E0243A;border:0;letter-spacing:.06em;font-size:12px}
+.live::before{content:'';width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.2}}
+.sp{flex:1;min-width:0}
+.iconbtn{background:rgba(37,22,15,.88);border:1px solid var(--line);border-radius:999px;height:32px;min-width:32px;padding:0 8px;font-weight:700;font-size:14px;flex:none}
+.coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE89A,#FFB800 60%,#C98A00);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);display:inline-block;flex:none}
+.meters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;background:rgba(37,22,15,.82);border:1px solid var(--line);border-radius:14px;padding:4px 8px;pointer-events:none}
+.meter{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;min-width:0;font-variant-numeric:tabular-nums}
+.meter .bar{flex:1;height:7px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;min-width:16px}
+.meter .bar i{display:block;height:100%;width:50%;background:var(--c);transition:width .6s}
+.meter.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.12)}}
+.phase{font-size:12px;font-weight:800;color:var(--sun);text-align:center;grid-column:1/-1;line-height:1}
+.bubble{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);z-index:5;background:rgba(37,22,15,.85);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:14px;font-weight:700;max-width:92%;text-align:center;pointer-events:none}
+.lower3{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);z-index:15;width:min(560px,94%);display:flex;gap:10px;align-items:center;background:linear-gradient(90deg,#E0243A,#B0182C);border-radius:16px;padding:8px 12px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:up .3s ease-out;cursor:pointer}
+.lower3 .mic{font-size:28px;flex:none}
+.lower3 b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.lower3 span{font-size:15px;font-weight:700;line-height:1.2}
+.jobbar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;max-width:600px;margin:0 auto}
+.jb{background:rgba(37,22,15,.9);border:1px solid var(--line);border-radius:14px;padding:5px 2px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;font-weight:700;line-height:1.05;color:var(--muted);min-width:0}
+.jb .ic{width:30px;height:30px;border-radius:10px;background:var(--c);display:flex;align-items:center;justify-content:center}
+.jb .ic svg{width:19px;height:19px}
+.jb span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.jb.lock{opacity:.45}
+.jb.lock .ic{background:var(--panel2)}
+.jb.done{border-color:var(--good);color:var(--sun)}
+.jb.next{border-color:var(--sun);animation:glow 1.4s infinite}
+@keyframes glow{50%{box-shadow:0 0 0 3px rgba(255,182,39,.5)}}
+.hidden{display:none!important}
+
+.ov{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(20,10,6,.6);padding:14px}
+.card{width:100%;max-width:520px;max-height:100%;background:var(--panel);border-radius:26px;border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;animation:up .28s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.lower3{animation-name:up3}
+@keyframes up3{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.panel{position:fixed;left:0;right:0;bottom:0;z-index:10;margin:0 auto;max-width:560px;max-height:62%;background:rgba(58,36,25,.97);border-radius:24px 24px 0 0;border:1px solid var(--line);border-bottom:0;display:flex;flex-direction:column;overflow:hidden;animation:up .25s ease-out;padding-bottom:env(safe-area-inset-bottom,0px)}
+.panel.tall{max-height:84%}
+.ph{display:flex;align-items:center;gap:10px;padding:10px 14px 6px}
+.badge{width:40px;height:40px;border-radius:13px;background:var(--c);display:flex;align-items:center;justify-content:center;flex:none}
+.badge svg{width:25px;height:25px}
+.pt{flex:1;min-width:0}
+.pt small{display:block;font-size:11px;color:var(--c);font-weight:700}
+.pt b{font-size:18px;font-weight:800;display:block;line-height:1.1}
+.x{width:36px;height:36px;border-radius:50%;background:var(--panel2);font-size:20px;font-weight:700;flex:none}
+.pb{padding:0 14px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+.prompt{font-size:15px;font-weight:700;text-wrap:pretty}
+.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:700}
+.meta .notes{margin-left:auto;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
+.meta .notes[disabled]{opacity:.5}
+.fb{border-radius:14px;padding:8px 12px;font-weight:700;font-size:15px;min-height:20px}
+.fb.good{background:rgba(61,220,151,.14);border:1px solid var(--good)}
+.fb.bad{background:rgba(255,93,115,.12);border:1px solid var(--bad)}
+.fb.info{color:var(--sun);padding:0 2px}
+.big{background:linear-gradient(180deg,#FFCB57,#FFA41B);color:#2A1500;font-weight:800;font-size:18px;border-radius:16px;padding:10px 20px;box-shadow:0 4px 0 #B86E00}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 #B86E00}
+.big.alt{background:var(--raise);color:var(--ink);box-shadow:0 4px 0 #2E1C12}
+.big[disabled]{opacity:.45}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.shake-x{animation:sx .35s}
+@keyframes sx{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.learn-text{font-size:16px;font-weight:600;color:#F7E6D2}
+.learn-text ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.learn-text li{background:var(--panel2);border-radius:12px;padding:6px 10px;display:flex;gap:8px;align-items:center}
+.learn-text li b{color:var(--sun)}
+.tail{color:var(--sun);font-weight:800}
+.art{background:var(--deep);border-radius:18px;padding:8px;display:flex;justify-content:center}
+.art svg{width:100%;max-width:320px;height:auto;display:block}
+
+/* grid tasks (dunes, memory) */
+.gwrap{position:relative;display:flex;justify-content:center;align-items:center;padding:26px 0}
+.grid{display:grid;gap:3px;width:min(300px,78vw);aspect-ratio:1;background:#7A5536;border-radius:12px;padding:3px;position:relative}
+.cell{border-radius:7px;background:#E8C48C;position:relative;display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden}
+.cell svg{width:100%;height:100%;display:block}
+.cell.me{box-shadow:inset 0 0 0 3px #1B6FD1}
+.cell.path{background:#F3D9A8}
+.cell.ok{box-shadow:inset 0 0 0 3px var(--good)}
+.cell.no{animation:sx .35s;background:#F2A0A0}
+.cell.hint{box-shadow:inset 0 0 0 3px var(--sun)}
+.cell.fog{background:#B59572}
+.cell .av{position:absolute;inset:18%;border-radius:50%;background:#1B6FD1;border:3px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.edge{position:absolute;background:var(--raise);border-radius:10px;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 3px 0 #2E1C12}
+.edge.t{top:0;left:50%;transform:translateX(-50%);width:min(300px,78vw);height:22px}
+.edge.b{bottom:0;left:50%;transform:translateX(-50%);width:min(300px,78vw);height:22px}
+.edge.l{left:calc(50% - min(150px,39vw) - 26px);top:50%;transform:translateY(-50%);width:22px;height:min(300px,78vw)}
+.edge.r{left:calc(50% + min(150px,39vw) + 4px);top:50%;transform:translateY(-50%);width:22px;height:min(300px,78vw)}
+.edge.sel{background:var(--sun);color:#2A1500}
+.edge.right{background:var(--good);color:#06301F}
+.edge.wrong{background:var(--bad)}
+.edge[disabled]{opacity:.35}
+.stick{display:flex;align-items:center;gap:10px;background:var(--deep);border-radius:14px;padding:6px 10px}
+.stick svg{width:96px;height:96px;flex:none}
+.stick div{font-size:13px;font-weight:700;color:var(--muted)}
+.stick b{color:var(--ink)}
+.studybar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.studybar i{display:block;height:100%;background:var(--sp2);width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border-radius:999px;padding:2px 8px 2px 3px;font-size:12px;font-weight:700}
+.legend svg{width:22px;height:22px}
+
+/* day plan */
+.ptable{width:100%;border-collapse:separate;border-spacing:2px;font-size:12px;font-weight:800;text-align:center}
+.ptable th{color:var(--muted);font-weight:800;padding:2px}
+.ptable td{background:var(--deep);border-radius:6px;padding:3px 2px;font-variant-numeric:tabular-nums}
+.ptable td:first-child{text-align:left;padding-left:6px;background:var(--panel2)}
+.ptable .neg{color:#FF9AA8}.ptable .pos{color:var(--good)}
+.rules{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:700;color:var(--sun)}
+.rules span::before{content:'• '}
+.slots{display:flex;flex-direction:column;gap:5px}
+.slot{display:flex;align-items:center;gap:8px;background:var(--deep);border:2px dashed rgba(255,236,210,.25);border-radius:12px;padding:4px 8px;min-height:40px;font-weight:800;font-size:14px;text-align:left}
+.slot .when{width:92px;flex:none;font-size:12px;color:var(--muted);line-height:1.1}
+.slot .when b{display:block;color:var(--ink);font-size:13px}
+.slot .what{flex:1}
+.slot.filled{border-style:solid;border-color:var(--sp3)}
+.slot.plane .when::after{content:' ✈️'}
+.slot .en{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.slot.bad{border-color:var(--bad)}
+.cards{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.cards button{background:var(--raise);border-radius:12px;padding:6px 10px;font-weight:800;font-size:14px;box-shadow:0 3px 0 #2E1C12}
+.cards button.on{background:var(--sun);color:#2A1500}
+.cards button.used{opacity:.3}
+.ebar{height:12px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.ebar i{display:block;height:100%;background:var(--energy);width:0;transition:width .35s}
+
+/* spot (mirage) */
+.pano{border-radius:14px;overflow:hidden;background:#BFE3F5}
+.pano svg{width:100%;height:auto;display:block}
+.pano .cand{cursor:pointer}
+.sgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.sgrid.b3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sitem{background:#F1DDB8;border-radius:12px;aspect-ratio:1;padding:4px;position:relative;border:3px solid transparent}
+.sitem svg{width:100%;height:100%;display:block}
+.sitem.found{border-color:var(--good);background:#CFF3E2}
+.sitem.no{animation:sx .35s;border-color:var(--bad)}
+.sitem.hint{border-color:var(--sun)}
+.sitem small{position:absolute;left:0;right:0;bottom:2px;font-size:10px;font-weight:800;color:#5A3B22;line-height:1}
+
+/* still */
+.still svg{width:100%;max-width:330px;height:auto;display:block;margin:0 auto}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.tiles button{background:var(--raise);border-radius:12px;padding:8px 6px;font-weight:800;font-size:14px;box-shadow:0 3px 0 #2E1C12;min-height:44px}
+.tiles button.done{background:#1D5F48;box-shadow:none;opacity:.6}
+.tiles button.hint{outline:3px solid var(--sun)}
+
+/* reflex */
+.rx{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.rxrule{text-align:center;font-weight:800;font-size:15px;border-radius:12px;padding:5px;background:var(--panel2)}
+.rxrule.night{background:#1D2A5C;color:#CFE0FF}
+.rxrule.flash{animation:fl .6s 3}
+@keyframes fl{50%{background:var(--sun);color:#2A1500}}
+.rxcard{height:120px;border-radius:18px;background:var(--deep);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:800;font-size:17px;text-align:center}
+.rxcard.night{background:#0F1638}
+.rxcard .e{font-size:52px;line-height:1;animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
+.rxcard.hit{background:rgba(61,220,151,.3)}.rxcard.miss{background:rgba(255,93,115,.3)}
+.rxbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rxbtns button{border-radius:16px;padding:12px 4px;font-weight:800;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.rxbtns .go{background:#2FA86F}.rxbtns .stay{background:#D9822B}.rxbtns .cover{background:#4E7BD9}
+.timebar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.timebar i{display:block;height:100%;background:var(--sp5);width:100%}
+.score3{display:flex;justify-content:center;gap:16px;font-weight:700;font-size:15px;color:var(--muted)}
+
+.done{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.starrow{font-size:34px;letter-spacing:4px;line-height:1;color:var(--sun)}
+.starrow .off{opacity:.2;color:var(--ink)}
+.gain{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.piece{font-size:14px;font-weight:700;background:var(--panel2);border-radius:999px;padding:3px 12px;display:inline-flex;gap:6px;align-items:center}
+
+.intro{padding:18px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;overflow:auto}
+.intro h1{margin:0;font-size:30px;line-height:1.02;font-weight:800;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--sun);font-weight:700}
+.intro p{margin:0;font-size:16px;font-weight:600;color:#F2E0CA;max-width:38ch}
+.beat{background:linear-gradient(90deg,#FF7A3D,#FF3D7F);border-radius:14px;padding:8px 14px;font-weight:800}
+.res-big{font-size:54px;font-weight:800;line-height:1;color:var(--sun);font-variant-numeric:tabular-nums}
+.rank{font-size:22px;font-weight:800;background:linear-gradient(90deg,#FFB627,#FF7EC8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.res-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+.res-grid div{background:var(--panel2);border-radius:14px;padding:8px 2px;font-weight:700;font-size:12px;color:var(--muted)}
+.res-grid b{display:block;color:var(--ink);font-size:19px;font-variant-numeric:tabular-nums}
+.res-list{width:100%;display:flex;flex-direction:column;gap:6px}
+.res-list>div{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:6px 10px;font-weight:700;font-size:14px;text-align:left}
+.res-list .badge{width:32px;height:32px;border-radius:10px}
+.res-list .badge svg{width:20px;height:20px}
+.res-list span.l{flex:1;min-width:0}
+.res-list em{font-style:normal;color:var(--sun);white-space:nowrap}
+.endbadges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.endbadges div{background:linear-gradient(180deg,#5A3A26,#3A2419);border:2px solid var(--sun);border-radius:16px;padding:6px 12px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px}
+.endbadges div span{font-size:24px}
+.endbadges div.off{border-color:var(--line);opacity:.45}
+.board{width:100%;background:var(--deep);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:4px;text-align:left}
+.board h4{margin:0 0 4px;font-size:16px}
+.board .r{display:grid;grid-template-columns:28px 1fr auto auto;gap:8px;align-items:center;padding:4px 8px;border-radius:10px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.board .r.me{background:rgba(255,182,39,.15);color:var(--sun)}
+.board .r small{color:var(--muted);font-weight:600}
+.namerow{display:flex;gap:8px;width:100%}
+.namerow input{flex:1;min-width:0;background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 17px var(--font);padding:8px 12px;user-select:text;-webkit-user-select:text}
+.note{font-size:13px;color:var(--muted);font-weight:600;max-width:42ch}
+.cardimg{width:100%;max-width:340px;border-radius:18px}
+.toast{position:fixed;left:50%;top:96px;transform:translateX(-50%);z-index:40;background:var(--bad);color:#fff;font-weight:800;padding:8px 16px;border-radius:999px;max-width:92%;text-align:center;animation:up .3s}
+#confetti{position:fixed;inset:0;z-index:25;pointer-events:none}
+#wm{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.07;background-repeat:repeat}
+.pledge{display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:14px;font-weight:700;color:#F2E0CA;cursor:pointer;max-width:40ch}
+.pledge input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:#FFB627}
+.ranked-rules{font-size:13px;font-weight:700;color:var(--sun);max-width:42ch}
+.ans-list{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left}
+.ans-list>div{background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:600;font-size:14px}
+.ans-list b{display:block;color:var(--sun);font-size:15px}
+.cred{background:#140B07;border-radius:12px;padding:10px;font-size:13px;font-weight:700;display:flex;flex-direction:column;gap:3px}
+.brief{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:18px;overflow:auto}
+.brief h1{margin:0;font-size:32px;line-height:1}
+.brief-rows{width:100%;display:flex;flex-direction:column;gap:6px;text-align:left}
+.brief-rows div{background:var(--panel2);border-radius:12px;padding:7px 12px;font-weight:700;font-size:14px;display:flex;gap:10px}
+.brief-rows span{color:var(--muted);min-width:84px;flex:none}
+.zone-ic{width:120px;height:84px}
+.zone-ic svg{width:100%;height:100%}
+.wiz{min-height:440px;justify-content:space-between}
+.wiz-body{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:up .3s ease-out}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--raise)}
+.dots i.on{width:22px;border-radius:999px;background:var(--sun)}
+.dots i.done{background:var(--good)}
+.hero{font-size:64px;line-height:1;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.howlist{display:flex;flex-direction:column;gap:8px;width:100%;text-align:left}
+.howlist div{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:700;font-size:15px}
+.howlist .n{font-size:24px;width:32px;text-align:center;flex:none}
+.suitprev{width:150px;height:180px}
+.suitprev svg{width:100%;height:100%}
+.suits{display:flex;gap:10px;justify-content:center}
+.suits button{width:54px;height:54px;border-radius:50%;background:var(--c);border:3px solid transparent}
+.suits button.on{border-color:#fff;box-shadow:0 0 0 3px var(--sun)}
+.dests{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.dests button{background:var(--panel2);border:2px solid transparent;border-radius:14px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;font-weight:800;min-width:0}
+.dests button svg{width:64px;height:44px}
+.dests button.on{border-color:var(--sun);background:var(--raise)}
+.dests small{font-size:11px;color:var(--muted);font-weight:700;line-height:1.1}
+.fields{display:flex;flex-direction:column;gap:8px;width:100%}
+.fields input{background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 17px var(--font);padding:10px 12px;user-select:text;-webkit-user-select:text}
+.nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-weight:700}
+pre.dbg{background:#140B07;border-radius:12px;padding:10px;font-size:11px;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text;font-family:ui-monospace,monospace;text-align:left}
+.endtitle{position:fixed;left:0;right:0;top:38%;z-index:30;text-align:center;font-size:44px;font-weight:800;color:var(--sun);text-shadow:0 0 30px rgba(255,182,39,.6),0 3px 0 #000;pointer-events:none;animation:up .5s}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+
+<canvas id="gl"></canvas>
+<div class="hud">
+  <div class="hrow">
+    <span class="chip live" id="live">LIVE</span>
+    <span class="chip" id="timer" role="button" title="Show time">⏱ 15:00</span>
+    <span class="chip" id="score">★ 0</span>
+    <span class="chip streak hidden" id="streak"></span>
+    <span class="sp"></span>
+    <span class="chip"><i class="coin"></i><span id="coins">0</span></span>
+    <button class="iconbtn" id="lang" aria-label="Change language">हिं</button>
+    <button class="iconbtn" id="snd" aria-label="Sound and host voice on or off">🔊</button>
+  </div>
+  <div class="meters hidden" id="meters"></div>
+</div>
+<div class="bubble hidden" id="bubble"></div>
+<div class="jobbar hidden" id="jobbar"></div>
+<canvas id="confetti" hidden></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="application/json" id="mission-data">{"id": "desert-survival", "version": 1.0, "round": "R2", "band": "S", "title": {"en": "Desert Survival Show", "hi": "डेज़र्ट सर्वाइवल शो"}, "story": {"en": "You are a contestant on a live TV survival show. A helicopter has dropped you in the desert with a little water and a radio. Beat 6 hands-on challenges, from dawn to night, and reach the rescue camp in 15 minutes.", "hi": "तुम एक लाइव टीवी सर्वाइवल शो के प्रतियोगी हो। हेलिकॉप्टर ने तुम्हें थोड़े पानी और एक रेडियो के साथ रेगिस्तान में उतार दिया है। सुबह से रात तक 6 हाथ से करने वाली चुनौतियाँ पार करो और 15 मिनट में रेस्क्यू कैंप पहुँचो।"}, "windowSec": 900, "scoring": {"coins": {"start": 3, "perFirstTry": 1, "notesCost": 1}, "job": {"first": 300, "second": 150, "helped": 50, "notesFactor": 0.5, "speedMax": 100, "streak": [1, 1.25, 1.5, 2]}, "skillCredit": {"first": 1, "second": 0.5, "later": 0, "notesPenalty": 0.25}, "windowBonusPerSec": 2, "ranks": [{"min": 0, "en": "Tourist", "hi": "टूरिस्ट"}, {"min": 1000, "en": "Trekker", "hi": "ट्रेकर"}, {"min": 1800, "en": "Desert Scout", "hi": "डेज़र्ट स्काउट"}, {"min": 2600, "en": "Survival Pro", "hi": "सर्वाइवल प्रो"}, {"min": 3400, "en": "Desert Legend", "hi": "डेज़र्ट लेजेंड"}]}, "meter": {"water": [2.5, 3.0, 3.5], "battery": [70, 75, 80], "energy": 100, "perJob": {"dawn": [0.2, 6], "morning": [0.3, 8], "noon": [0.5, 12], "afternoon": [0.4, 10], "evening": [0.3, 8]}, "batteryPerJob": 5, "mistakeWater": 0.1, "mistakeEnergy": 2, "mistakeBattery": 2, "heliBattery": 40, "waterKeeper": 1.0, "ironWill": 50}, "phases": {"dawn": {"en": "Dawn", "hi": "भोर"}, "morning": {"en": "Morning", "hi": "सुबह"}, "noon": {"en": "Noon heat", "hi": "दोपहर की गर्मी"}, "afternoon": {"en": "Afternoon", "hi": "दोपहर बाद"}, "evening": {"en": "Sunset", "hi": "सूर्यास्त"}, "night": {"en": "Night", "hi": "रात"}}, "host": {"intro": {"en": "Welcome to the Desert Survival Show! Our contestant is alone in the desert with a little water and a radio. Six challenges stand between them and the rescue camp. Let's go!", "hi": "डेज़र्ट सर्वाइवल शो में आपका स्वागत है! हमारा प्रतियोगी रेगिस्तान में अकेला है, थोड़ा पानी और एक रेडियो लेकर। रेस्क्यू कैंप तक छह चुनौतियाँ हैं। चलो शुरू करें!"}, "after": {"plan": {"en": "The plan is ready. But which way is the camp? There is no compass... After the break: reading the dunes!", "hi": "प्लान तैयार है। पर कैंप किस तरफ़ है? कोई कम्पास नहीं... ब्रेक के बाद: टीलों को पढ़ना!"}, "dunes": {"en": "Right direction! But a dust gust is coming, and the map is about to vanish...", "hi": "सही दिशा! पर धूल का झोंका आ रहा है, और नक्शा गायब होने वाला है..."}, "memory": {"en": "Water ahead... or is it? The noon heat plays tricks on the eyes!", "hi": "आगे पानी... या नहीं? दोपहर की गर्मी आँखों को धोखा देती है!"}, "mirage": {"en": "Water is running low. Can science pull water out of dry sand?", "hi": "पानी कम हो रहा है। क्या विज्ञान सूखी रेत से पानी निकाल सकता है?"}, "still": {"en": "The sun is setting, and the wind is rising... Here comes the sandstorm!", "hi": "सूरज ढल रहा है, और हवा तेज़ हो रही है... आ गया रेत का तूफ़ान!"}}, "heliCall": {"en": "The storm is over and the radio signal is strong... Is that a helicopter?", "hi": "तूफ़ान खत्म और रेडियो सिग्नल मज़बूत है... क्या वह हेलिकॉप्टर है?"}, "walkCall": {"en": "The storm is over, but the radio battery is weak. It is a long walk to camp...", "hi": "तूफ़ान खत्म, पर रेडियो की बैटरी कमज़ोर है। कैंप तक लंबा पैदल रास्ता है..."}, "heliEnd": {"en": "Rescued by helicopter! What a performance!", "hi": "हेलिकॉप्टर से रेस्क्यू! क्या शानदार खेल!"}, "walkEnd": {"en": "Made it to camp on foot! A true desert walker!", "hi": "पैदल कैंप पहुँच गए! सच्चे रेगिस्तानी राही!"}}, "zones": [{"id": "jaisalmer", "name": {"en": "Jaisalmer", "hi": "जैसलमेर"}, "ground": "#E3B878", "dune": "#D9A55F", "place": {"en": "Sam sand dunes, Thar Desert, Rajasthan", "hi": "सम रेत के टीले, थार रेगिस्तान, राजस्थान"}, "fact": {"en": "Thar summer days can go above 45 °C, and winter nights can drop close to 0 °C.", "hi": "थार में गर्मियों के दिन 45 °C से ऊपर जा सकते हैं, और सर्दियों की रातें लगभग 0 °C तक गिर सकती हैं।"}}, {"id": "bikaner", "name": {"en": "Bikaner", "hi": "बीकानेर"}, "ground": "#E8C28A", "dune": "#D7AE6E", "place": {"en": "Thar Desert, Rajasthan", "hi": "थार रेगिस्तान, राजस्थान"}, "fact": {"en": "Bikaner is famous for camels. India has a national research centre on camels here.", "hi": "बीकानेर ऊँटों के लिए मशहूर है। यहाँ ऊँटों पर भारत का राष्ट्रीय अनुसंधान केंद्र है।"}}, {"id": "barmer", "name": {"en": "Barmer", "hi": "बाड़मेर"}, "ground": "#D9AE74", "dune": "#C9965A", "place": {"en": "Thar Desert, Rajasthan", "hi": "थार रेगिस्तान, राजस्थान"}, "fact": {"en": "Barmer is one of the driest parts of India. Most of its little rain falls in the monsoon months.", "hi": "बाड़मेर भारत के सबसे सूखे इलाकों में से है। यहाँ की थोड़ी बारिश ज़्यादातर मानसून के महीनों में होती है।"}}, {"id": "kutch", "name": {"en": "Rann of Kutch", "hi": "कच्छ का रण"}, "ground": "#EEE8DC", "dune": "#D8CDB8", "place": {"en": "White salt desert, Gujarat", "hi": "सफ़ेद नमक का रेगिस्तान, गुजरात"}, "fact": {"en": "The Rann floods in the monsoon. When the water dries, it leaves a huge white crust of salt.", "hi": "मानसून में रण में पानी भर जाता है। पानी सूखने पर नमक की एक बहुत बड़ी सफ़ेद परत रह जाती है।"}}, {"id": "nubra", "name": {"en": "Nubra Valley", "hi": "नुब्रा घाटी"}, "ground": "#CBB89A", "dune": "#B9A27F", "place": {"en": "Cold desert, Ladakh", "hi": "ठंडा रेगिस्तान, लद्दाख"}, "fact": {"en": "Nubra is a cold desert about 3,000 m high. Its dunes at Hunder have two-humped camels.", "hi": "नुब्रा लगभग 3,000 मीटर ऊँचा ठंडा रेगिस्तान है। हुंडर के टीलों पर दो कूबड़ वाले ऊँट मिलते हैं।"}}], "camp": {"x": 0, "z": -42}, "jobs": [{"id": "plan", "task": "dayplan", "superpower": "SP3", "competency": "C3.3", "unlock": "start", "phase": "dawn", "targetSec": 120, "station": {"x": 5, "z": 24}, "label": {"en": "Plan the Day", "hi": "दिन का प्लान"}, "learn": [{"art": "daycurve", "text": {"en": "In a hot desert, the time of day changes everything. Walking in the noon heat burns far more energy and water than walking in the cool morning or evening.", "hi": "गर्म रेगिस्तान में दिन का समय सब कुछ बदल देता है। दोपहर की गर्मी में चलने से ठंडी सुबह या शाम की तुलना में कहीं ज़्यादा ऊर्जा और पानी खर्च होता है।"}, "bullets": [{"en": "Walk when it is cool: morning and evening.", "hi": "ठंडे समय में चलो: सुबह और शाम।"}, {"en": "At noon, make shade and rest in it.", "hi": "दोपहर में छाया बनाओ और उसमें आराम करो।"}, {"en": "Never walk in the dark: you can lose the way.", "hi": "अंधेरे में कभी मत चलो: रास्ता भटक सकते हो।"}]}, {"art": "mirror", "text": {"en": "Rescue planes look for signals. A mirror flash can be seen from many kilometres away, but only while the sun shines and the plane is passing.", "hi": "रेस्क्यू विमान सिग्नल ढूँढते हैं। शीशे की चमक कई किलोमीटर दूर से दिखती है, पर सिर्फ़ तब जब धूप हो और विमान ऊपर से गुज़र रहा हो।"}, "tail": {"en": "Plan first, then act. That is how survivors win.", "hi": "पहले प्लान, फिर काम। ऐसे ही सर्वाइवर जीतते हैं।"}}], "prompt": {"en": "Plan your day. Put the 6 jobs into the 6 time slots so that you finish with the MOST energy. Work it out from the table: the energy is only shown when you start the day. 2 tries.", "hi": "अपना दिन प्लान करो। 6 कामों को 6 समय-खानों में ऐसे रखो कि आखिर में तुम्हारे पास सबसे ज़्यादा ऊर्जा बचे। टेबल से हिसाब लगाओ: ऊर्जा सिर्फ़ दिन शुरू करने पर दिखेगी। 2 कोशिशें।"}, "explain": {"en": "Best plan: {plan}. It ends with {best} energy. Walk in cool slots, never two walks in a row, flash the mirror exactly when the plane passes, and rest in shade at noon or in your shelter at night.", "hi": "सबसे अच्छा प्लान: {plan}। इसमें आखिर में {best} ऊर्जा बचती है। ठंडे समय में चलो, लगातार दो बार मत चलो, शीशा ठीक तभी चमकाओ जब विमान गुज़रे, और दोपहर में छाया में या रात में शेल्टर में आराम करो।"}, "bank": [{"ph": "mmnnex", "P": 0, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["mirror", "walk", "shade", "rest", "walk", "shelter"], "valid": 5, "gap": 5}, {"ph": "mmnnex", "P": 1, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "mirror", "shade", "rest", "walk", "shelter"], "valid": 9, "gap": 5}, {"ph": "mmnnex", "P": 4, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 13, "opt": ["walk", "shade", "walk", "shelter", "mirror", "rest"], "valid": 5, "gap": 5}, {"ph": "mnnnex", "P": 1, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "mirror", "shade", "rest", "walk", "shelter"], "valid": 9, "gap": 5}, {"ph": "mnnnex", "P": 2, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "shade", "mirror", "rest", "walk", "shelter"], "valid": 5, "gap": 5}, {"ph": "mnnnex", "P": 3, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "shade", "rest", "mirror", "walk", "shelter"], "valid": 6, "gap": 5}, {"ph": "mnnnex", "P": 4, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 13, "opt": ["walk", "shade", "walk", "shelter", "mirror", "rest"], "valid": 4, "gap": 5}, {"ph": "mmneex", "P": 0, "E0": 50, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["mirror", "walk", "shade", "walk", "shelter", "rest"], "valid": 6, "gap": 5}, {"ph": "mmneex", "P": 1, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 15, "shelterNightExtra": 10, "best": 28, "opt": ["walk", "mirror", "shade", "walk", "shelter", "rest"], "valid": 8, "gap": 5}, {"ph": "mmmnex", "P": 3, "E0": 50, "walk": {"m": 15, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 13, "opt": ["walk", "shade", "walk", "mirror", "shelter", "rest"], "valid": 8, "gap": 5}, {"ph": "mmmnex", "P": 4, "E0": 50, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "shade", "walk", "shelter", "mirror", "rest"], "valid": 4, "gap": 5}, {"ph": "mmmnex", "P": 4, "E0": 50, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 25, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 28, "opt": ["walk", "shade", "walk", "rest", "mirror", "shelter"], "valid": 4, "gap": 5}, {"ph": "mnneex", "P": 1, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 15, "shelterNightExtra": 10, "best": 28, "opt": ["walk", "mirror", "shade", "walk", "shelter", "rest"], "valid": 8, "gap": 5}, {"ph": "mnneex", "P": 2, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 33, "opt": ["walk", "shade", "mirror", "walk", "shelter", "rest"], "valid": 8, "gap": 5}, {"ph": "mnneex", "P": 3, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "shade", "rest", "mirror", "walk", "shelter"], "valid": 6, "gap": 5}, {"ph": "mnneex", "P": 4, "E0": 60, "walk": {"m": 10, "n": 30, "e": 15, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 15, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 23, "opt": ["walk", "shade", "rest", "walk", "mirror", "shelter"], "valid": 5, "gap": 5}, {"ph": "mmnnnx", "P": 0, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 13, "opt": ["mirror", "walk", "shade", "walk", "shelter", "rest"], "valid": 4, "gap": 5}, {"ph": "mmnnnx", "P": 3, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 13, "opt": ["walk", "shade", "walk", "mirror", "shelter", "rest"], "valid": 5, "gap": 5}, {"ph": "mmnnnx", "P": 4, "E0": 60, "walk": {"m": 10, "n": 30, "e": 10, "x": 25}, "shade": 5, "restNoon": 15, "restNight": 10, "restOther": 5, "shelter": 10, "shelterNightExtra": 10, "best": 13, "opt": ["walk", "shade", "walk", "shelter", "mirror", "rest"], "valid": 5, "gap": 5}]}, {"id": "dunes", "task": "dunes", "superpower": "SP1", "competency": "C1.2", "unlock": "plan", "phase": "morning", "targetSec": 90, "size": 5, "station": {"x": -7, "z": 13}, "label": {"en": "Read the Dunes", "hi": "टीलों को पढ़ो"}, "learn": [{"art": "shadow", "text": {"en": "No compass? Use the sun. The sun moves across the sky from east to west, so the tip of a shadow moves from west to east.", "hi": "कम्पास नहीं? सूरज का इस्तेमाल करो। सूरज आसमान में पूरब से पश्चिम की ओर चलता है, इसलिए परछाईं की नोक पश्चिम से पूरब की ओर खिसकती है।"}, "bullets": [{"en": "Push a stick into the sand. Mark the tip of its shadow (mark 1).", "hi": "रेत में एक डंडी गाड़ो। उसकी परछाईं की नोक पर निशान लगाओ (निशान 1)।"}, {"en": "Wait 15 minutes. Mark the new tip (mark 2).", "hi": "15 मिनट रुको। नई नोक पर निशान लगाओ (निशान 2)।"}, {"en": "Mark 1 is WEST. Mark 2 is EAST.", "hi": "निशान 1 पश्चिम है। निशान 2 पूरब है।"}, {"en": "Stand with west on your left and east on your right: you are facing NORTH.", "hi": "पश्चिम को बाएँ और पूरब को दाएँ रखकर खड़े हो: तुम्हारा मुँह उत्तर की ओर है।"}]}, {"art": "dune", "text": {"en": "Wind builds crescent dunes. The long, gentle back faces the wind. Between the two horns is a steep slip face of soft, sliding sand. The horns point the way the wind blows.", "hi": "हवा अर्धचंद्र आकार के टीले बनाती है। लंबी, हल्की ढलान वाली पीठ हवा की ओर होती है। दोनों सींगों के बीच नरम, फिसलती रेत की खड़ी ढलान होती है। सींग उस दिशा में होते हैं जिधर हवा बहती है।"}, "bullets": [{"en": "Climb a dune only up its gentle back: the side away from the horns.", "hi": "टीले पर सिर्फ़ उसकी हल्की पीठ से चढ़ो: सींगों से उल्टी तरफ़ से।"}, {"en": "Never climb into the steep face between the horns. You slide back and waste water.", "hi": "सींगों के बीच की खड़ी ढलान पर कभी मत चढ़ो। तुम फिसलोगे और पानी बर्बाद होगा।"}]}], "prompt": {"en": "The camp is due {dir}. Your compass is broken, but you made two shadow marks. Tap the edge of the map that faces {dir}.", "hi": "कैंप ठीक {dir} में है। तुम्हारा कम्पास टूटा है, पर तुमने परछाईं के दो निशान बनाए हैं। नक्शे का वह किनारा टैप करो जो {dir} की ओर है।"}, "prompt2": {"en": "Now walk to the camp flag. Tap the next square to step. Flat sand is always safe. Enter a dune only from its gentle back, away from its horns.", "hi": "अब कैंप के झंडे तक चलो। अगले खाने पर टैप करके कदम रखो। समतल रेत हमेशा सुरक्षित है। टीले में सिर्फ़ उसकी हल्की पीठ से, सींगों से उल्टी तरफ़ से जाओ।"}, "explain": {"en": "The shadow tip moves from west (mark 1) to east (mark 2), so {dir} was the {edge} edge of the map. Dune horns point downwind, so a dune can only be entered from the side away from its horns.", "hi": "परछाईं की नोक पश्चिम (निशान 1) से पूरब (निशान 2) जाती है, इसलिए {dir} नक्शे का {edge} किनारा था। टीले के सींग हवा की दिशा में होते हैं, इसलिए टीले में सिर्फ़ सींगों से उल्टी तरफ़ से जाया जा सकता है।"}}, {"id": "memory", "task": "memory", "superpower": "SP2", "competency": "C2.2", "unlock": "dunes", "phase": "morning", "targetSec": 60, "size": 5, "studySec": 10, "station": {"x": 6, "z": 3}, "label": {"en": "Landmark Memory", "hi": "निशानों की याद"}, "learn": [{"art": "landmarks", "text": {"en": "Desert travellers find their way by landmarks: a lone khejri tree, an old well, a stone chhatri. In a sandstorm you cannot see far, so you must carry the map in your head.", "hi": "रेगिस्तान के यात्री निशानों से रास्ता ढूँढते हैं: अकेला खेजड़ी का पेड़, पुराना कुआँ, पत्थर की छतरी। रेत के तूफ़ान में दूर तक नहीं दिखता, इसलिए नक्शा दिमाग में रखना पड़ता है।"}, "bullets": [{"en": "Link things together: \"the well is right of the tree\".", "hi": "चीज़ों को जोड़ो: \"कुआँ पेड़ के दाईं ओर है\"।"}, {"en": "Say the route to yourself: \"up 3, right 2\".", "hi": "रास्ता मन में बोलो: \"ऊपर 3, दाएँ 2\"।"}, {"en": "Remember the dangers too, not only the goal.", "hi": "सिर्फ़ मंज़िल नहीं, खतरे भी याद रखो।"}], "tail": {"en": "You get {sec} seconds to study the map.", "hi": "नक्शा देखने के लिए तुम्हें {sec} सेकंड मिलेंगे।"}}], "prompt": {"en": "Study the oasis map for {sec} seconds. Then the dust hides it. Walk to the oasis from memory: every step must bring you closer, and never step into a danger.", "hi": "ओएसिस का नक्शा {sec} सेकंड देखो। फिर धूल उसे छिपा देगी। याद से ओएसिस तक चलो: हर कदम तुम्हें पास ले जाए, और किसी खतरे पर कदम मत रखना।"}, "explain": {"en": "The oasis was {n} steps away. A shortest route that kept clear of the {hz} existed from the start.", "hi": "ओएसिस {n} कदम दूर था। {hz} से बचकर जाने वाला सबसे छोटा रास्ता शुरू से मौजूद था।"}}, {"id": "mirage", "task": "spot", "superpower": "SP6", "competency": "C6.2", "unlock": "memory", "phase": "noon", "targetSec": 70, "thorny": 2, "broken": 3, "station": {"x": -6, "z": -8}, "label": {"en": "Mirage Check", "hi": "मरीचिका जाँच"}, "learn": [{"art": "mirage", "text": {"en": "At noon the hot ground heats the air just above it. Light from the sky bends in this hot air, so you see a shiny patch that looks like water. That is a mirage: really a picture of the sky.", "hi": "दोपहर में गर्म ज़मीन अपने ठीक ऊपर की हवा को गर्म कर देती है। आसमान से आती रोशनी इस गर्म हवा में मुड़ जाती है, इसलिए पानी जैसा चमकीला हिस्सा दिखता है। यही मरीचिका है: असल में आसमान की तस्वीर।"}, "bullets": [{"en": "A mirage is sky-coloured and shimmers. Trees can look upside-down in it.", "hi": "मरीचिका आसमान के रंग की होती है और झिलमिलाती है। उसमें पेड़ उल्टे दिख सकते हैं।"}, {"en": "It moves away as you walk towards it.", "hi": "उसकी तरफ़ चलो तो वह दूर खिसकती जाती है।"}, {"en": "Real water has life: green plants at its edge, birds, animal tracks leading to it.", "hi": "असली पानी के पास जीवन होता है: किनारे पर हरे पौधे, पक्षी, उस तक जाते जानवरों के पैरों के निशान।"}]}, {"art": "thorns", "text": {"en": "Pro Focus means checking the small details. Desert bushes like babool and vilayati babool have sharp thorns, so never rest under them. And check your kit: one small crack can lose all your water.", "hi": "प्रो फोकस का मतलब छोटी बातों की जाँच। बबूल और विलायती बबूल जैसी झाड़ियों में तेज़ काँटे होते हैं, उनके नीचे कभी आराम मत करो। और अपना सामान जाँचो: एक छोटी सी दरार सारा पानी बहा सकती है।"}}], "prompts": [{"en": "Part 1 of 3: Tap the REAL oasis. The other three are mirages.", "hi": "भाग 1/3: असली ओएसिस पर टैप करो। बाकी तीन मरीचिका हैं।"}, {"en": "Part 2 of 3: You need shade. Find the {n} bushes WITH thorns, so you do not rest under them.", "hi": "भाग 2/3: छाया चाहिए। काँटों वाली {n} झाड़ियाँ ढूँढो, ताकि उनके नीचे आराम न करो।"}, {"en": "Part 3 of 3: Check your survival kit. Find the {n} broken items.", "hi": "भाग 3/3: अपना सर्वाइवल किट जाँचो। {n} टूटी चीज़ें ढूँढो।"}], "prompt": {"en": "Three checks: the real oasis, the thorny bushes and the broken kit.", "hi": "तीन जाँच: असली ओएसिस, काँटेदार झाड़ियाँ और टूटा सामान।"}, "explain": {"en": "The real oasis had green plants at its edge and {cue}; the mirages had no life around them. Thorny bushes had small spikes on their stems. Broken kit: {list}.", "hi": "असली ओएसिस के किनारे हरे पौधे थे और {cue}; मरीचिकाओं के आसपास कोई जीवन नहीं था। काँटेदार झाड़ियों की डंडियों पर छोटे काँटे थे। टूटा सामान: {list}।"}}, {"id": "still", "task": "still", "superpower": "SP4", "competency": "C4.3", "unlock": "mirage", "phase": "afternoon", "targetSec": 60, "station": {"x": 7, "z": -18}, "label": {"en": "Desert Science", "hi": "रेगिस्तान का विज्ञान"}, "learn": [{"art": "still", "text": {"en": "A solar still pulls water out of damp sand and green leaves. Sunlight passes through a clear sheet and heats the pit. Water evaporates, touches the cooler sheet and condenses into drops. A small stone makes the sheet dip, so the drops run to the lowest point and fall into the cup.", "hi": "सोलर स्टिल नम रेत और हरी पत्तियों से पानी निकालता है। धूप पारदर्शी शीट से होकर गड्ढे को गर्म करती है। पानी भाप बनकर उड़ता है, ठंडी शीट को छूकर बूँदें बन जाता है। एक छोटा पत्थर शीट को बीच में झुकाता है, तो बूँदें सबसे नीचे वाली जगह तक बहकर कप में गिरती हैं।"}, "bullets": [{"en": "Evaporation: heat turns water into vapour.", "hi": "वाष्पीकरण: गर्मी पानी को भाप बनाती है।"}, {"en": "Condensation: vapour cools into drops on the sheet.", "hi": "संघनन: भाप ठंडी होकर शीट पर बूँदें बनती है।"}, {"en": "Gravity: drops slide down to the lowest point, above the cup.", "hi": "गुरुत्व: बूँदें सबसे नीचे की जगह तक, कप के ऊपर, फिसलती हैं।"}]}, {"art": "daynight", "text": {"en": "More desert science: light-coloured, loose clothes reflect sunlight and let sweat cool you, and covering your head and skin saves water. Dry air and clear skies hold little heat, so after sunset the sand loses heat fast and nights turn cold.", "hi": "रेगिस्तान का और विज्ञान: हल्के रंग के ढीले कपड़े धूप लौटाते हैं और पसीने से ठंडक देते हैं, और सिर व त्वचा ढकने से पानी बचता है। सूखी हवा और साफ़ आसमान कम गर्मी रोकते हैं, इसलिए सूरज ढलते ही रेत जल्दी ठंडी होती है और रातें ठंडी हो जाती हैं।"}}], "prompt": {"en": "Build a solar still. Tap the items in an order that works. {n} items would ruin your still: leave them out.", "hi": "सोलर स्टिल बनाओ। चीज़ों पर ऐसे क्रम में टैप करो जो काम करे। {n} चीज़ें तुम्हारा स्टिल खराब कर देंगी: उन्हें छोड़ दो।"}, "explain": {"en": "Dig the pit, put the green leaves and the cup inside, cover with the clear sheet, then seal the edges with sand and put the small stone in the middle. {decoys}", "hi": "गड्ढा खोदो, उसमें हरी पत्तियाँ और कप रखो, पारदर्शी शीट से ढको, फिर किनारों को रेत से बंद करो और बीच में छोटा पत्थर रखो। {decoys}"}, "parts": {"pit": {"en": "Dig a pit", "hi": "गड्ढा खोदो", "needs": []}, "leaves": {"en": "Green leaves", "hi": "हरी पत्तियाँ", "needs": ["pit"]}, "cup": {"en": "Cup in the centre", "hi": "बीच में कप", "needs": ["pit"]}, "sheet": {"en": "Clear plastic sheet", "hi": "पारदर्शी प्लास्टिक शीट", "needs": ["leaves", "cup"]}, "seal": {"en": "Seal edges with sand", "hi": "किनारे रेत से बंद करो", "needs": ["sheet"]}, "stone": {"en": "Small stone in the middle", "hi": "बीच में छोटा पत्थर", "needs": ["sheet"]}}, "decoys": {"foil": {"en": "Shiny foil sheet", "hi": "चमकीली फ़ॉइल शीट", "why": {"en": "Foil reflects the sunlight, so the pit never heats up.", "hi": "फ़ॉइल धूप को लौटा देती है, तो गड्ढा गर्म ही नहीं होता।"}}, "towel": {"en": "Cotton towel cover", "hi": "सूती तौलिये का ढक्कन", "why": {"en": "Vapour escapes through cloth instead of forming drops.", "hi": "भाप कपड़े में से निकल जाती है, बूँदें नहीं बनतीं।"}}, "holes": {"en": "Poke air holes", "hi": "हवा के छेद करो", "why": {"en": "Holes let the warm, wet air escape.", "hi": "छेदों से गर्म, नम हवा बाहर निकल जाती है।"}}, "bigrock": {"en": "Big heavy rock", "hi": "बड़ा भारी पत्थर", "why": {"en": "A big rock tears the sheet or pushes it into the cup.", "hi": "बड़ा पत्थर शीट फाड़ देता है या उसे कप में धँसा देता है।"}}}, "decoyCount": 2, "order": ["pit", "leaves", "cup", "sheet", "seal", "stone"]}, {"id": "storm", "task": "reflex", "superpower": "SP5", "competency": "C5.2", "unlock": "still", "phase": "evening", "targetSec": 70, "station": {"x": -4, "z": -29}, "label": {"en": "Sandstorm Reflex", "hi": "तूफ़ानी फुर्ती"}, "learn": [{"art": "rules", "text": {"en": "In a sandstorm, think fast but think right. The right move depends on what you see AND on the time of day.", "hi": "रेत के तूफ़ान में तेज़ सोचो, पर सही सोचो। सही कदम इस पर निर्भर है कि तुम्हें क्या दिख रहा है और दिन का कौन सा समय है।"}, "bullets": [{"en": "NIGHT: you cannot see the way, so NEVER go. Everything that was GO becomes STAY. COVER stays COVER.", "hi": "रात: रास्ता नहीं दिखता, इसलिए कभी मत चलो। जो भी GO था, वह STAY बन जाता है। COVER, COVER ही रहता है।"}]}], "prompt": {"en": "Events pop up fast. Tap GO, STAY or COVER before the bar runs out. Night falls in the middle and the rule changes! You need {pass} of {n} right.", "hi": "घटनाएँ तेज़ी से आएँगी। पट्टी खत्म होने से पहले GO, STAY या COVER टैप करो। बीच में रात हो जाएगी और नियम बदल जाएगा! {n} में से {pass} सही चाहिए।"}, "explain": {"en": "Day: GO for fresh camel tracks, camp smoke and a far dust wall; STAY for scorpions, snakes and old tracks; COVER when sand hits. Night: never GO. Stay put, and still cover when sand hits.", "hi": "दिन: ताज़े ऊँट के निशान, कैंप के धुएँ और दूर की धूल की दीवार के लिए GO; बिच्छू, साँप और पुराने निशान के लिए STAY; रेत लगे तो COVER। रात: कभी GO नहीं। वहीं रुको, और रेत लगे तो फिर भी चेहरा ढको।"}, "events": [{"id": "camel", "icon": "🐪", "en": "Fresh camel tracks", "hi": "ऊँट के ताज़े निशान", "day": "go", "night": "stay"}, {"id": "smoke", "icon": "💨", "en": "Smoke from the camp", "hi": "कैंप से उठता धुआँ", "day": "go", "night": "stay"}, {"id": "wall", "icon": "🌫️", "en": "Dust wall, far away", "hi": "धूल की दीवार, दूर", "day": "go", "night": "stay"}, {"id": "scorpion", "icon": "🦂", "en": "Scorpion on your path", "hi": "रास्ते पर बिच्छू", "day": "stay", "night": "stay"}, {"id": "snake", "icon": "🐍", "en": "Snake under a bush", "hi": "झाड़ी के नीचे साँप", "day": "stay", "night": "stay"}, {"id": "old", "icon": "👣", "en": "Old tracks, filled with sand", "hi": "पुराने निशान, रेत से भरे", "day": "stay", "night": "stay"}, {"id": "gust", "icon": "🌪️", "en": "Sand hits your face", "hi": "चेहरे पर रेत लगी", "day": "cover", "night": "cover"}], "mix": {"go": 3, "stay": 3, "cover": 2}, "stageLen": 8, "windowMs": [2300, 2100], "gapMs": 450, "pass": 13}], "kit": {"bottle": {"en": "Water bottle", "hi": "पानी की बोतल"}, "mirror": {"en": "Signal mirror", "hi": "सिग्नल शीशा"}, "compass": {"en": "Compass", "hi": "कम्पास"}, "torch": {"en": "Torch", "hi": "टॉर्च"}, "rope": {"en": "Rope", "hi": "रस्सी"}, "hat": {"en": "Sun hat", "hi": "धूप की टोपी"}, "glasses": {"en": "Sunglasses", "hi": "धूप का चश्मा"}, "boot": {"en": "Boot", "hi": "जूता"}}, "kitBroken": {"bottle": {"en": "the bottle had a crack and was dripping", "hi": "बोतल में दरार थी और पानी टपक रहा था"}, "mirror": {"en": "the mirror was cracked", "hi": "शीशा टूटा था"}, "compass": {"en": "the compass had no needle", "hi": "कम्पास में सुई नहीं थी"}, "torch": {"en": "the torch lens was broken", "hi": "टॉर्च का काँच टूटा था"}, "rope": {"en": "the rope was cut through", "hi": "रस्सी कटी हुई थी"}, "hat": {"en": "the hat had a hole", "hi": "टोपी में छेद था"}, "glasses": {"en": "the sunglasses were missing a lens", "hi": "चश्मे का एक काँच गायब था"}, "boot": {"en": "the boot sole was torn", "hi": "जूते का तला फटा था"}}, "fairPlay": {"floors": {"plan": 15, "dunes": 12, "memory": 8, "mirage": 10, "still": 8, "storm": 25}, "minTotalSec": 300, "readMinSec": 3, "readPromptSec": 2.5, "planMinSec": 15, "reactFloorMs": 180, "reactFlagCount": 4, "idleSec": 60, "leaveMax": 2, "leaveTotalSec": 20, "bands": {"green": 80, "amber": 60}, "caps": {"A": -25, "B": -20, "C": -25, "D": -15, "E": -30, "F": -25}, "slotMin": 30, "startGraceMin": 10}}</script>
+<script>
+"use strict";
+/* ================= FSL Mission engine: Desert Survival Show (3D) =================
+   The child walks across a 3D desert and does one hands-on job per station. No MCQs.
+   A mission = JSON: jobs[] with task type + params + learn slides + texts, plus zones, meter, host lines, fairPlay.
+   Task types: dayplan, dunes, memory, spot, still, reflex.
+   Skill credit (feeds the Star level): 1 first try / 0.5 second / 0 after, minus 0.25 if Notes were used.
+   Points, speed, streaks, coins, ranks, the Survival Meter and the ending badges are for fun and the leaderboard only.
+   Every job is independent: nothing earned or lost in one job changes another job.
+   Run data -> localStorage fsl.missionRuns.desert: mission_runs, mission_job_results, mission_events. */
+
+const SP = {
+  SP1:{en:'Smart Logic',hi:'स्मार्ट लॉजिक',c:'var(--sp1)',hex:'#FFC83D',n:0xFFC83D},
+  SP2:{en:'Super Memrix',hi:'सुपर मेमरिक्स',c:'var(--sp2)',hex:'#B39BFF',n:0xB39BFF},
+  SP3:{en:'Master Algo',hi:'मास्टर एल्गो',c:'var(--sp3)',hex:'#2ED3C0',n:0x2ED3C0},
+  SP4:{en:'Sci Idea',hi:'साइ आइडिया',c:'var(--sp4)',hex:'#FF8A5C',n:0xFF8A5C},
+  SP5:{en:'Speed Flex',hi:'स्पीड फ्लेक्स',c:'var(--sp5)',hex:'#4EA8FF',n:0x4EA8FF},
+  SP6:{en:'Pro Focus',hi:'प्रो फोकस',c:'var(--sp6)',hex:'#FF7EC8',n:0xFF7EC8}
+};
+const COMP = {'C1.1':'Pattern Recognition','C1.2':'Logical Deduction','C1.3':'Quantitative Reasoning','C2.1':'Mental Rotation','C2.2':'Working Memory','C2.3':'Diagram & Mechanism Reading','C3.1':'Algorithmic Thinking','C3.2':'Decomposition & Planning','C3.3':'Optimisation & Trade-offs','C4.1':'Observation & Inference','C4.2':'Experimental Design','C4.3':'Cause, Effect & Systems','C5.1':'Processing Speed','C5.2':'Cognitive Flexibility','C5.3':'Learn & Transfer','C6.1':'Sustained Attention','C6.2':'Detail & Error Detection','C6.3':'Critical Evaluation of Information'};
+const ICON = {
+  SP1:'<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="#25160F"/><rect x="8.5" y="18" width="7" height="2" rx="1" fill="#25160F"/><rect x="9.5" y="21" width="5" height="1.6" rx=".8" fill="#25160F"/><path d="M10 9l2 3 2-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>',
+  SP2:'<svg viewBox="0 0 24 24"><path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 1 5 3 3 0 0 0 4 4 2 2 0 0 0 2-1V4a2 2 0 0 0-2-1zm6 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-1 5 3 3 0 0 1-4 4 2 2 0 0 1-2-1V4a2 2 0 0 1 2-1z" fill="#25160F"/></svg>',
+  SP3:'<svg viewBox="0 0 24 24"><rect x="2" y="3" width="8" height="5" rx="1.5" fill="#25160F"/><rect x="8" y="10" width="8" height="5" rx="1.5" fill="#25160F"/><rect x="14" y="17" width="8" height="5" rx="1.5" fill="#25160F"/><path d="M6 8v4h2M12 15v4h2" stroke="#25160F" stroke-width="1.8" fill="none"/></svg>',
+  SP4:'<svg viewBox="0 0 24 24"><path d="M9 2h6v2h-1v5l5.5 9.5A2.3 2.3 0 0 1 17.5 22h-11a2.3 2.3 0 0 1-2-3.5L10 9V4H9z" fill="#25160F"/><path d="M7 16h10l1.5 2.6c.3.6-.1 1.4-.8 1.4H6.3c-.7 0-1.1-.8-.8-1.4z" fill="#fff" opacity=".85"/></svg>',
+  SP5:'<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#25160F"/></svg>',
+  SP6:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#25160F"/><circle cx="12" cy="12" r="6.5" fill="#fff"/><circle cx="12" cy="12" r="3.5" fill="#25160F"/></svg>'
+};
+const UI = {
+  eyebrow:{en:'FSL Round 2 · Band',hi:'FSL राउंड 2 · बैंड'},
+  enter:{en:'Drop me in the desert',hi:'मुझे रेगिस्तान में उतारो'},
+  pickSuit:{en:'Pick your survival gear colour',hi:'अपने सर्वाइवल गियर का रंग चुनो'},
+  tapStation:{en:'Tap a glowing station to walk there',hi:'चमकते स्टेशन पर टैप करो, वहाँ चलो'},
+  goFirst:{en:'Start at the drop zone: plan your day!',hi:'ड्रॉप ज़ोन से शुरू करो: अपना दिन प्लान करो!'},
+  goCamp:{en:'All challenges done! Heading to the rescue camp...',hi:'सारी चुनौतियाँ पूरी! रेस्क्यू कैंप की ओर...'},
+  locked:{en:'Finish the earlier challenges first',hi:'पहले पिछली चुनौतियाँ पूरी करो'},
+  learn:{en:'Learn',hi:'सीखो'}, next:{en:'Next',hi:'आगे'},
+  startJob:{en:'Start the challenge',hi:'चुनौती शुरू करो'}, backToJob:{en:'Back to the challenge',hi:'चुनौती पर वापस'},
+  notes:{en:'Notes',hi:'नोट्स'}, tries:{en:'Try',hi:'कोशिश'}, mistakes:{en:'Mistakes',hi:'गलतियाँ'},
+  tryAgain:{en:'Not quite. Try again!',hi:'अभी नहीं। फिर कोशिश करो!'},
+  great:{en:'Challenge done!',hi:'चुनौती पूरी!'}, helped:{en:'Done with help. Read why:',hi:'मदद से पूरा। क्यों, यह पढ़ो:'},
+  back:{en:'Back to the desert',hi:'रेगिस्तान में वापस'}, close:{en:'Close',hi:'बंद करो'},
+  showHelp:{en:'The glowing ones are right.',hi:'चमकने वाले सही हैं।'},
+  // plan
+  cards:{walk:{en:'Walk',hi:'चलना'},shade:{en:'Make shade',hi:'छाया बनाना'},rest:{en:'Rest',hi:'आराम'},mirror:{en:'Mirror signal',hi:'शीशे का सिग्नल'},shelter:{en:'Build shelter',hi:'शेल्टर बनाना'}},
+  ph:{m:{en:'Morning',hi:'सुबह'},n:{en:'Noon heat',hi:'दोपहर की गर्मी'},e:{en:'Evening',hi:'शाम'},x:{en:'Night',hi:'रात'}},
+  slotN:{en:'Slot {n}',hi:'खाना {n}'},
+  energy:{en:'Energy',hi:'ऊर्जा'}, anyTime:{en:'any',hi:'कभी भी'},
+  planRules:[{en:'Start with {E0} energy. It must never go below 0.',hi:'शुरुआत {E0} ऊर्जा से। यह कभी 0 से नीचे नहीं जानी चाहिए।'},
+    {en:'You must walk twice (2 legs). Never two walks in a row.',hi:'दो बार चलना है (2 हिस्से)। लगातार दो बार कभी नहीं।'},
+    {en:'Build the shelter after both walks (at the end of the route).',hi:'शेल्टर दोनों बार चलने के बाद बनाओ (रास्ते के आखिर में)।'},
+    {en:'The plane passes in slot {P} only. The mirror works only then.',hi:'विमान सिर्फ़ खाना {P} में गुज़रेगा। शीशा सिर्फ़ तभी काम करेगा।'},
+    {en:'Rest gives +{rn} at noon if shade is already made, +{rx} at night if the shelter is already built, else +{ro}.',hi:'आराम से दोपहर में +{rn} (अगर छाया पहले बनी हो), रात में +{rx} (अगर शेल्टर पहले बना हो), वरना +{ro}।'}],
+  tapCard:{en:'Tap a job, then tap a slot. Tap a filled slot to empty it.',hi:'कोई काम टैप करो, फिर कोई खाना। भरे खाने को टैप करके खाली करो।'},
+  startDay:{en:'Start the day',hi:'दिन शुरू करो'}, fillAll:{en:'Fill all 6 slots first',hi:'पहले सभी 6 खाने भरो'},
+  planBad:{twoWalks:{en:'Two walks in a row: you collapse from tiredness.',hi:'लगातार दो बार चलना: थककर गिर गए।'},plane:{en:'The mirror flashed when no plane was there.',hi:'शीशा तब चमकाया जब विमान वहाँ नहीं था।'},
+    shelterEarly:{en:'The shelter was built before you finished walking.',hi:'चलना पूरा होने से पहले शेल्टर बना दिया।'},tired:{en:'Energy fell below 0: too tired to go on.',hi:'ऊर्जा 0 से नीचे गई: आगे जाने की ताकत नहीं।'}},
+  planWorse:{en:'The day works, and you end with {e} energy. A better plan ends with more.',hi:'दिन ठीक चला, और आखिर में {e} ऊर्जा बची। बेहतर प्लान में ज़्यादा बचती है।'},
+  planBest:{en:'Perfect plan! You end with {e} energy.',hi:'एकदम सही प्लान! आखिर में {e} ऊर्जा बची।'},
+  shelterNight:{en:'Shelter at night costs +{v} more (dark and cold).',hi:'रात में शेल्टर बनाने में +{v} ज़्यादा लगता है (अंधेरा और ठंड)।'},
+  // dunes
+  dirs:{N:{en:'north',hi:'उत्तर'},E:{en:'east',hi:'पूरब'},S:{en:'south',hi:'दक्षिण'},W:{en:'west',hi:'पश्चिम'}},
+  edges:[{en:'top',hi:'ऊपरी'},{en:'right',hi:'दायाँ'},{en:'bottom',hi:'निचला'},{en:'left',hi:'बायाँ'}],
+  stickInfo:{en:'Shadow stick: <b>1</b> = first mark, <b>2</b> = 15 minutes later.',hi:'परछाईं वाली डंडी: <b>1</b> = पहला निशान, <b>2</b> = 15 मिनट बाद।'},
+  wrongEdge:{en:'Not that edge. Think: which way does the shadow tip move?',hi:'यह किनारा नहीं। सोचो: परछाईं की नोक किधर खिसकती है?'},
+  edgeShown:{en:'This edge faces the camp.',hi:'यह किनारा कैंप की ओर है।'},
+  steepFace:{en:'That is the steep slip face between the horns. You slide back: -water.',hi:'यह सींगों के बीच की खड़ी ढलान है। तुम फिसल गए: पानी कम।'},
+  notNext:{en:'Tap a square next to you (up, down, left or right).',hi:'अपने बगल वाला खाना टैप करो (ऊपर, नीचे, बाएँ या दाएँ)।'},
+  campFlag:{en:'Camp',hi:'कैंप'}, youLbl:{en:'You',hi:'तुम'}, duneLbl:{en:'Dune (horns = downwind)',hi:'टीला (सींग = हवा की दिशा)'}, flatLbl:{en:'Flat sand',hi:'समतल रेत'},
+  // memory
+  study:{en:'Study the map!',hi:'नक्शा याद करो!'}, storm:{en:'Dust storm! The map is gone. Walk from memory.',hi:'धूल का तूफ़ान! नक्शा गायब। याद से चलो।'},
+  hazard:{en:'Danger! That was the {x}. Back to your last square.',hi:'खतरा! वहाँ {x} था। पिछले खाने पर वापस।'},
+  farther:{en:'That step did not bring you closer to the oasis.',hi:'इस कदम से तुम ओएसिस के पास नहीं आए।'},
+  peekMap:{en:'A gap in the dust! Look quickly...',hi:'धूल में दरार! जल्दी देखो...'},
+  items:{oasis:{en:'Oasis',hi:'ओएसिस'},quick:{en:'Quicksand',hi:'दलदली रेत'},thorn:{en:'Thorn thicket',hi:'काँटों का झुरमुट'},nest:{en:'Scorpion nest',hi:'बिच्छुओं का घर'},
+    tree:{en:'Khejri tree',hi:'खेजड़ी का पेड़'},well:{en:'Old well',hi:'पुराना कुआँ'},chhatri:{en:'Stone chhatri',hi:'पत्थर की छतरी'}},
+  // spot
+  realOasis:{en:'Real oasis! Green plants and life around it.',hi:'असली ओएसिस! आसपास हरे पौधे और जीवन।'},
+  isMirage:{plain:{en:'Mirage: a shiny sky-coloured band. The far tree stands behind it, not at its edge, and nothing grows by the "water".',hi:'मरीचिका: आसमान के रंग की चमकीली पट्टी। दूर का पेड़ उसके पीछे है, किनारे पर नहीं, और "पानी" के पास कुछ नहीं उगता।'},
+    inverted:{en:'Mirage: the upside-down tree is a picture of a far tree, bent by hot air.',hi:'मरीचिका: उल्टा पेड़ दूर के पेड़ की तस्वीर है, गर्म हवा से मुड़ी हुई।'},
+    dead:{en:'Mirage: only a dead, dry bush. No green, no water.',hi:'मरीचिका: सिर्फ़ सूखी मरी झाड़ी। न हरियाली, न पानी।'},
+    road:{en:'Mirage: shimmering hot air over flat ground.',hi:'मरीचिका: समतल ज़मीन पर झिलमिलाती गर्म हवा।'}},
+  cueBirds:{en:'birds',hi:'पक्षी थे'}, cueTracks:{en:'animal tracks leading to it',hi:'उस तक जाते जानवरों के पैरों के निशान थे'},
+  noThorns:{en:'No thorns on that one. Look closer at the stems.',hi:'इसमें काँटे नहीं हैं। डंडियों को ध्यान से देखो।'},
+  kitOk:{en:'That item looks fine.',hi:'यह चीज़ ठीक है।'}, found:{en:'Found {n} of {m}',hi:'{m} में से {n} मिलीं'},
+  // still
+  stillNeed:{en:'Not yet. Something else must go in first.',hi:'अभी नहीं। पहले कुछ और लगना है।'},
+  stillDone:{en:'Drops form on the sheet and run into the cup!',hi:'शीट पर बूँदें बनीं और कप में बह गईं!'},
+  decoyLeft:{en:'Good that you left out: {d}.',hi:'अच्छा हुआ कि छोड़ दिया: {d}।'},
+  // reflex
+  go:{en:'GO',hi:'GO चलो'}, stay:{en:'STAY',hi:'STAY रुको'}, cover:{en:'COVER',hi:'COVER ढको'},
+  dayRule:{en:'☀ DAY rules',hi:'☀ दिन के नियम'}, nightRule:{en:'🌙 NIGHT! Never GO now',hi:'🌙 रात! अब कभी GO नहीं'},
+  rxStart:{en:'Start',hi:'शुरू'}, right:{en:'Right',hi:'सही'}, wrongN:{en:'Wrong',hi:'गलत'}, slow:{en:'Too slow',hi:'बहुत धीमे'},
+  rxPass:{en:'{n} right. You got through the storm!',hi:'{n} सही। तुम तूफ़ान पार कर गए!'},
+  rxFail:{en:'{n} right. You need {p}.',hi:'{n} सही। {p} चाहिए।'},
+  rxAgain:{en:'Try again (new events)',hi:'फिर कोशिश (नई घटनाएँ)'},
+  // flow / results
+  points:{en:'points',hi:'अंक'}, firstTry:{en:'First try',hi:'पहली बार में'}, stars:{en:'Stars',hi:'सितारे'}, time:{en:'Time',hi:'समय'},
+  waterLeft:{en:'Water left',hi:'बचा पानी'},
+  nextRank:{en:'{n} more points to become {r}',hi:'{r} बनने के लिए {n} अंक और'}, topRank:{en:'Top rank reached!',hi:'सबसे ऊँची रैंक!'},
+  crew:{en:'Contestant board on this device',hi:'इस डिवाइस का प्रतियोगी बोर्ड'}, noScores:{en:'No scores yet. Save yours first!',hi:'अभी कोई स्कोर नहीं। पहले अपना सेव करो!'},
+  yourName:{en:'Your name',hi:'तुम्हारा नाम'}, save:{en:'Save',hi:'सेव'},
+  share:{en:'Make my score card',hi:'मेरा स्कोर कार्ड बनाओ'}, copyLink:{en:'Challenge a friend',hi:'दोस्त को चैलेंज करो'},
+  copied:{en:'Link copied. Send it to a friend!',hi:'लिंक कॉपी हो गया। दोस्त को भेजो!'}, copyFail:{en:'Copy this link:',hi:'यह लिंक कॉपी करो:'},
+  playAgain:{en:'Play again',hi:'फिर से खेलो'},
+  starNote:{en:'Your Star level counts only challenges done right on the first try. Points, speed, streaks, coins, the Survival Meter and badges are for fun and the leaderboard.',hi:'तुम्हारा स्टार लेवल सिर्फ़ पहली बार में सही की गई चुनौतियों से बनता है। अंक, स्पीड, स्ट्रीक, सिक्के, सर्वाइवल मीटर और बैज मज़े और लीडरबोर्ड के लिए हैं।'},
+  meterNote:{en:'The Survival Meter is for fun. It never changes your stars.',hi:'सर्वाइवल मीटर मज़े के लिए है। इससे तुम्हारे सितारे कभी नहीं बदलते।'},
+  beatBanner:{en:'Your friend scored {n}. Can you beat it?',hi:'तुम्हारे दोस्त ने {n} अंक बनाए। क्या तुम आगे निकल सकते हो?'},
+  beatWin:{en:'You beat your friend’s {n}!',hi:'तुमने दोस्त के {n} अंक पार कर लिए!'}, beatLose:{en:'Your friend has {n}. Play again to beat it!',hi:'दोस्त के {n} अंक हैं। फिर खेलो और आगे निकलो!'},
+  saveCard:{en:'Press and hold the card to save or share it.',hi:'कार्ड को दबाकर रखो और सेव या शेयर करो।'},
+  cardBeat:{en:'Beat my score!',hi:'मेरा स्कोर हराओ!'}, cardScored:{en:'I survived the {zone} desert and scored',hi:'मैं {zone} के रेगिस्तान से बचकर निकला/निकली और बनाए'},
+  log:{en:'Run log (for the team)',hi:'रन लॉग (टीम के लिए)'}, copyLog:{en:'Copy log JSON',hi:'लॉग JSON कॉपी करो'},
+  noGL:{en:'This device cannot show 3D. Please try a newer browser or phone.',hi:'यह डिवाइस 3D नहीं दिखा सकता। नया ब्राउज़र या फ़ोन आज़माओ।'},
+  windowBonus:{en:'Show time bonus',hi:'शो टाइम बोनस'},
+  windowClosed:{en:'Show time is over! Finish fast. No time bonus now.',hi:'शो का समय खत्म! जल्दी पूरा करो। अब टाइम बोनस नहीं।'},
+  rescued:{en:'Rescued!',hi:'बच गए!'},
+  badges:{heli:{en:'Sky Rescue',hi:'आसमानी रेस्क्यू',i:'🚁'},walk:{en:'Desert Walker',hi:'रेगिस्तानी राही',i:'🐪'},water:{en:'Water Keeper',hi:'पानी रक्षक',i:'💧'},iron:{en:'Iron Will',hi:'फ़ौलादी इरादा',i:'⚡'}},
+  badgeWhy:{heli:{en:'Radio battery {b}% at the end (40% or more calls the helicopter).',hi:'आखिर में रेडियो बैटरी {b}% (40% या ज़्यादा पर हेलिकॉप्टर आता है)।'},walk:{en:'Radio battery {b}%: too weak for the helicopter, so you walked.',hi:'रेडियो बैटरी {b}%: हेलिकॉप्टर के लिए कमज़ोर, इसलिए पैदल चले।'}},
+  water:{en:'Water',hi:'पानी'}, battery:{en:'Radio',hi:'रेडियो'}, energyM:{en:'Energy',hi:'ऊर्जा'},
+  rankedTitle:{en:'Ranked round',hi:'रैंक्ड राउंड'}, testSlot:{en:'test slot',hi:'टेस्ट स्लॉट'},
+  fslId:{en:'Your FSL ID',hi:'तुम्हारी FSL ID'},
+  pledge:{en:'I promise to play alone, without help, and to stay in the game.',hi:'मैं वादा करता/करती हूँ कि अकेले, बिना मदद के खेलूँगा/खेलूँगी और गेम से बाहर नहीं जाऊँगा/जाऊँगी।'},
+  rulesR:{en:'One attempt only. Leaving the game, screenshots and very fast answers are recorded. Answers open at {t}.',hi:'सिर्फ़ एक मौका। गेम छोड़ना, स्क्रीनशॉट और बहुत तेज़ जवाब रिकॉर्ड होते हैं। जवाब {t} बजे खुलेंगे।'},
+  startRanked:{en:'Start ranked round',hi:'रैंक्ड राउंड शुरू करो'}, needId:{en:'Type your FSL ID and tick the promise',hi:'अपनी FSL ID लिखो और वादे पर टिक करो'},
+  opensAt:{en:'The slot opens at {t}',hi:'स्लॉट {t} बजे खुलेगा'},
+  startClosed:{en:'Start time is over (only the first {m} minutes of the slot). You can play Practice.',hi:'शुरू करने का समय खत्म (स्लॉट के सिर्फ़ पहले {m} मिनट)। तुम प्रैक्टिस खेल सकते हो।'},
+  playPractice:{en:'Play Practice',hi:'प्रैक्टिस खेलो'},
+  already:{en:'You already played this slot. Answers open at {t}.',hi:'तुम यह स्लॉट खेल चुके हो। जवाब {t} बजे खुलेंगे।'},
+  answersLater:{en:'🔒 The answer opens when the slot closes at {t}.',hi:'🔒 जवाब स्लॉट बंद होने पर {t} बजे खुलेगा।'},
+  seeAnswers:{en:'See answers',hi:'जवाब देखो'}, answersTitle:{en:'Your answers',hi:'तुम्हारे जवाब'},
+  leftWarn:{en:'You left the game. This is recorded for fair play.',hi:'तुमने गेम छोड़ा। फ़ेयर प्ले के लिए यह रिकॉर्ड हुआ।'},
+  capWarn:{en:'Screenshots are recorded in the ranked round.',hi:'रैंक्ड राउंड में स्क्रीनशॉट रिकॉर्ड होते हैं।'},
+  nowPractice:{en:'Ranked round done. This game is Practice.',hi:'रैंक्ड राउंड हो गया। यह गेम प्रैक्टिस है।'},
+  letsGo:{en:"Let's go",hi:'चलो शुरू करें'}, howTitle:{en:'How to play',hi:'कैसे खेलें'}, howHead:{en:'Your survival show in 4 steps',hi:'तुम्हारा सर्वाइवल शो, 4 कदमों में'},
+  how1:{en:'Walk to a glowing station. Tap it, or tap the sand to walk.',hi:'चमकते स्टेशन तक चलो। उस पर टैप करो, या चलने के लिए रेत पर टैप करो।'},
+  how2:{en:'Read the Learn card. It teaches real desert survival science.',hi:'सीखो वाला कार्ड पढ़ो। यह असली रेगिस्तानी सर्वाइवल विज्ञान सिखाता है।'},
+  how3:{en:'Do the challenge with your hands. Right the first time = 3 stars.',hi:'चुनौती खुद हाथ से करो। पहली बार में सही = 3 सितारे।'},
+  how4:{en:'Beat all {jobs} challenges from dawn to night in {min} minutes. Keep the radio charged for a helicopter ending!',hi:'भोर से रात तक सभी {jobs} चुनौतियाँ {min} मिनट में पार करो। हेलिकॉप्टर वाले अंत के लिए रेडियो चार्ज रखो!'},
+  stepOf:{en:'Step {n} of {m}',hi:'कदम {n} / {m}'}, whoPlays:{en:'Who is playing?',hi:'कौन खेल रहा है?'},
+  zoneAssigned:{en:'Your desert is chosen for you when you start.',hi:'शुरू करने पर तुम्हारा रेगिस्तान तुम्हारे लिए चुना जाएगा।'},
+  yourDrop:{en:'Your drop zone',hi:'तुम्हारा ड्रॉप ज़ोन'}, pickZone:{en:'Pick your desert',hi:'अपना रेगिस्तान चुनो'}, randomZone:{en:'Surprise me',hi:'कोई भी'},
+  startKit:{en:'Your kit',hi:'तुम्हारा सामान'}, kitLine:{en:'{w} L water · radio battery {b}% · a mirror and a stick',hi:'{w} लीटर पानी · रेडियो बैटरी {b}% · एक शीशा और एक डंडी'},
+  goDrop:{en:'Start the show',hi:'शो शुरू करो'},
+  sameRules:{en:'Every desert has the same 6 challenges at the same difficulty, so stars are fair for everyone.',hi:'हर रेगिस्तान में वही 6 चुनौतियाँ, उतनी ही कठिन, इसलिए सबके सितारे बराबर गिने जाते हैं।'},
+  verifyNote:{en:'Science facts are kept simple for play.',hi:'खेल के लिए विज्ञान की बातें आसान रखी गई हैं।'},
+  hostLbl:{en:'Show host',hi:'शो होस्ट'}, tapSkip:{en:'tap to skip',hi:'छोड़ने के लिए टैप करो'}
+};
+const SUITS=[0xFF8A5C,0x2ED3C0,0xB39BFF,0xFFC83D];
+
+/* ---------- helpers ---------- */
+const $ = (s,el=document)=>el.querySelector(s);
+const h = (tag,attrs={},html='')=>{const e=document.createElement(tag);for(const k in attrs){const v=attrs[k];if(k==='style'&&typeof v==='object'){for(const sk in v){if(sk.startsWith('--'))e.style.setProperty(sk,v[sk]);else e.style[sk]=v[sk];}}else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?'':v);}if(html)e.innerHTML=html;return e;};
+const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+const uuid = ()=>(crypto.randomUUID?crypto.randomUUID():'r-'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+function t(x,vars){let s=(x&&typeof x==='object')?(x[S.lang]||x.en||''):(x||'');if(vars)for(const k in vars)s=s.split('{'+k+'}').join(vars[k]);return s;}
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const fmt = n=>Math.round(n).toLocaleString('en-IN');
+function fmtTime(ms){const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function rnd(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let q=Math.imul(seed^seed>>>15,1|seed);q=q+Math.imul(q^q>>>7,61|q)^q;return((q^q>>>14)>>>0)/4294967296;};}
+const rshuffle=(a,r)=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const L2=(a,b)=>({en:a,hi:b});
+function subT(o,vars){const out={};for(const k in o){let x=o[k];if(typeof x==='string'){for(const q in vars){const val=vars[q];x=x.split('{'+q+'}').join(typeof val==='object'&&val?(val[k]!=null?val[k]:val.en):val);}}out[k]=x;}return out;}
+
+/* ---------- sound ---------- */
+const SFX = {ctx:null,
+  ensure(){if(!S.sound)return null;try{if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state==='suspended')this.ctx.resume();}catch(e){return null;}return this.ctx;},
+  tone(f,d=.15,type='sine',v=.18,when=0){const c=this.ensure();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;const t0=c.currentTime+when;g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+d+.02);},
+  good(){[523,659,784].forEach((f,i)=>this.tone(f,.16,'triangle',.18,i*.08));},
+  bad(){this.tone(200,.22,'sawtooth',.1);},
+  tap(){this.tone(880,.05,'square',.06);},
+  coin(){this.tone(988,.08,'square',.08);this.tone(1319,.12,'square',.08,.07);},
+  rumble(sec=3){const c=this.ensure();if(!c)return;const n=c.sampleRate*sec,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();f.type='lowpass';f.frequency.value=260;g.gain.value=.5;s.buffer=b;s.connect(f).connect(g).connect(c.destination);s.start();}
+};
+
+
+SFX.wind=function(sec=2){const c=this.ensure();if(!c)return;const n=c.sampleRate*sec,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();f.type='bandpass';f.frequency.value=700;f.Q.value=.6;g.gain.value=.35;s.buffer=b;s.connect(f).connect(g).connect(c.destination);s.start();};
+SFX.sting=function(){[392,523,659,880].forEach((f,i)=>this.tone(f,.22,'sawtooth',.06,i*.11));};
+
+/* ---------- host voice (TV show host via speech synthesis; text banner always shown) ---------- */
+const HOST={say(text,ms=4200){const el=$('#lower3');if(el)el.remove();const b=h('div',{class:'lower3',id:'lower3',role:'status'},`<span class="mic">🎙️</span><div><b>${esc(t(UI.hostLbl))} · ${esc(t(UI.tapSkip))}</b><span>${esc(text)}</span></div>`);
+    b.onclick=()=>{b.remove();try{speechSynthesis.cancel();}catch(e){}};document.body.append(b);clearTimeout(HOST.tm);HOST.tm=setTimeout(()=>b.remove(),Math.max(ms,text.length*55));
+    if(!S.sound)return;try{const sy=window.speechSynthesis;if(!sy)return;sy.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=S.lang==='hi'?'hi-IN':'en-IN';u.rate=1.04;u.pitch=1.05;
+      const vs=sy.getVoices();const v=vs.find(x=>x.lang===u.lang)||vs.find(x=>x.lang&&x.lang.startsWith(S.lang));if(v)u.voice=v;sy.speak(u);}catch(e){}},
+  stop(){try{speechSynthesis.cancel();}catch(e){}const el=$('#lower3');if(el)el.remove();}};
+
+/* ---------- state ---------- */
+const S={base:null,ver:null,mode:'practice',slot:null,childId:null,childName:null,fp:null,fsOn:false,mission:null,lang:'en',sound:true,suit:0,coins:0,streak:0,bestStreak:0,points:0,jobs:{},run:null,events:[],beat:null,phase:'intro',windowStart:null,windowLeft:900,windowClosedShown:false,active:null,meter:null,story:'dawn'};
+const RUNKEY='fsl.missionRuns.desert';
+function newRun(){
+  const m=S.mission;S.coins=m.scoring.coins.start;S.streak=0;S.bestStreak=0;S.points=0;S.events=[];S.windowStart=null;S.windowLeft=m.windowSec;S.windowClosedShown=false;S.active=null;
+  S.fp={hidden:0,hiddenMs:0,hiddenAt:null,blur:0,fsExit:0,capture:0,studyLeave:0,fastReacts:0};
+  S.meter=S.ver?{water:S.ver.water,energy:m.meter.energy,battery:S.ver.battery}:{water:3,energy:100,battery:75};
+  S.jobs={};m.jobs.forEach(j=>S.jobs[j.id]={status:'new',learnDone:false,learnMs:0,learnOpen:null,firstActMs:null,answerSec:null,tries:0,mistakes:0,notes:false,level:null,timeMs:0,startedAt:null,points:0,credit:0,stars:0});
+  S.run={run_id:uuid(),player_id:null,player_name:null,mission_id:m.id,mission_version:m.version,round:m.round,band:m.band,lang:S.lang,started_at:null,ended_at:null,completed:false,points:0,stars:0,first_try:0,jobs:m.jobs.length,window_bonus:0,best_streak:0,rank:null,coins_end:null,ending:null,badges:[],meter_end:null,beat_target:S.beat,mode:S.mode,slot_key:S.slot?S.slot.key:null,slot_start:S.slot?new Date(S.slot.start).toISOString():null,slot_end:S.slot?new Date(S.slot.end).toISOString():null,device_id:deviceId(),version:S.ver,credibility:null,client:{ua:navigator.userAgent.slice(0,120),w:innerWidth,h:innerHeight}};
+  S.t0=performance.now();
+}
+function log(event,jobId=null,payload={}){const j=jobId?S.mission.jobs.find(x=>x.id===jobId):null;
+  S.events.push({run_id:S.run.run_id,seq:S.events.length+1,ts:new Date().toISOString(),t_ms:Math.round(performance.now()-S.t0),event,job_id:jobId,superpower:j?j.superpower:null,competency:j?j.competency:null,payload});saveRun();}
+function jobResults(){return S.mission.jobs.map(j=>{const r=S.jobs[j.id];return{run_id:S.run.run_id,job_id:j.id,task:j.task,superpower:j.superpower,competency:j.competency,completed:r.status==='done',level:r.level,first_try:r.level==='first',tries:r.tries,mistakes:r.mistakes,notes_used:r.notes,time_ms:Math.round(r.timeMs),skill_credit:r.credit,points:r.points,stars:r.stars};});}
+function saveRun(){const runs=store.get(RUNKEY,[]);const rec={run:S.run,job_results:jobResults(),events:S.events};const i=runs.findIndex(r=>r.run.run_id===S.run.run_id);if(i>=0)runs[i]=rec;else runs.push(rec);while(runs.length>20)runs.shift();store.set(RUNKEY,runs);}
+
+/* ================= versions: a different puzzle for every child, same difficulty ================= */
+function hashStr(str){let x=2166136261;for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619);}return x>>>0;}
+function deviceId(){let d=store.get('fsl.deviceId',null);if(!d){d=uuid();store.set('fsl.deviceId',d);}return d;}
+const DV=[[-1,0],[0,1],[1,0],[0,-1]]; // screen dirs: 0 up, 1 right, 2 down, 3 left  ([dr,dc])
+const WORLD=['N','E','S','W'];
+function bfs(N,start,goal,canEnter){const key=(r,c)=>r*N+c;const prev=new Map([[key(...start),null]]);const q=[start];
+  while(q.length){const [r,c]=q.shift();if(r===goal[0]&&c===goal[1]){let n=0,k=key(r,c);while(prev.get(k)!=null){k=prev.get(k);n++;}return n;}
+    for(let d=0;d<4;d++){const nr=r+DV[d][0],nc=c+DV[d][1];if(nr<0||nc<0||nr>=N||nc>=N)continue;const k=key(nr,nc);if(prev.has(k))continue;if(!canEnter(nr,nc,d))continue;prev.set(k,key(r,c));q.push([nr,nc]);}}
+  return -1;}
+function edgeCell(edge,i,N){return edge===0?[0,i]:edge===1?[i,N-1]:edge===2?[N-1,i]:[i,0];}
+function genDunes(r,N){
+  for(let tries=0;tries<3000;tries++){
+    const rot=Math.floor(r()*4);const campDir=r()<.5?'S':'W';const ce=campDir==='S'?(rot+2)%4:(rot+3)%4;const se=(ce+2)%4;
+    const start=edgeCell(se,2,N);const camp=edgeCell(ce,Math.floor(r()*N),N);
+    const ok=[rot,(rot+1)%4];const dune=[...Array(N)].map(()=>Array(N).fill(false));
+    for(let i=0;i<N;i++)for(let k=0;k<N;k++){if((i===start[0]&&k===start[1])||(i===camp[0]&&k===camp[1]))continue;dune[i][k]=r()<.5;}
+    const legal=(nr,nc,d)=>!dune[nr][nc]||ok.includes(d);
+    const L=bfs(N,start,camp,legal);if(L<0)continue;
+    if(bfs(N,start,camp,(nr,nc)=>!dune[nr][nc])>=0)continue;
+    const man=Math.abs(start[0]-camp[0])+Math.abs(start[1]-camp[1]);if(L!==man+2)continue;
+    return{rot,campDir,ce,start,camp,dune,len:L,man};
+  }
+  return{fallback:true,rot:0,campDir:'S',ce:2,start:[0,2],camp:[4,1],len:7,man:5,dune:[[0,0,1,1,0],[1,0,1,0,1],[0,1,1,1,0],[1,1,0,0,1],[0,0,0,1,0]].map(r=>r.map(Boolean))};
+}
+function genMemory(r,N){
+  const corners=[[N-1,0],[N-1,N-1],[0,N-1],[0,0]];
+  for(let tries=0;tries<2000;tries++){
+    const start=corners[Math.floor(r()*4)];const cells=[];for(let i=0;i<N;i++)for(let k=0;k<N;k++)cells.push([i,k]);
+    const far=cells.filter(c=>Math.abs(c[0]-start[0])+Math.abs(c[1]-start[1])===6);const oasis=far[Math.floor(r()*far.length)];
+    const inBox=c=>Math.min(start[0],oasis[0])<=c[0]&&c[0]<=Math.max(start[0],oasis[0])&&Math.min(start[1],oasis[1])<=c[1]&&c[1]<=Math.max(start[1],oasis[1]);
+    const free=rshuffle(cells.filter(c=>!(c[0]===start[0]&&c[1]===start[1])&&!(c[0]===oasis[0]&&c[1]===oasis[1])),r);
+    const box=free.filter(inBox),out=free.filter(c=>!inBox(c));if(box.length<4||out.length<2)continue;
+    const hz=[box[0],box[1],r()<.5?box[2]:out[0]];const rest=free.filter(c=>!hz.includes(c));const lm=[rest[0],rest[1],rest[2]];
+    const isH=(a,b)=>hz.some(x=>x[0]===a&&x[1]===b);
+    // a monotone (always closer) path that avoids every hazard must exist; and the plain straight lines must be blocked
+    const dr=Math.sign(oasis[0]-start[0]),dc=Math.sign(oasis[1]-start[1]);const memo={};
+    const can=(a,b)=>{if(isH(a,b))return false;if(a===oasis[0]&&b===oasis[1])return true;const k=a+','+b;if(k in memo)return memo[k];let v=false;if(a!==oasis[0]&&can(a+dr,b))v=true;if(!v&&b!==oasis[1]&&can(a,b+dc))v=true;return memo[k]=v;};
+    if(!can(start[0],start[1]))continue;
+    let blocked=0;const n=Math.abs(oasis[0]-start[0])+Math.abs(oasis[1]-start[1]);
+    // count monotone paths that hit a hazard: need hazards to really matter
+    hz.forEach(x=>{if(inBox(x))blocked++;});if(blocked<2)continue;
+    const kinds=['quick','thorn','nest'];const lk=['tree','well','chhatri'];
+    return{start,oasis,steps:n,hazards:hz.map((c,i)=>[c[0],c[1],kinds[i]]),landmarks:lm.map((c,i)=>[c[0],c[1],lk[i]])};
+  }
+  return{fallback:true,start:[4,0],oasis:[0,3],steps:7,hazards:[[2,1,'quick'],[1,3,'thorn'],[3,3,'nest']],landmarks:[[4,4,'tree'],[0,0,'well'],[2,4,'chhatri']]};
+}
+function genReflex(r,jb){
+  const ev=jb.events;const byAns=a=>ev.filter(e=>e.day===a);const pick=(arr,n)=>{const out=[];for(let i=0;i<n;i++)out.push(arr[Math.floor(r()*arr.length)].id);return out;};
+  const dayN=jb.stageLen-1+Math.floor(r()*3);const nightN=jb.stageLen*2-dayN;
+  const mk=(n,night)=>{const mx=night?{go:Math.round(n*.45),cover:2}:{go:Math.round(n*.375),cover:2};mx.stay=n-mx.go-mx.cover;
+    let a=[...pick(byAns('go'),mx.go),...pick(byAns('stay'),mx.stay),...pick(byAns('cover'),mx.cover)];
+    for(let k=0;k<50;k++){a=rshuffle(a,r);const ans=a.map(id=>{const e=ev.find(x=>x.id===id);return night?e.night:e.day;});let bad=false;for(let i=2;i<ans.length;i++)if(ans[i]===ans[i-1]&&ans[i]===ans[i-2])bad=true;if(!bad)break;}
+    return a;};
+  return{day:mk(dayN,false),night:mk(nightN,true)};
+}
+function makeVersion(seedStr,avoid={},zoneId=null){
+  const r=rnd(hashStr(seedStr));const jb=id=>S.base.jobs.find(j=>j.id===id);const Z=S.base.zones;const M=S.base.meter;
+  const v={seed:seedStr};
+  if(zoneId&&Z.find(z=>z.id===zoneId))v.zone=zoneId;else{const ids=Z.map(z=>z.id);let i=Math.floor(r()*ids.length);const used=avoid.zone||[];if(used.length<ids.length)for(let k=0;k<ids.length&&used.includes(ids[i]);k++)i=(i+1)%ids.length;v.zone=ids[i];}
+  v.water=M.water[Math.floor(r()*M.water.length)];v.battery=M.battery[Math.floor(r()*M.battery.length)];
+  const bank=jb('plan').bank;let pi=Math.floor(r()*bank.length);const up=avoid.plan||[];if(up.length<bank.length)for(let k=0;k<bank.length&&up.includes(pi);k++)pi=(pi+1)%bank.length;v.plan=pi;
+  v.dunes=genDunes(r,jb('dunes').size);
+  v.memory=genMemory(r,jb('memory').size);
+  const mj=jb('mirage');const types=rshuffle(['plain','inverted','dead','road'],r).slice(0,3);const real=Math.floor(r()*4);const cand=[];let ti=0;for(let i=0;i<4;i++)cand.push(i===real?'real':types[ti++]);
+  v.mirage={cand,cue:r()<.5?'birds':'tracks',thorny:rshuffle([0,1,2,3,4,5],r).slice(0,mj.thorny),bushShape:[0,1,2,3,4,5].map(()=>Math.floor(r()*3)),
+    kit:rshuffle(Object.keys(S.base.kit),r),broken:rshuffle(Object.keys(S.base.kit),r).slice(0,mj.broken)};
+  const sj=jb('still');v.still={decoys:rshuffle(Object.keys(sj.decoys),r).slice(0,sj.decoyCount),order:null};v.still.order=rshuffle(sj.order.concat(v.still.decoys),r);
+  v.reflex=genReflex(r,jb('storm'));
+  return v;
+}
+function planSim(seq,p){ // returns {e, err, trace}
+  let E=p.E0,walks=0,prev=null;const done=new Set();const tr=[];
+  for(let i=0;i<seq.length;i++){const c=seq[i],ph=p.ph[i];
+    if(c==='walk'){if(prev==='walk')return{e:null,err:'twoWalks',at:i,trace:tr};E-=p.walk[ph];walks++;}
+    else if(c==='shade')E-=p.shade;
+    else if(c==='rest'){if(ph==='n'&&done.has('shade'))E+=p.restNoon;else if(ph==='x'&&done.has('shelter'))E+=p.restNight;else E+=p.restOther;}
+    else if(c==='mirror'){if(i!==p.P)return{e:null,err:'plane',at:i,trace:tr};E-=2;}
+    else if(c==='shelter'){if(walks<2)return{e:null,err:'shelterEarly',at:i,trace:tr};E-=p.shelter+(ph==='x'?p.shelterNightExtra:0);}
+    tr.push(E);if(E<0)return{e:null,err:'tired',at:i,trace:tr};done.add(c);prev=c;}
+  return{e:E,err:null,trace:tr};
+}
+function applyVersion(v){
+  const m=JSON.parse(JSON.stringify(S.base));const J=id=>m.jobs.find(j=>j.id===id);
+  m.zone=m.zones.find(z=>z.id===v.zone)||m.zones[0];
+  const pj=J('plan');pj.p=pj.bank[v.plan];delete pj.bank;const P=pj.p;
+  pj.explain=subT(pj.explain,{best:P.best,plan:{en:P.opt.map(c=>UI.cards[c].en).join(' → '),hi:P.opt.map(c=>UI.cards[c].hi).join(' → ')}});
+  const dj=J('dunes');dj.v=v.dunes;const dir=UI.dirs[v.dunes.campDir];dj.prompt=subT(dj.prompt,{dir});dj.explain=subT(dj.explain,{dir,edge:UI.edges[v.dunes.ce]});
+  const mj=J('memory');mj.v=v.memory;mj.prompt=subT(mj.prompt,{sec:mj.studySec});mj.learn[0].tail=subT(mj.learn[0].tail,{sec:mj.studySec});
+  mj.explain=subT(mj.explain,{n:v.memory.steps,hz:{en:v.memory.hazards.map(x=>UI.items[x[2]].en.toLowerCase()).join(', '),hi:v.memory.hazards.map(x=>UI.items[x[2]].hi).join(', ')}});
+  const sp=J('mirage');sp.v=v.mirage;sp.prompts[1]=subT(sp.prompts[1],{n:sp.thorny});sp.prompts[2]=subT(sp.prompts[2],{n:sp.broken});
+  sp.explain=subT(sp.explain,{cue:v.mirage.cue==='birds'?UI.cueBirds:UI.cueTracks,list:{en:v.mirage.broken.map(k=>m.kitBroken[k].en).join('; '),hi:v.mirage.broken.map(k=>m.kitBroken[k].hi).join('; ')}});
+  const st=J('still');st.v=v.still;st.prompt=subT(st.prompt,{n:st.decoyCount});
+  st.explain=subT(st.explain,{decoys:{en:v.still.decoys.map(d=>st.decoys[d].en+': '+st.decoys[d].why.en).join(' '),hi:v.still.decoys.map(d=>st.decoys[d].hi+': '+st.decoys[d].why.hi).join(' ')}});
+  const rj=J('storm');rj.v=v.reflex;rj.prompt=subT(rj.prompt,{pass:rj.pass,n:v.reflex.day.length+v.reflex.night.length});
+  S.ver=v;S.mission=m;
+}
+
+/* ================= fair play: slot, flags, credibility ================= */
+const hhmm=ms=>{const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+function slotState(){if(!S.slot)return 'open';const now=Date.now();if(now<S.slot.start)return 'before';if(now<=S.slot.start+S.slot.grace)return 'open';if(now<=S.slot.end)return 'late';return 'closed';}
+function answersOpen(){return S.mode!=='ranked'||!S.slot||Date.now()>S.slot.end;}
+function fpOn(){return (S.phase==='play'||S.phase==='rescue')&&S.fp;}
+function studying(){return S.active&&S.active.task&&S.active.task.studying&&S.active.task.studying();}
+document.addEventListener('visibilitychange',()=>{if(!fpOn())return;
+  if(document.hidden){S.fp.hidden++;if(studying())S.fp.studyLeave++;S.fp.hiddenAt=performance.now();log('fp_leave',S.active?S.active.job.id:null,{kind:'hidden',study:!!studying()});}
+  else if(S.fp.hiddenAt!=null){const d=performance.now()-S.fp.hiddenAt;S.fp.hiddenMs+=d;S.fp.hiddenAt=null;log('fp_return',null,{ms:Math.round(d)});if(S.mode==='ranked')toast(t(UI.leftWarn),3500);}});
+window.addEventListener('blur',()=>{if(!fpOn())return;const st=studying();setTimeout(()=>{if(!fpOn()||document.hidden)return;S.fp.blur++;if(st)S.fp.studyLeave++;log('fp_leave',S.active?S.active.job.id:null,{kind:'focus_lost',study:!!st});},300);});
+window.addEventListener('focus',()=>{if(fpOn()&&S.mode==='ranked'&&S.fp.blur&&!document.hidden)toast(t(UI.leftWarn),2500);});
+document.addEventListener('fullscreenchange',()=>{if(fpOn()&&S.fsOn&&!document.fullscreenElement){S.fp.fsExit++;S.fsOn=false;log('fp_leave',null,{kind:'fullscreen_exit'});}});
+function capKey(e){const k=e.key||'';if(k==='PrintScreen'||((e.metaKey||e.ctrlKey)&&e.shiftKey&&/^[345sS]$/.test(k))){if(fpOn()){S.fp.capture++;if(studying())S.fp.studyLeave++;log('fp_capture',null,{key:k,study:!!studying()});if(S.mode==='ranked')toast(t(UI.capWarn),3500);}}}
+document.addEventListener('keyup',e=>{if(e.key==='PrintScreen')capKey(e);});
+document.addEventListener('keydown',e=>{if(e.key!=='PrintScreen')capKey(e);});
+document.addEventListener('contextmenu',e=>{if(S.mode==='ranked')e.preventDefault();});
+function setWatermark(on){let el=$('#wm');if(!on){if(el)el.remove();return;}if(!el){el=h('div',{id:'wm'});document.body.append(el);}
+  const c=document.createElement('canvas');c.width=360;c.height=200;const g=c.getContext('2d');g.translate(180,100);g.rotate(-.4);g.fillStyle='#fff';g.font="800 22px 'Baloo 2',sans-serif";g.textAlign='center';
+  g.fillText(`FSL · ${S.childId||''}`,0,-6);g.font="700 16px 'Baloo 2',sans-serif";g.fillText(`${S.childName||''} · ${new Date().toLocaleDateString('en-IN')}`,0,18);el.style.backgroundImage=`url(${c.toDataURL()})`;}
+function computeCred(){
+  const F=S.base.fairPlay,fl=[];const add=(group,id,points,detail)=>fl.push({group,id,points,detail});const now=Date.now();
+  const dev=store.get('fsl.devRanked.desert',[]);
+  if(S.mode==='ranked'){[...new Set(dev.filter(x=>x.child!==S.childId&&now-x.at<864e5).map(x=>x.child))].forEach(c=>add('A','A1',-10,'another child played ranked on this device in 24 h: '+c));}
+  S.mission.jobs.forEach(j=>{const fl0=F.floors[j.id],st=S.jobs[j.id];if(fl0&&st.status==='done'&&st.timeMs/1000<fl0)add('B','B1',-5,`${j.id} done in ${(st.timeMs/1000).toFixed(1)} s (floor ${fl0} s)`);});
+  const tot=(new Date(S.run.ended_at||Date.now())-new Date(S.run.started_at))/1000;if(tot<F.minTotalSec)add('B','B2',-5,`whole show in ${Math.round(tot)} s (floor ${F.minTotalSec} s)`);
+  if(S.fp.fastReacts>=F.reactFlagCount)add('B','B3',-5,`${S.fp.fastReacts} sandstorm reactions faster than ${F.reactFloorMs} ms`);
+  const me=S.jobs.memory;if(me.status==='done'&&me.mistakes===0&&S.fp.studyLeave>0)add('C','C1',-10,`perfect memory walk after leaving the game or a screenshot key during the study time (${S.fp.studyLeave}x)`);
+  const pl=S.jobs.plan;if(pl.level==='first'&&pl.answerSec!=null&&pl.answerSec<F.planMinSec)add('C','C2',-5,`best day plan submitted ${pl.answerSec.toFixed(1)} s after the table opened`);
+  let c3=0;S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];if(st.level==='first'&&st.learnMs<F.readMinSec*1000&&c3<3){c3++;add('C','C3',-3,`${j.id}: Learn card read ${(st.learnMs/1000).toFixed(1)} s, then first try`);}});
+  S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];if(j.task!=='reflex'&&j.task!=='memory'&&st.level==='first'&&st.firstActMs!=null&&st.firstActMs<F.readPromptSec*1000)add('C','C5',-3,`${j.id}: first action ${(st.firstActMs/1000).toFixed(1)} s after the task opened (no time to read)`);});
+  const leaves=S.fp.hidden+S.fp.blur+S.fp.fsExit;if(leaves>F.leaveMax)add('D','D1',-5*Math.min(3,leaves-F.leaveMax),`left the game ${leaves} times (${S.fp.hidden} app hidden, ${S.fp.blur} focus lost, ${S.fp.fsExit} full screen exit)`);
+  if(S.fp.hiddenMs>F.leaveTotalSec*1000)add('D','D1b',-5,`away from the game ${Math.round(S.fp.hiddenMs/1000)} s in total`);
+  S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];if(st.level!=='first')return;const ev=S.events.filter(e=>e.job_id===j.id).map(e=>e.t_ms);let gap=0;for(let i=1;i<ev.length;i++)gap=Math.max(gap,ev[i]-ev[i-1]);if(gap>F.idleSec*1000)add('D','D2',-5,`${j.id}: ${Math.round(gap/1000)} s pause, then first try`);});
+  if(S.childId){const runs=store.get(RUNKEY,[]).filter(x=>x.run&&x.run.mode==='practice'&&x.run.player_id===S.childId&&x.run.completed);
+    if(S.mode==='ranked'&&runs.length>=2){const avg=runs.reduce((a,x)=>a+x.job_results.reduce((q,r)=>q+r.skill_credit,0)/6,0)/runs.length;const mine=S.mission.jobs.reduce((q,j)=>q+S.jobs[j.id].credit,0)/6;if(mine>avg+0.4)add('E','E1',-10,`ranked skill ${mine.toFixed(2)} vs practice average ${avg.toFixed(2)}`);}}
+  if(S.mode==='ranked'){const earlier=dev.filter(x=>x.child!==S.childId&&now-x.at<2*3600e3);const beat=earlier.find(x=>S.points>=1.3*x.points);if(beat)add('E','E2',-10,`scored ${S.points} after ${beat.child} scored ${beat.points} on this device within 2 h`);}
+  if(S.fp.capture)add('F','F1',-10*S.fp.capture,`screenshot key pressed ${S.fp.capture} time(s)`);
+  const groups={};fl.forEach(x=>groups[x.group]=(groups[x.group]||0)+x.points);let total=0;for(const g in groups){groups[g]=Math.max(F.caps[g],groups[g]);total+=groups[g];}
+  const score=Math.max(0,100+total);const band=score>=F.bands.green?'Green':score>=F.bands.amber?'Amber':'Red';
+  return{score,band,groups,flags:fl,signals:{leaves,hidden_ms:Math.round(S.fp.hiddenMs),focus_lost:S.fp.blur,fullscreen_exit:S.fp.fsExit,capture:S.fp.capture,study_leave:S.fp.studyLeave,fast_reacts:S.fp.fastReacts},note:'Screen recording and meeting screen-share cannot be seen by a web page; the app version can block them. Focus loss is the proxy here.'};
+}
+
+/* ---------- Survival Meter (fun layer only) ---------- */
+function meterChange(dw,de,db,why){const m=S.meter;if(!m)return;m.water=Math.max(.1,Math.round((m.water+dw)*10)/10);m.energy=Math.max(5,Math.min(100,m.energy+de));m.battery=Math.max(5,Math.min(100,m.battery+db));
+  renderMeters(dw,de,db);if(why)log('meter',S.active?S.active.job.id:null,{dw,de,db,why,water:m.water,energy:m.energy,battery:m.battery});}
+function meterMistake(jobId){const M=S.mission.meter;if(jobId==='storm'){meterChange(0,-1,-M.mistakeBattery,'mistake');return;}meterChange(jobId==='dunes'?-2*M.mistakeWater:-M.mistakeWater,-M.mistakeEnergy,0,'mistake');}
+function renderMeters(dw,de,db){const el=$('#meters');if(!S.meter)return;const m=S.meter,M=S.mission.meter;const maxW=Math.max(...M.water);
+  el.innerHTML=`<div class="phase">📺 ${esc(t(S.mission.phases[S.story]))} · ${esc(t(S.mission.zone.name))}</div>`+
+   [['water','💧',m.water.toFixed(1)+' L',m.water/maxW*100,'var(--water)',dw],['energy','⚡',Math.round(m.energy),m.energy,'var(--energy)',de],['battery','📻',Math.round(m.battery)+'%',m.battery,'var(--batt)',db]]
+   .map(([k,ic,val,pct,c,d])=>`<div class="meter${d?' bump':''}" style="--c:${c}" title="${esc(t(k==='water'?UI.water:k==='energy'?UI.energyM:UI.battery))}">${ic}<span class="bar"><i style="width:${Math.max(4,Math.min(100,pct))}%"></i></span>${val}</div>`).join('');}
+
+/* ================= 3D desert ================= */
+const R={tweens:[],clock:null,markers:{},hits:[],dust:[],props:{}};
+const lam=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
+const basic=(c,o={})=>new THREE.MeshBasicMaterial(Object.assign({color:c},o));
+function tween(dur,fn,done){R.tweens.push({t:0,dur,fn,done});}
+function label(text,{bg='rgba(37,22,15,.9)',fg='#FFF6EA',size=44,w=512,hgt=96}={}){
+  const c=document.createElement('canvas');c.width=w;c.height=hgt;const g=c.getContext('2d');
+  g.font=`800 ${size}px 'Baloo 2','Nirmala UI','Noto Sans Devanagari',sans-serif`;const tw=Math.min(w-20,g.measureText(text).width+40);
+  g.fillStyle=bg;const x=(w-tw)/2,r=hgt/2-4;g.beginPath();g.moveTo(x+r,4);g.arcTo(x+tw,4,x+tw,hgt-4,r);g.arcTo(x+tw,hgt-4,x,hgt-4,r);g.arcTo(x,hgt-4,x,4,r);g.arcTo(x,4,x+tw,4,r);g.fill();
+  g.fillStyle=fg;g.textAlign='center';g.textBaseline='middle';g.fillText(text,w/2,hgt/2+3,w-40);
+  const tex=new THREE.CanvasTexture(c);tex.anisotropy=4;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sp.scale.set(w/hgt*0.9,0.9,1);sp.renderOrder=10;return sp;}
+const SKY={
+  dawn:{sky:0xF0A47E,fog:0xF2B793,sun:[60,9,-20],int:.65,col:0xFFC9A0,hemi:.75,stars:0},
+  morning:{sky:0x9FD3F0,fog:0xD9E8EE,sun:[45,40,-10],int:.9,col:0xFFF1D6,hemi:.9,stars:0},
+  noon:{sky:0xCFEAF7,fog:0xF4EEDF,sun:[5,85,-5],int:1.05,col:0xFFFFFF,hemi:1,stars:0},
+  afternoon:{sky:0xEBCF96,fog:0xF0D7A6,sun:[-40,45,-10],int:.95,col:0xFFE2B0,hemi:.9,stars:0},
+  evening:{sky:0xD9673E,fog:0xC9774F,sun:[-60,7,-20],int:.6,col:0xFF9A5C,hemi:.65,stars:.2},
+  night:{sky:0x0B1030,fog:0x141A3E,sun:[-60,-20,0],int:.25,col:0x9DB4FF,hemi:.35,stars:1}
+};
+function groundHeight(x,z){return Math.sin(x*.11)*.35+Math.cos(z*.09+x*.05)*.35;}
+function init3D(){
+  const cv=$('#gl');
+  try{R.renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});}catch(e){document.body.append(h('div',{class:'nogl'},esc(t(UI.noGL))));return false;}
+  R.renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+  const sc=R.scene=new THREE.Scene();sc.background=new THREE.Color(SKY.dawn.sky);sc.fog=new THREE.Fog(SKY.dawn.fog,50,140);
+  R.camera=new THREE.PerspectiveCamera(52,1,0.1,500);R.camera.position.set(0,12,46);
+  R.hemi=new THREE.HemisphereLight(0xfff4e0,0x8a5a32,.8);sc.add(R.hemi);R.sunL=new THREE.DirectionalLight(0xffffff,.8);R.sunL.position.set(40,40,10);sc.add(R.sunL);
+  // ground with soft waves
+  const gg=new THREE.PlaneGeometry(260,260,90,90);gg.rotateX(-Math.PI/2);const pa=gg.attributes.position;for(let i=0;i<pa.count;i++){pa.setY(i,groundHeight(pa.getX(i),pa.getZ(i)));}gg.computeVertexNormals();
+  R.groundMat=lam(0xE3B878);const ground=new THREE.Mesh(gg,R.groundMat);sc.add(ground);R.ground=ground;
+  // sun, moon, stars
+  R.sun=new THREE.Mesh(new THREE.SphereGeometry(6,20,14),basic(0xFFF2B0,{fog:false}));sc.add(R.sun);
+  R.moon=new THREE.Mesh(new THREE.SphereGeometry(4,20,14),basic(0xEDEFFF,{fog:false}));R.moon.position.set(30,60,-150);R.moon.visible=false;sc.add(R.moon);
+  const r=rnd(7),pos=[];for(let i=0;i<900;i++){const th=r()*Math.PI*2,ph=Math.acos(r()*0.95);const rr=200;pos.push(rr*Math.sin(ph)*Math.cos(th),rr*Math.cos(ph)+5,rr*Math.sin(ph)*Math.sin(th));}
+  const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));R.stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:1.2,sizeAttenuation:true,fog:false,transparent:true,opacity:0}));sc.add(R.stars);
+  // dunes: scattered crescents away from the route + a far ring
+  R.duneMat=lam(0xD9A55F);const route=S.mission.jobs.map(j=>[j.station.x,j.station.z]).concat([[0,34],[S.mission.camp.x,S.mission.camp.z]]);
+  const nearRoute=(x,z)=>route.some(([a,b])=>Math.hypot(x-a,z-b)<7)||Math.abs(x)<4&&z>-46&&z<36;
+  for(let i=0;i<70;i++){const x=(r()-.5)*120,z=(r()-.5)*120;if(nearRoute(x,z))continue;const s=2+r()*5;const d=new THREE.Mesh(new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI/2),R.duneMat);d.scale.set(s*1.6,s*.55,s);d.position.set(x,groundHeight(x,z)-.2,z);d.rotation.y=Math.PI/4+(r()-.5)*.4;sc.add(d);}
+  for(let i=0;i<22;i++){const a=i/22*Math.PI*2;const d=new THREE.Mesh(new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI/2),R.duneMat);const s=10+r()*10;d.scale.set(s*1.8,s*.6,s);d.position.set(Math.cos(a)*95,-1,Math.sin(a)*95);sc.add(d);}
+  // little bushes + rocks for life
+  for(let i=0;i<40;i++){const x=(r()-.5)*90,z=(r()-.5)*90;if(nearRoute(x,z))continue;const b=new THREE.Mesh(new THREE.IcosahedronGeometry(.5+r()*.5,0),lam(r()<.6?0x8A8F4A:0x7A6A55));b.position.set(x,groundHeight(x,z)+.2,z);b.scale.y=.6;sc.add(b);}
+  // trail stones between stations
+  const pts=[[0,34]].concat(S.mission.jobs.map(j=>[j.station.x,j.station.z])).concat([[S.mission.camp.x,S.mission.camp.z]]);
+  for(let i=0;i<pts.length-1;i++){const [a,b]=pts[i],[c,d]=pts[i+1];const n=Math.floor(Math.hypot(c-a,d-b)/2.2);for(let k=1;k<n;k++){const x=a+(c-a)*k/n,z=b+(d-b)*k/n;const s=new THREE.Mesh(new THREE.CylinderGeometry(.22,.28,.12,6),lam(0xB98A5A));s.position.set(x,groundHeight(x,z)+.05,z);sc.add(s);}}
+  buildProps();buildCamp();buildAvatar();buildMarkers();buildDust();
+  R.ray=new THREE.Raycaster();R.clock=new THREE.Clock();
+  resize();addEventListener('resize',resize);bindInput();applyZone();setStory('dawn',true);
+  R.renderer.setAnimationLoop(frame);
+  return true;
+}
+function resize(){const w=innerWidth,hh=innerHeight;R.renderer.setSize(w,hh,false);R.camera.aspect=w/hh;R.camera.fov=w<hh?62:50;R.camera.updateProjectionMatrix();}
+function applyZone(){const z=S.mission.zone;if(!z||!R.groundMat)return;R.groundMat.color.set(z.ground);R.duneMat.color.set(z.dune);}
+function setStory(ph,instant){S.story=ph;const k=SKY[ph];if(!k)return;const from={sky:R.scene.background.clone(),fog:R.scene.fog.color.clone(),col:R.sunL.color.clone(),int:R.sunL.intensity,hemi:R.hemi.intensity,sun:R.sun.position.clone(),stars:R.stars.material.opacity};
+  const to={sky:new THREE.Color(k.sky),fog:new THREE.Color(k.fog),col:new THREE.Color(k.col),sun:new THREE.Vector3(k.sun[0]*2,k.sun[1]*2,k.sun[2]*2-60)};
+  const apply=e=>{R.scene.background.copy(from.sky).lerp(to.sky,e);R.scene.fog.color.copy(from.fog).lerp(to.fog,e);R.sunL.color.copy(from.col).lerp(to.col,e);R.sunL.intensity=from.int+(k.int-from.int)*e;R.hemi.intensity=from.hemi+(k.hemi-from.hemi)*e;
+    R.sun.position.copy(from.sun).lerp(to.sun,e);R.sunL.position.copy(R.sun.position);R.stars.material.opacity=from.stars+(k.stars-from.stars)*e;R.sun.visible=R.sun.position.y>-4;R.moon.visible=ph==='night';
+    R.sun.material.color.set(ph==='evening'||ph==='dawn'?0xFF9A5C:0xFFF2B0);};
+  if(instant)apply(1);else tween(2.5,apply);renderMeters();}
+
+/* --- station props --- */
+function propGroup(j,dx=0,dz=-3.5){const g=new THREE.Group();const x=j.station.x+dx,z=j.station.z+dz;g.position.set(x,groundHeight(x,z),z);R.scene.add(g);return g;}
+function buildProps(){
+  const J=id=>S.mission.jobs.find(j=>j.id===id);
+  // plan: backpack + tarp + sign board
+  let g=propGroup(J('plan'));const bag=new THREE.Mesh(new THREE.BoxGeometry(1,1.3,.6),lam(0xC0392B));bag.position.set(-1.2,.65,0);g.add(bag);
+  const tarp=new THREE.Mesh(new THREE.PlaneGeometry(3,2),lam(0x2ED3C0,{side:THREE.DoubleSide}));tarp.position.set(1,1.6,0);tarp.rotation.x=-1.1;g.add(tarp);
+  [[-.4,0],[2.4,0]].forEach(([x])=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,2.2,6),lam(0x7A5536));p.position.set(x,1.1,-.6);g.add(p);});
+  const board=new THREE.Mesh(new THREE.BoxGeometry(2.2,1.4,.1),lam(0xF5E6C8));board.position.set(0,2.6,-1.4);g.add(board);
+  // dunes: shadow stick with two marks
+  g=propGroup(J('dunes'));const st=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,2.4,8),lam(0x6E4B2E));st.position.y=1.2;g.add(st);
+  const shadow=new THREE.Mesh(new THREE.PlaneGeometry(.18,2.6),basic(0x6B4A2C,{transparent:true,opacity:.5}));shadow.rotation.x=-Math.PI/2;shadow.position.set(.9,.03,.4);shadow.rotation.z=-1.1;g.add(shadow);
+  [[1.9,.9],[2.1,-.3]].forEach(([x,z],i)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.1,10),basic(i?0xFFB627:0xFFFFFF));m.position.set(x,.06,z);g.add(m);});
+  const bd=new THREE.Mesh(new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI/2),R.duneMat);bd.scale.set(5,2,3.4);bd.position.set(-4,0,-3);bd.rotation.y=.8;g.add(bd);
+  // memory: map board + old well
+  g=propGroup(J('memory'));const post=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,2.4,6),lam(0x7A5536));post.position.y=1.2;g.add(post);
+  const map=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.8,.1),lam(0xF3E2BE));map.position.y=2.6;g.add(map);R.props.map=map;
+  const well=new THREE.Mesh(new THREE.CylinderGeometry(1,1.1,.9,16,1,true),lam(0xA9845E,{side:THREE.DoubleSide}));well.position.set(3,.45,-1);g.add(well);
+  const tree=khejri();tree.position.set(-3,0,-2);g.add(tree);
+  // mirage: shimmering band + a far palm cluster
+  g=propGroup(J('mirage'),0,-9);const mw=new THREE.Mesh(new THREE.PlaneGeometry(14,3),basic(0x9FD8F5,{transparent:true,opacity:.6,depthWrite:false}));mw.rotation.x=-Math.PI/2;mw.position.y=.08;g.add(mw);R.props.mirage=mw;
+  const oas=new THREE.Group();oas.position.set(9,0,-6);g.add(oas);const pond=new THREE.Mesh(new THREE.CircleGeometry(2.2,20),lam(0x3F8FBF));pond.rotation.x=-Math.PI/2;pond.position.y=.06;oas.add(pond);
+  for(let i=0;i<4;i++){const p=palm();p.position.set(Math.cos(i*1.7)*2.6,0,Math.sin(i*1.7)*2.6);p.rotation.y=i;oas.add(p);}
+  // still: pit + clear sheet cone + stone + cup
+  g=propGroup(J('still'));const pit=new THREE.Mesh(new THREE.CircleGeometry(1.4,24),lam(0x8A6238));pit.rotation.x=-Math.PI/2;pit.position.y=.05;g.add(pit);
+  const sheet=new THREE.Mesh(new THREE.ConeGeometry(1.5,.5,24,1,true),lam(0xDDF3FF,{transparent:true,opacity:.55,side:THREE.DoubleSide}));sheet.rotation.x=Math.PI;sheet.position.y=.2;sheet.visible=false;g.add(sheet);R.props.sheet=sheet;
+  const stone=new THREE.Mesh(new THREE.IcosahedronGeometry(.18,0),lam(0x8C8C8C));stone.position.y=.05;stone.visible=false;g.add(stone);R.props.stone=stone;
+  // storm: rock outcrop shelter
+  g=propGroup(J('storm'),2,-3);for(let i=0;i<4;i++){const rk=new THREE.Mesh(new THREE.DodecahedronGeometry(1+i*.3,0),lam(0x9C6B45));rk.position.set(i*1.4-2,.6,-i*.5);rk.scale.y=.8;g.add(rk);}
+}
+function palm(){const g=new THREE.Group();const tr=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,3.2,6),lam(0x8B6A43));tr.position.y=1.6;tr.rotation.z=.12;g.add(tr);
+  for(let i=0;i<6;i++){const lf=new THREE.Mesh(new THREE.BoxGeometry(1.8,.05,.4),lam(0x3E9B4F));lf.position.set(Math.cos(i)*0.8,3.2,Math.sin(i)*0.8);lf.rotation.y=-i;lf.rotation.z=-.4;g.add(lf);}return g;}
+function khejri(){const g=new THREE.Group();const tr=new THREE.Mesh(new THREE.CylinderGeometry(.15,.25,2,6),lam(0x6E4B2E));tr.position.y=1;g.add(tr);const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3,0),lam(0x6F8F3A));cr.position.y=2.4;cr.scale.y=.6;g.add(cr);return g;}
+function buildCamp(){
+  const c=S.mission.camp;const g=new THREE.Group();g.position.set(c.x,groundHeight(c.x,c.z),c.z);R.scene.add(g);R.camp=g;
+  [[-4,-2,0xFF8A5C],[3.5,-3,0x2ED3C0],[-1,-5,0xFFC83D]].forEach(([x,z,col])=>{const t=new THREE.Mesh(new THREE.ConeGeometry(1.6,2.4,4),lam(col));t.position.set(x,1.2,z);t.rotation.y=Math.PI/4;g.add(t);});
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4,6),lam(0xdddddd));pole.position.set(0,2,-1);g.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(1.4,.9),lam(0xE0243A,{side:THREE.DoubleSide}));fl.position.set(.7,3.5,-1);g.add(fl);R.flag=fl;
+  const pad=new THREE.Mesh(new THREE.CircleGeometry(3,28),lam(0x5A5A5A));pad.rotation.x=-Math.PI/2;pad.position.set(6,.06,3);g.add(pad);const H=label('H',{bg:'rgba(0,0,0,0)',fg:'#FFFFFF',size:80,w:128,hgt:128});H.position.set(6,.3,3);H.scale.set(2,2,1);g.add(H);
+  const fire=new THREE.Group();fire.position.set(-2,0,2);for(let i=0;i<3;i++){const f=new THREE.Mesh(new THREE.ConeGeometry(.3,.9,8),basic(i?0xFFB627:0xFF5D2E));f.position.set((i-1)*.2,.45,0);fire.add(f);}g.add(fire);R.fire=fire;
+  const lbl=label('🏁 RESCUE CAMP',{bg:'rgba(224,36,58,.95)',fg:'#fff',size:42});lbl.position.set(0,5.4,-1);lbl.scale.multiplyScalar(1.2);g.add(lbl);
+  const cm=camel();cm.position.set(-6,0,4);cm.rotation.y=.8;g.add(cm);
+  // helicopter (flies in only on the sky-rescue ending)
+  const hg=new THREE.Group();const body=new THREE.Mesh(new THREE.SphereGeometry(1.4,16,12),lam(0xE0243A));body.scale.set(1.5,1,1);hg.add(body);
+  const tail=new THREE.Mesh(new THREE.BoxGeometry(3.4,.35,.35),lam(0xE0243A));tail.position.set(-3,.3,0);hg.add(tail);
+  const glass=new THREE.Mesh(new THREE.SphereGeometry(.9,12,10),lam(0x8FD3FF));glass.position.set(1.3,.2,0);hg.add(glass);
+  const rotor=new THREE.Group();[0,Math.PI/2].forEach(a=>{const b=new THREE.Mesh(new THREE.BoxGeometry(6,.06,.3),lam(0x333333));b.rotation.y=a;rotor.add(b);});rotor.position.y=1.5;hg.add(rotor);R.rotor=rotor;
+  [-.8,.8].forEach(z=>{const sk=new THREE.Mesh(new THREE.BoxGeometry(2.6,.12,.12),lam(0x444444));sk.position.set(0,-1.4,z);hg.add(sk);});
+  const beam=new THREE.Mesh(new THREE.ConeGeometry(3,12,20,1,true),basic(0xFFF6C0,{transparent:true,opacity:.15,side:THREE.DoubleSide,depthWrite:false}));beam.position.y=-6;hg.add(beam);R.beam=beam;
+  hg.position.set(60,30,-80);hg.visible=false;R.scene.add(hg);R.heli=hg;
+}
+function camel(){const g=new THREE.Group();const m=lam(0xC4924F);const body=new THREE.Mesh(new THREE.BoxGeometry(2,1,.8),m);body.position.y=2;g.add(body);const hump=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),m);hump.position.set(0,2.6,0);g.add(hump);
+  const neck=new THREE.Mesh(new THREE.BoxGeometry(.35,1.3,.35),m);neck.position.set(1.1,2.6,0);neck.rotation.z=-.5;g.add(neck);const head=new THREE.Mesh(new THREE.BoxGeometry(.7,.35,.35),m);head.position.set(1.6,3.2,0);g.add(head);
+  [[-.7,.3],[-.7,-.3],[.7,.3],[.7,-.3]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.2,1.5,.2),m);l.position.set(x,.75,z);g.add(l);});return g;}
+function buildDust(){const tex=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const gr=g.createRadialGradient(32,32,2,32,32,30);gr.addColorStop(0,'rgba(220,170,110,.9)');gr.addColorStop(1,'rgba(220,170,110,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
+  R.dustG=new THREE.Group();R.dustG.visible=false;R.scene.add(R.dustG);for(let i=0;i<70;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,opacity:.7}));s.scale.setScalar(3+Math.random()*5);s.position.set((Math.random()-.5)*40,Math.random()*6,(Math.random()-.5)*40);R.dustG.add(s);}}
+function dust(on,x,z){R.dustG.visible=on;if(on&&x!=null)R.dustG.position.set(x,0,z);if(on)SFX.wind(2.5);}
+
+/* --- avatar (survival contestant) --- */
+function buildAvatar(){
+  const g=new THREE.Group();const suit=lam(SUITS[S.suit]);R.suitMat=suit;const dark=lam(0x5B4532),skin=lam(0xC68B59),cloth=lam(0xF3E7D3);
+  const leg=x=>{const p=new THREE.Group();p.position.set(x,.85,0);const m=new THREE.Mesh(new THREE.BoxGeometry(.28,.85,.32),dark);m.position.y=-.42;p.add(m);g.add(p);return p;};
+  R.legL=leg(-.18);R.legR=leg(.18);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.78,.9,.48),cloth);body.position.y=1.3;g.add(body);
+  const scarf=new THREE.Mesh(new THREE.BoxGeometry(.82,.22,.52),suit);scarf.position.y=1.72;g.add(scarf);
+  const pack=new THREE.Mesh(new THREE.BoxGeometry(.6,.7,.25),suit);pack.position.set(0,1.35,-.34);g.add(pack);
+  const bottle=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.32,8),lam(0x4EC3FF));bottle.position.set(.36,1.05,-.1);g.add(bottle);
+  const arm=x=>{const p=new THREE.Group();p.position.set(x,1.7,0);const m=new THREE.Mesh(new THREE.BoxGeometry(.22,.8,.26),cloth);m.position.y=-.38;p.add(m);g.add(p);return p;};
+  R.armL=arm(-.52);R.armR=arm(.52);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.34,18,14),skin);head.position.y=2.08;g.add(head);
+  const brim=new THREE.Mesh(new THREE.CylinderGeometry(.62,.62,.05,20),lam(0xE9D2A6));brim.position.y=2.3;g.add(brim);
+  const crown=new THREE.Mesh(new THREE.CylinderGeometry(.3,.36,.3,16),lam(0xE9D2A6));crown.position.y=2.46;g.add(crown);
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(.365,.365,.08,16),suit);band.position.y=2.36;g.add(band);
+  [-.12,.12].forEach(x=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),basic(0x25160F));e.position.set(x,2.08,.31);g.add(e);});
+  const sh=new THREE.Mesh(new THREE.CircleGeometry(.55,20),basic(0x000000,{transparent:true,opacity:.25}));sh.rotation.x=-Math.PI/2;sh.position.y=.03;g.add(sh);
+  g.position.set(0,0,34);R.scene.add(g);R.avatar=g;R.walk={target:null,onArrive:null,phase:0};
+}
+function walkTo(x,z,onArrive){R.walk.target=new THREE.Vector3(x,0,z);R.walk.onArrive=onArrive||null;}
+
+/* --- station markers --- */
+function buildMarkers(){
+  S.mission.jobs.forEach(j=>{const g=new THREE.Group();g.position.set(j.station.x,groundHeight(j.station.x,j.station.z),j.station.z);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(1.1,1.5,40),basic(SP[j.superpower].n,{transparent:true,opacity:.9,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.08;g.add(ring);
+    const hit=new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,5,12),basic(0xffffff,{transparent:true,opacity:0,depthWrite:false}));hit.position.y=2.5;hit.userData.station=j.id;g.add(hit);R.hits.push(hit);
+    R.scene.add(g);R.markers[j.id]={g,ring,hit,label:null};});
+  refreshMarkerLabels();
+}
+function refreshMarkerLabels(){
+  if(!R.markers)return;S.mission.jobs.forEach(j=>{const mk=R.markers[j.id];if(!mk)return;if(mk.label){mk.g.remove(mk.label);mk.label.material.map.dispose();}
+    const st=S.jobs[j.id]||{};const locked=!isUnlocked(j);const done=st.status==='done';
+    const txt=(done?'★'.repeat(st.stars)+' ':locked?'🔒 ':'')+t(j.label);
+    const lb=label(txt,{bg:done?'rgba(29,95,72,.95)':locked?'rgba(77,49,34,.85)':SP[j.superpower].hex,fg:done||locked?'#FFF6EA':'#25160F'});lb.position.y=3.6;mk.g.add(lb);mk.label=lb;
+    mk.ring.material.opacity=locked?.25:.9;});
+}
+
+/* --- input --- */
+function bindInput(){
+  const cv=$('#gl');let down=null;
+  cv.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};});
+  cv.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y);down=null;if(moved<10)tap(e.clientX,e.clientY);});
+}
+function pick(x,y,objs){const v=new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1);R.ray.setFromCamera(v,R.camera);return R.ray.intersectObjects(objs,true);}
+function tap(x,y){
+  if(S.phase!=='play'||S.active)return;
+  const hs=pick(x,y,R.hits);if(hs.length){goToStation(hs[0].object.userData.station);return;}
+  const gh=pick(x,y,[R.ground]);if(gh.length){const p=gh[0].point;if(Math.hypot(p.x,p.z)<55){walkTo(p.x,p.z);SFX.tap();}}
+}
+
+/* --- frame loop --- */
+const CAM={pos:new THREE.Vector3(0,12,48),look:new THREE.Vector3(0,2,26)};
+function frame(){
+  const dt=Math.min(.05,R.clock.getDelta());const tt=R.clock.elapsedTime;
+  for(let i=R.tweens.length-1;i>=0;i--){const tw=R.tweens[i];tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.fn(k);if(k>=1){R.tweens.splice(i,1);tw.done&&tw.done();}}
+  const av=R.avatar,w=R.walk;
+  if(w.target){const d=new THREE.Vector3().subVectors(w.target,av.position);d.y=0;const dist=d.length();
+    if(dist<.15){w.target=null;const cb=w.onArrive;w.onArrive=null;cb&&cb();}
+    else{const step=Math.min(dist,(S.phase==='rescue'?5:7)*dt);d.normalize();av.position.addScaledVector(d,step);const ang=Math.atan2(d.x,d.z);let da=ang-av.rotation.y;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;av.rotation.y+=da*Math.min(1,dt*10);w.phase+=dt*11;}}
+  const sw=w.target?Math.sin(w.phase)*.7:0;R.legL.rotation.x=sw;R.legR.rotation.x=-sw;R.armL.rotation.x=-sw*.8;R.armR.rotation.x=sw*.8;
+  if(!R.avatar.userData.ride)av.position.y=groundHeight(av.position.x,av.position.z)+(w.target?Math.abs(Math.sin(w.phase))*.08:0);
+  Object.values(R.markers).forEach((mk,i)=>{const s=1+Math.sin(tt*3+i)*.08;mk.ring.scale.set(s,s,s);});
+  if(R.props.mirage){R.props.mirage.material.opacity=.35+Math.sin(tt*5)*.15+Math.sin(tt*13)*.05;R.props.mirage.visible=S.story==='noon'||S.story==='morning'||S.story==='afternoon';}
+  if(R.fire)R.fire.children.forEach((f,i)=>{const q=.8+Math.random()*.4;f.scale.set(q,q*(1+Math.sin(tt*9+i)*.2),q);});
+  if(R.flag)R.flag.rotation.y=Math.sin(tt*3)*.3;
+  if(R.heli&&R.heli.visible){R.rotor.rotation.y+=dt*25;}
+  if(R.dustG.visible){R.dustG.children.forEach((s,i)=>{s.position.x+=dt*(6+i%5);if(s.position.x>20)s.position.x=-20;s.material.opacity=.4+Math.sin(tt*2+i)*.25;});}
+  let tp,tl;
+  if(S.camMode==='job'&&S.camPose){tp=S.camPose.pos;tl=S.camPose.look;}
+  else if(S.camMode==='heli'){const hp=R.heli.position;tp=new THREE.Vector3(hp.x+16,hp.y+4,hp.z+22);tl=hp.clone();}
+  else{const p=av.position;const portrait=innerWidth<innerHeight;tp=new THREE.Vector3(p.x,p.y+(portrait?11:9),p.z+(portrait?15:13));tl=new THREE.Vector3(p.x,p.y+1.2,p.z-3);}
+  const k=1-Math.exp(-dt*3);CAM.pos.lerp(tp,k);CAM.look.lerp(tl,k);R.camera.position.copy(CAM.pos);R.camera.lookAt(CAM.look);
+  R.renderer.render(R.scene,R.camera);
+}
+
+/* ================= learn art (SVG) ================= */
+const ART={
+  daycurve:()=>`<svg viewBox="0 0 320 170"><rect width="320" height="170" fill="#25160F"/><path d="M20 140 Q160 -40 300 140" stroke="#FFB627" stroke-width="3" fill="none" stroke-dasharray="6 6"/>
+   ${[['🌅',30,128],['☀️',160,26],['🌇',290,128]].map(([e,x,y])=>`<text x="${x}" y="${y}" font-size="26" text-anchor="middle">${e}</text>`).join('')}
+   <rect x="20" y="146" width="80" height="16" rx="8" fill="#3DDC97"/><rect x="120" y="146" width="80" height="16" rx="8" fill="#FF5D73"/><rect x="220" y="146" width="80" height="16" rx="8" fill="#3DDC97"/>
+   <text x="60" y="158" font-size="11" font-weight="800" text-anchor="middle" fill="#06301F">${esc(t(L2('walk','चलो')))}</text><text x="160" y="158" font-size="11" font-weight="800" text-anchor="middle" fill="#fff">${esc(t(L2('shade + rest','छाया + आराम')))}</text><text x="260" y="158" font-size="11" font-weight="800" text-anchor="middle" fill="#06301F">${esc(t(L2('walk','चलो')))}</text></svg>`,
+  mirror:()=>`<svg viewBox="0 0 320 170"><rect width="320" height="170" fill="#9FD3F0"/><rect y="120" width="320" height="50" fill="#E3B878"/><circle cx="40" cy="30" r="16" fill="#FFF2B0"/>
+   <path d="M60 40 L150 112" stroke="#FFF6C0" stroke-width="4"/><path d="M150 112 L270 36" stroke="#FFF6C0" stroke-width="6" stroke-dasharray="10 6"/><rect x="138" y="104" width="22" height="16" rx="3" fill="#CFE9FF" stroke="#25160F" stroke-width="2"/>
+   <g transform="translate(270 32)"><ellipse rx="22" ry="7" fill="#4D3122"/><rect x="-6" y="-12" width="12" height="24" fill="#4D3122"/><rect x="-30" y="-2" width="60" height="4" fill="#4D3122"/></g></svg>`,
+  shadow:()=>`<svg viewBox="0 0 320 170"><rect width="320" height="170" fill="#E8C48C"/><text x="20" y="24" font-size="13" font-weight="800" fill="#5A3B22">${esc(t(UI.dirs.W)).toUpperCase()}</text><text x="300" y="24" font-size="13" font-weight="800" fill="#5A3B22" text-anchor="end">${esc(t(UI.dirs.E)).toUpperCase()}</text>
+   <rect x="196" y="40" width="6" height="90" fill="#6E4B2E"/><path d="M199 130 L70 104" stroke="#8B6A43" stroke-width="6" opacity=".45"/><path d="M199 130 L110 86" stroke="#8B6A43" stroke-width="6" opacity=".7"/>
+   <circle cx="70" cy="104" r="9" fill="#fff" stroke="#25160F" stroke-width="2"/><text x="70" y="108" font-size="11" font-weight="800" text-anchor="middle">1</text><circle cx="110" cy="86" r="9" fill="#FFB627" stroke="#25160F" stroke-width="2"/><text x="110" y="90" font-size="11" font-weight="800" text-anchor="middle">2</text>
+   <path d="M70 104 L110 86" stroke="#E0243A" stroke-width="3" marker-end="url(#ar)"/><defs><marker id="ar" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#E0243A"/></marker></defs>
+   <text x="160" y="160" font-size="13" font-weight="800" text-anchor="middle" fill="#5A3B22">1 → 2 = ${esc(t(UI.dirs.W))} → ${esc(t(UI.dirs.E))}</text></svg>`,
+  dune:()=>`<svg viewBox="0 0 320 170"><rect width="320" height="170" fill="#E8C48C"/><g transform="translate(160 92) scale(1.6)">${duneShape(0,true)}</g>
+   <path d="M40 150 L40 30" stroke="#4E7BD9" stroke-width="5" marker-end="url(#aw)"/><defs><marker id="aw" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4E7BD9"/></marker></defs>
+   <text x="52" y="160" font-size="12" font-weight="800" fill="#24407A">${esc(t(L2('wind','हवा')))}</text>
+   <text x="160" y="164" font-size="12" font-weight="800" text-anchor="middle" fill="#3DDC97" stroke="#06301F" stroke-width=".5">${esc(t(L2('gentle back ✓','हल्की पीठ ✓')))}</text><text x="160" y="16" font-size="12" font-weight="800" text-anchor="middle" fill="#B0182C">${esc(t(L2('steep face ✗ (between horns)','खड़ी ढलान ✗ (सींगों के बीच)')))}</text></svg>`,
+  landmarks:()=>`<svg viewBox="0 0 320 120"><rect width="320" height="120" fill="#E8C48C"/>${['tree','well','chhatri','oasis'].map((k,i)=>`<g transform="translate(${20+i*75} 14)"><svg width="60" height="60" viewBox="0 0 100 100">${ITEM[k]()}</svg><text x="30" y="80" font-size="11" font-weight="800" text-anchor="middle" fill="#5A3B22">${esc(t(UI.items[k]))}</text></g>`).join('')}</svg>`,
+  mirage:()=>`<svg viewBox="0 0 320 170"><rect width="320" height="170" fill="#BFE3F5"/><rect y="100" width="320" height="70" fill="#E8C48C"/><path d="M0 100 Q80 96 160 100 T320 100" stroke="#F4EEDF" stroke-width="3" fill="none"/>
+   <path d="M40 30 Q150 90 250 112" stroke="#FFB627" stroke-width="3" fill="none" stroke-dasharray="6 5"/><text x="34" y="26" font-size="12" font-weight="800" fill="#24407A">${esc(t(L2('sky light','आसमान की रोशनी')))}</text>
+   <rect x="170" y="104" width="120" height="10" rx="5" fill="#9FD8F5" opacity=".9"/><text x="230" y="134" font-size="12" font-weight="800" text-anchor="middle" fill="#5A3B22">${esc(t(L2('hot air bends light','गर्म हवा रोशनी मोड़ती है')))}</text>
+   <g transform="translate(290 60)"><circle r="7" fill="#C68B59"/><rect x="-5" y="7" width="10" height="20" fill="#4E7BD9"/></g></svg>`,
+  thorns:()=>`<svg viewBox="0 0 320 120"><rect width="320" height="120" fill="#F1DDB8"/><g transform="translate(30 10)"><svg width="100" height="100" viewBox="0 0 100 100">${bushSvg(0,true)}</svg></g><g transform="translate(190 10)"><svg width="100" height="100" viewBox="0 0 100 100">${bushSvg(1,false)}</svg></g>
+   <text x="80" y="116" font-size="12" font-weight="800" text-anchor="middle" fill="#B0182C">✗ ${esc(t(L2('thorns','काँटे')))}</text><text x="240" y="116" font-size="12" font-weight="800" text-anchor="middle" fill="#1D7A50">✓ ${esc(t(L2('no thorns','काँटे नहीं')))}</text></svg>`,
+  still:()=>`<svg viewBox="0 0 330 170">${stillSvg(['pit','leaves','cup','sheet','seal','stone'],true)}</svg>`,
+  daynight:()=>`<svg viewBox="0 0 320 150"><rect width="160" height="150" fill="#9FD3F0"/><rect x="160" width="160" height="150" fill="#0F1638"/><rect y="110" width="320" height="40" fill="#E3B878"/><rect x="160" y="110" width="160" height="40" fill="#8A6A4A"/>
+   <circle cx="40" cy="30" r="16" fill="#FFF2B0"/><circle cx="280" cy="30" r="12" fill="#EDEFFF"/>${[0,1,2].map(i=>`<path d="M${60+i*30} 106 l0 -30" stroke="#FF5D2E" stroke-width="3" marker-end="url(#up)"/>`).join('')}${[0,1,2].map(i=>`<path d="M${200+i*30} 106 l0 -40" stroke="#9DB4FF" stroke-width="3" marker-end="url(#up)"/>`).join('')}
+   <defs><marker id="up" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#fff"/></marker></defs>
+   <text x="80" y="134" font-size="12" font-weight="800" text-anchor="middle" fill="#5A3B22">${esc(t(L2('day: sand heats up','दिन: रेत गर्म')))}</text><text x="240" y="134" font-size="12" font-weight="800" text-anchor="middle" fill="#fff">${esc(t(L2('night: heat escapes','रात: गर्मी निकल जाती है')))}</text></svg>`,
+  rules:()=>{const j=S.mission.jobs.find(x=>x.id==='storm');const row=(night)=>j.events.map(e=>`<div style="display:flex;justify-content:space-between;gap:6px;padding:2px 6px"><span>${e.icon} ${esc(t(e))}</span><b style="color:${{go:'#3DDC97',stay:'#FFB627',cover:'#7FA8FF'}[night?e.night:e.day]}">${esc(t(UI[night?e.night:e.day]))}</b></div>`).join('');
+    return `<div style="width:100%;font-size:13px;font-weight:700;display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:left"><div style="background:#4D3122;border-radius:10px;padding:4px"><div style="text-align:center;color:var(--sun)">${esc(t(UI.dayRule))}</div>${row(false)}</div><div style="background:#1D2A5C;border-radius:10px;padding:4px"><div style="text-align:center;color:#CFE0FF">🌙 ${esc(t(UI.ph.x))}</div>${row(true)}</div></div>`;}
+};
+function duneShape(angle,big){return `<g transform="rotate(${angle})"><path d="M-38 -26 Q0 62 38 -26 Q0 14 -38 -26 Z" fill="#E7B56E" stroke="#B9803F" stroke-width="2"/><path d="M-38 -26 Q0 30 38 -26 Q0 14 -38 -26 Z" fill="#A86B30"/>${big?'':''}<path d="M-14 22 Q0 28 14 22" stroke="#F7D9A0" stroke-width="2" fill="none"/></g>`;}
+const ITEM={
+  oasis:()=>`<ellipse cx="50" cy="72" rx="36" ry="14" fill="#3F8FBF"/><rect x="60" y="22" width="6" height="46" fill="#8B6A43"/><path d="M63 24 q-24 -6 -30 8 M63 24 q24 -6 30 8 M63 24 q-14 -16 -26 -10 M63 24 q14 -16 26 -10" stroke="#3E9B4F" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+  quick:()=>`<ellipse cx="50" cy="60" rx="38" ry="26" fill="#9C6B45"/><path d="M50 60 m-24 0 a24 14 0 1 1 48 0 a18 10 0 1 1 -36 0 a12 6 0 1 1 24 0" stroke="#5A3B22" stroke-width="4" fill="none"/>`,
+  thorn:()=>bushSvg(2,true),
+  nest:()=>`<ellipse cx="50" cy="74" rx="30" ry="10" fill="#7A5536"/><g fill="#3A2419" stroke="#3A2419" stroke-width="4" stroke-linecap="round"><ellipse cx="50" cy="56" rx="14" ry="9"/><path d="M38 52 l-14 -8 M38 60 l-14 4 M62 52 l14 -8 M62 60 l14 4" fill="none"/><path d="M50 47 q-4 -20 10 -26 q8 -2 6 8" fill="none"/></g>`,
+  tree:()=>`<rect x="45" y="44" width="10" height="44" fill="#6E4B2E"/><path d="M50 60 l-16 -14 M50 54 l14 -14" stroke="#6E4B2E" stroke-width="5"/><ellipse cx="50" cy="32" rx="34" ry="20" fill="#6F8F3A"/>`,
+  well:()=>`<ellipse cx="50" cy="40" rx="30" ry="10" fill="#3A2419"/><path d="M20 40 v34 a30 10 0 0 0 60 0 v-34" fill="#A9845E"/><path d="M20 52 h60 M20 64 h60" stroke="#7A5536" stroke-width="2"/><path d="M28 40 v-26 h44 v26" stroke="#6E4B2E" stroke-width="4" fill="none"/>`,
+  chhatri:()=>`<path d="M18 40 Q50 4 82 40 Z" fill="#E0A064"/><rect x="16" y="40" width="68" height="8" fill="#C98A4B"/><rect x="22" y="48" width="8" height="34" fill="#D9A55F"/><rect x="70" y="48" width="8" height="34" fill="#D9A55F"/><rect x="14" y="82" width="72" height="8" fill="#C98A4B"/><circle cx="50" cy="12" r="4" fill="#C98A4B"/>`
+};
+function bushSvg(shape,thorny){const stems=[[50,90,30,40],[50,90,50,30],[50,90,70,40],[50,90,22,60],[50,90,78,60]];const leaf=shape===0?'#6F8F3A':shape===1?'#7FA04A':'#5E7F33';
+  let s=stems.map(([x1,y1,x2,y2])=>`<path d="M${x1} ${y1} L${x2} ${y2}" stroke="#6E4B2E" stroke-width="4"/>`).join('');
+  stems.forEach(([x1,y1,x2,y2],i)=>{const n=shape===2?5:4;for(let k=1;k<=n;k++){const x=x1+(x2-x1)*k/(n+1),y=y1+(y2-y1)*k/(n+1);
+    if(thorny){const dx=(y2-y1),dy=-(x2-x1),l=Math.hypot(dx,dy);const ux=dx/l*7,uy=dy/l*7;s+=`<path d="M${x} ${y} l${ux.toFixed(1)} ${uy.toFixed(1)} M${x} ${y} l${(-ux).toFixed(1)} ${(-uy).toFixed(1)}" stroke="#F3E7D3" stroke-width="2"/>`;}
+    else s+=`<ellipse cx="${x+(i%2?5:-5)}" cy="${y}" rx="6" ry="3.5" fill="${leaf}"/>`;}});
+  stems.forEach(([,, x2,y2])=>{s+=`<circle cx="${x2}" cy="${y2}" r="${shape===1?8:6}" fill="${leaf}"/>`;});
+  return `<ellipse cx="50" cy="92" rx="30" ry="5" fill="#000" opacity=".15"/>`+s;}
+function kitSvg(k,broken){const B=broken;switch(k){
+  case 'bottle':return `<rect x="36" y="22" width="28" height="64" rx="10" fill="#4EC3FF"/><rect x="42" y="12" width="16" height="12" rx="3" fill="#1B6FD1"/><rect x="36" y="44" width="28" height="14" fill="#E8F6FF" opacity=".6"/>${B?'<path d="M44 60 l6 6 l-4 5 l7 6" stroke="#25160F" stroke-width="2" fill="none"/><path d="M52 80 q2 6 0 8 q-3 -2 0 -8" fill="#1B6FD1"/><circle cx="51" cy="94" r="2.5" fill="#1B6FD1"/>':''}`;
+  case 'mirror':return `<rect x="20" y="24" width="60" height="50" rx="6" fill="#8C93C4"/><rect x="25" y="29" width="50" height="40" rx="4" fill="#DDF3FF"/><circle cx="50" cy="49" r="4" fill="#25160F"/>${B?'<path d="M30 33 L48 50 L40 66 M48 50 L70 40 M48 50 L66 64" stroke="#25160F" stroke-width="1.8" fill="none"/>':''}`;
+  case 'compass':return `<circle cx="50" cy="52" r="32" fill="#C98A4B"/><circle cx="50" cy="52" r="26" fill="#F3E7D3"/><text x="50" y="34" font-size="10" font-weight="800" text-anchor="middle" fill="#25160F">N</text>${B?'<circle cx="50" cy="52" r="3" fill="#25160F"/>':'<path d="M50 30 L56 52 L50 74 L44 52 Z" fill="#E0243A"/><path d="M50 52 L56 52 L50 74 L44 52 Z" fill="#5A628F"/><circle cx="50" cy="52" r="3" fill="#25160F"/>'}`;
+  case 'torch':return `<rect x="18" y="42" width="44" height="18" rx="5" fill="#5A5A5A"/><path d="M62 38 L80 30 L80 72 L62 64 Z" fill="#7A7A7A"/><ellipse cx="80" cy="51" rx="5" ry="21" fill="#FFF6C0"/><rect x="30" y="38" width="8" height="5" fill="#FFB627"/>${B?'<path d="M78 34 L82 46 L77 54 L82 66" stroke="#25160F" stroke-width="2" fill="none"/>':''}`;
+  case 'rope':return B?`<path d="M20 30 C70 20 80 50 46 54" stroke="#C98A4B" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M54 60 C20 66 30 90 80 80" stroke="#C98A4B" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M46 54 l-4 4 M46 54 l-2 -5 M54 60 l4 -4 M54 60 l3 5" stroke="#8B6A43" stroke-width="2"/>`
+     :`<path d="M20 30 C70 20 80 50 50 56 C20 62 30 90 80 80" stroke="#C98A4B" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  case 'hat':return `<ellipse cx="50" cy="66" rx="40" ry="12" fill="#E9D2A6"/><path d="M28 64 Q30 26 50 26 Q70 26 72 64 Z" fill="#E9D2A6" stroke="#C9A877" stroke-width="2"/><rect x="29" y="54" width="42" height="7" fill="#E0243A"/>${B?'<ellipse cx="56" cy="40" rx="6" ry="4" fill="#25160F"/>':''}`;
+  case 'glasses':return `<path d="M14 44 H86" stroke="#25160F" stroke-width="4"/><circle cx="32" cy="52" r="15" fill="${'#25160F'}" stroke="#25160F" stroke-width="3"/><circle cx="68" cy="52" r="15" fill="${B?'#F1DDB8':'#25160F'}" stroke="#25160F" stroke-width="3"/><path d="M47 50 Q50 46 53 50" stroke="#25160F" stroke-width="3" fill="none"/>`;
+  case 'boot':return `<path d="M30 18 H56 V60 L84 66 Q90 68 88 78 H24 Z" fill="#8B5A2B"/><rect x="24" y="76" width="64" height="8" rx="2" fill="#3A2419"/>${B?'<path d="M50 84 L56 78 L62 84 L68 78" stroke="#F1DDB8" stroke-width="3" fill="none"/>':''}<path d="M34 30 h18 M34 40 h18" stroke="#C98A4B" stroke-width="2"/>`;
+ }return '';}
+function stillSvg(parts,labels,drops){const has=k=>parts.includes(k);let s=`<rect width="330" height="170" fill="#9FD3F0"/><circle cx="292" cy="26" r="15" fill="#FFF2B0"/><rect y="60" width="330" height="110" fill="#E3B878"/>`;
+  if(has('pit'))s+=`<path d="M70 60 Q165 170 260 60 Z" fill="#B48552"/>`;
+  if(has('leaves'))s+=[95,125,205,235].map((x,i)=>`<ellipse cx="${x}" cy="${88+(i%2)*6}" rx="14" ry="6" fill="#4E9B3F" transform="rotate(${i<2?25:-25} ${x} 90)"/>`).join('');
+  if(has('cup'))s+=`<path d="M150 112 h30 l-4 22 h-22 z" fill="#E8F6FF" stroke="#4E7BD9" stroke-width="2"/>${drops?'<rect x="155" y="124" width="20" height="9" fill="#4EC3FF"/>':''}`;
+  if(has('sheet'))s+=`<path d="M58 58 Q165 ${has('stone')?104:66} 272 58" stroke="#DDF3FF" stroke-width="4" fill="none" opacity=".95"/>`;
+  if(has('seal'))s+=`<path d="M46 60 q12 -14 24 0 Z M260 60 q12 -14 24 0 Z" fill="#C9965A"/>`;
+  if(has('stone'))s+=`<circle cx="165" cy="96" r="7" fill="#8C8C8C"/>`;
+  if(drops)s+=[110,140,190,220].map((x,i)=>`<circle cx="${x}" cy="${74+(i%2?6:10)}" r="3" fill="#1B6FD1"><animate attributeName="cy" values="${78};${100}" dur="1s" repeatCount="indefinite" begin="${i*.25}s"/></circle>`).join('');
+  if(labels)s+=`<text x="165" y="160" font-size="12" font-weight="800" text-anchor="middle" fill="#5A3B22">${esc(t(L2('sun → vapour → drops → cup','धूप → भाप → बूँदें → कप')))}</text>`;
+  return s;}
+
+/* ================= tasks ================= */
+const TASKS={};
+const cellKey=(r,c)=>r+','+c;
+
+TASKS.dayplan=api=>{
+  const j=api.job,P=j.p;const cards=['walk','walk','shade','rest','mirror','shelter'];const plan=Array(6).fill(null);let sel=null,busy=false,done=false;
+  const tbl=h('table',{class:'ptable'});const phs=['m','n','e','x'];
+  const fmtv=v=>v>0?`<span class="pos">+${v}</span>`:v<0?`<span class="neg">${v}</span>`:'0';
+  tbl.innerHTML=`<tr><th></th>${phs.map(p=>`<th>${esc(t(UI.ph[p]))}</th>`).join('')}</tr>`+
+    `<tr><td>${esc(t(UI.cards.walk))}</td>${phs.map(p=>`<td>${fmtv(-P.walk[p])}</td>`).join('')}</tr>`+
+    `<tr><td>${esc(t(UI.cards.shade))}</td>${phs.map(()=>`<td>${fmtv(-P.shade)}</td>`).join('')}</tr>`+
+    `<tr><td>${esc(t(UI.cards.rest))}</td>${phs.map(p=>`<td>${p==='n'?fmtv(P.restNoon)+'*':p==='x'?fmtv(P.restNight)+'*':fmtv(P.restOther)}</td>`).join('')}</tr>`+
+    `<tr><td>${esc(t(UI.cards.mirror))}</td>${phs.map(()=>`<td>${fmtv(-2)}</td>`).join('')}</tr>`+
+    `<tr><td>${esc(t(UI.cards.shelter))}</td>${phs.map(p=>`<td>${fmtv(-(P.shelter+(p==='x'?P.shelterNightExtra:0)))}</td>`).join('')}</tr>`;
+  const rules=h('div',{class:'rules'});UI.planRules.slice(0,4).forEach(x=>rules.append(h('span',{},esc(t(x,{E0:P.E0,P:P.P+1,rn:P.restNoon,rx:P.restNight,ro:P.restOther})))));
+  const slotsEl=h('div',{class:'slots'});const slotEls=[];
+  P.ph.split('').forEach((ph,i)=>{const s=h('button',{class:'slot'+(i===P.P?' plane':'')});s.onclick=()=>tapSlot(i);slotEls.push(s);slotsEl.append(s);});
+  const cardsEl=h('div',{class:'cards'});const cardEls=cards.map((c,i)=>{const b=h('button',{},esc(t(UI.cards[c])));b.onclick=()=>{if(busy||done||used(i))return;sel=sel===i?null:i;SFX.tap();draw();};cardsEl.append(b);return b;});
+  const used=i=>plan.includes(i);
+  const ebar=h('div',{class:'ebar'},'<i></i>');const btn=h('button',{class:'big'},'☀️ '+t(UI.startDay));
+  function draw(){slotEls.forEach((s,i)=>{const ph=P.ph[i];const ci=plan[i];s.classList.toggle('filled',ci!=null);
+      s.innerHTML=`<span class="when"><b>${esc(t(UI.slotN,{n:i+1}))}</b>${esc(t(UI.ph[ph]))}</span><span class="what">${ci!=null?esc(t(UI.cards[cards[ci]])):'—'}</span><span class="en"></span>`;});
+    cardEls.forEach((b,i)=>{b.classList.toggle('on',sel===i);b.classList.toggle('used',used(i));});}
+  function tapSlot(i){if(busy||done)return;SFX.tap();if(plan[i]!=null){plan[i]=null;draw();return;}if(sel==null){const f=cards.findIndex((c,k)=>!used(k));if(f<0)return;sel=f;}plan[i]=sel;sel=null;api.log('place',{slot:i,card:cards[plan[i]]});draw();}
+  btn.onclick=async()=>{if(busy||done)return;if(plan.some(x=>x==null)){api.say(t(UI.fillAll),'info');return;}busy=true;
+    const seq=plan.map(i=>cards[i]);const res=planSim(seq,P);
+    for(let i=0;i<6;i++){const e=res.trace[i];const s=slotEls[i];if(e==null){s.classList.add('bad');break;}s.querySelector('.en').textContent='⚡'+e;ebar.firstChild.style.width=Math.max(0,Math.min(100,e/Math.max(P.E0,P.best)*100))+'%';SFX.tone(440+i*60,.08,'triangle',.1);await sleep(380);}
+    const ok=res.err==null&&res.e===P.best;if(ok&&S.jobs[j.id].startedAt!=null)S.jobs[j.id].answerSec=(performance.now()-S.jobs[j.id].startedAt)/1000;
+    const r=api.answer(ok,{plan:seq,energy:res.e,error:res.err||(ok?null:'not-best')});
+    if(!r.final){api.say(res.err?t(UI.planBad[res.err]):t(UI.planWorse,{e:res.e}),'bad');setTimeout(()=>{slotEls.forEach(s=>{s.classList.remove('bad');s.querySelector('.en').textContent='';});ebar.firstChild.style.width='0';busy=false;},1400);}
+    else{done=true;btn.disabled=true;if(ok)api.say(t(UI.planBest,{e:res.e}),'good');else if(answersOpen()){slotEls.forEach((s,i)=>{s.querySelector('.what').innerHTML=`<s style="opacity:.5">${esc(t(UI.cards[seq[i]]))}</s> → <b style="color:var(--good)">${esc(t(UI.cards[P.opt[i]]))}</b>`;s.querySelector('.en').textContent='';});}}
+  };
+  api.el.append(rules,tbl,h('div',{class:'note',style:{maxWidth:'none'}},'* '+esc(t(UI.planRules[4],{rn:P.restNoon,rx:P.restNight,ro:P.restOther}))),h('div',{class:'note',style:{maxWidth:'none'}},esc(t(UI.tapCard))),cardsEl,slotsEl,ebar,h('div',{class:'row'}));api.el.lastChild.append(btn);draw();
+  return {destroy(){}};
+};
+
+TASKS.dunes=api=>{
+  const j=api.job,V=j.v,N=j.size;let phase=1,pos=V.start.slice(),edgeWrong=0;const ok=[V.rot,(V.rot+1)%4];
+  const E=DV[(V.rot+1)%4],Nn=DV[V.rot];const W=[-E[0],-E[1]];
+  const m1=[48+W[1]*36+Nn[1]*12,48+W[0]*36+Nn[0]*12],m2=[48+W[1]*6+Nn[1]*24,48+W[0]*6+Nn[0]*24];
+  const stick=h('div',{class:'stick'},`<svg viewBox="0 0 96 96"><rect width="96" height="96" rx="12" fill="#E8C48C"/><path d="M48 48 L${m1[0]} ${m1[1]}" stroke="#8B6A43" stroke-width="4" opacity=".35"/><path d="M48 48 L${m2[0]} ${m2[1]}" stroke="#8B6A43" stroke-width="4" opacity=".7"/><circle cx="48" cy="48" r="5" fill="#6E4B2E"/>
+    <circle cx="${m1[0]}" cy="${m1[1]}" r="8" fill="#fff" stroke="#25160F" stroke-width="2"/><text x="${m1[0]}" y="${m1[1]+4}" font-size="10" font-weight="800" text-anchor="middle">1</text><circle cx="${m2[0]}" cy="${m2[1]}" r="8" fill="#FFB627" stroke="#25160F" stroke-width="2"/><text x="${m2[0]}" y="${m2[1]+4}" font-size="10" font-weight="800" text-anchor="middle">2</text></svg><div>${t(UI.stickInfo)}</div>`);
+  const wrap=h('div',{class:'gwrap'});const grid=h('div',{class:'grid',style:{gridTemplateColumns:`repeat(${N},1fr)`}});const cells={};
+  const angle=V.rot*90+45;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const b=h('button',{class:'cell','aria-label':`${r+1},${c+1}`});
+    b.innerHTML=V.dune[r][c]?`<svg viewBox="-50 -50 100 100">${duneShape(angle)}</svg>`:`<svg viewBox="0 0 100 100"><path d="M15 35 q15 -6 30 0 t30 0 M20 65 q15 -6 30 0 t30 0" stroke="#D2A86C" stroke-width="4" fill="none"/></svg>`;
+    b.onclick=()=>tapCell(r,c);cells[cellKey(r,c)]=b;grid.append(b);}
+  const edges=['t','r','b','l'].map((cl,i)=>{const e=h('button',{class:'edge '+cl,'aria-label':t(UI.edges[i])},['▲','▶','▼','◀'][i]);e.onclick=()=>tapEdge(i);wrap.append(e);return e;});
+  wrap.prepend(grid);
+  const legend=h('div',{class:'legend'},`<span><svg viewBox="-50 -50 100 100">${duneShape(angle)}</svg>${esc(t(UI.duneLbl))}</span><span><svg viewBox="0 0 100 100"><rect width="100" height="100" rx="14" fill="#E8C48C"/></svg>${esc(t(UI.flatLbl))}</span>`);
+  api.el.append(stick,wrap,legend);
+  const drawMe=()=>{Object.values(cells).forEach(b=>{const a=b.querySelector('.av');if(a)a.remove();b.classList.remove('me');});const b=cells[cellKey(...pos)];b.classList.add('me');b.append(h('i',{class:'av'}));};
+  function tapEdge(i){if(phase!==1)return;SFX.tap();api.log('edge',{edge:i});
+    if(i===V.ce){edges[i].classList.add('right');toPhase2();}
+    else{edges[i].classList.add('wrong');setTimeout(()=>edges[i].classList.remove('wrong'),600);api.mistake({edge:i,expected:V.ce});api.say(t(UI.wrongEdge),'bad');edgeWrong++;
+      if(edgeWrong>=2){edges[V.ce].classList.add(answersOpen()?'right':'sel');api.say(t(UI.edgeShown),'info');setTimeout(toPhase2,1200);}}}
+  function toPhase2(){phase=2;edges.forEach((e,i)=>{if(i!==V.ce)e.disabled=true;});const cb=cells[cellKey(...V.camp)];cb.innerHTML+=`<span style="position:absolute;font-size:22px">🚩</span>`;drawMe();cells[cellKey(...pos)].classList.add('path');api.setPrompt(j.prompt2);}
+  function legalNext(){const L=[];for(let d=0;d<4;d++){const r=pos[0]+DV[d][0],c=pos[1]+DV[d][1];if(r<0||c<0||r>=N||c>=N)continue;if(V.dune[r][c]&&!ok.includes(d))continue;L.push([r,c]);}return L;}
+  function hint(){Object.values(cells).forEach(b=>b.classList.remove('hint'));if(S.jobs[j.id].mistakes<3)return;
+    const dist=(a,b2)=>bfs(N,a,V.camp,(nr,nc,d)=>!V.dune[nr][nc]||ok.includes(d));const best=legalNext().map(c=>[c,dist(c)]).filter(x=>x[1]>=0).sort((a,b)=>a[1]-b[1])[0];if(best)cells[cellKey(...best[0])].classList.add('hint');}
+  function tapCell(r,c){if(phase!==2)return;const dr=r-pos[0],dc=c-pos[1];if(Math.abs(dr)+Math.abs(dc)!==1){api.say(t(UI.notNext),'info');return;}
+    const d=DV.findIndex(v=>v[0]===dr&&v[1]===dc);SFX.tap();
+    if(V.dune[r][c]&&!ok.includes(d)){api.mistake({to:[r,c],dir:d});api.say(t(UI.steepFace),'bad');const b=cells[cellKey(r,c)];b.classList.add('no');setTimeout(()=>b.classList.remove('no'),500);hint();return;}
+    pos=[r,c];api.log('step',{to:pos,dune:V.dune[r][c]});cells[cellKey(r,c)].classList.add('path');drawMe();api.say('','info');hint();
+    if(r===V.camp[0]&&c===V.camp[1]){phase=3;SFX.good();api.complete({});}}
+  return {destroy(){}};
+};
+
+TASKS.memory=api=>{
+  const j=api.job,V=j.v,N=j.size;let pos=V.start.slice(),phase=0,peeked=false,tmr=null,raf=null;const seen=new Set();
+  const at=(r,c)=>{if(r===V.oasis[0]&&c===V.oasis[1])return 'oasis';const hz=V.hazards.find(x=>x[0]===r&&x[1]===c);if(hz)return hz[2];const lm=V.landmarks.find(x=>x[0]===r&&x[1]===c);return lm?lm[2]:null;};
+  const grid=h('div',{class:'grid',style:{gridTemplateColumns:`repeat(${N},1fr)`}});const cells={};
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const b=h('button',{class:'cell fog'});b.onclick=()=>tapCell(r,c);cells[cellKey(r,c)]=b;grid.append(b);}
+  const bar=h('div',{class:'studybar hidden'},'<i></i>');const go=h('button',{class:'big'},'🗺️ '+t(L2('Show the map ({s} s)','नक्शा दिखाओ ({s} से.)'),{s:j.studySec}));
+  const legend=h('div',{class:'legend'});['oasis','quick','thorn','nest','tree','well','chhatri'].forEach(k=>legend.append(h('span',{},`<svg viewBox="0 0 100 100">${ITEM[k]()}</svg>${esc(t(UI.items[k]))}</span>`)));
+  api.el.append(legend,bar,h('div',{class:'gwrap',style:{padding:'4px 0'}}),h('div',{class:'row'}));api.el.children[2].append(grid);api.el.lastChild.append(go);
+  const icon=k=>k?`<svg viewBox="0 0 100 100">${ITEM[k]()}</svg>`:'';
+  const draw=(showAll)=>{for(let r=0;r<N;r++)for(let c=0;c<N;c++){const b=cells[cellKey(r,c)];const k=at(r,c);const vis=showAll||seen.has(cellKey(r,c))||(r===pos[0]&&c===pos[1]&&k);
+      b.classList.toggle('fog',!showAll&&!(r===pos[0]&&c===pos[1])&&!seen.has(cellKey(r,c)));b.innerHTML=vis?icon(k):'';if(r===pos[0]&&c===pos[1]){b.append(h('i',{class:'av'}));b.classList.add('me');}else b.classList.remove('me');}};
+  go.onclick=()=>{if(phase)return;phase=1;go.remove();api.log('study_start',{});bar.classList.remove('hidden');api.say(t(UI.study),'info');draw(true);const t0=performance.now();const D=j.studySec*1000;
+    const f=()=>{const e=performance.now()-t0;bar.firstChild.style.width=Math.max(0,100-e/D*100)+'%';if(e<D)raf=requestAnimationFrame(f);else startWalk();};f();};
+  function startWalk(){phase=2;bar.classList.add('hidden');api.log('study_end',{});dust(true,j.station.x,j.station.z);SFX.wind(2);api.say(t(UI.storm),'info');draw(false);if(S.jobs[j.id].startedAt!=null)S.jobs[j.id].walkAt=performance.now();}
+  const dist=p=>Math.abs(p[0]-V.oasis[0])+Math.abs(p[1]-V.oasis[1]);
+  function tapCell(r,c){if(phase!==2)return;const dr=r-pos[0],dc=c-pos[1];if(Math.abs(dr)+Math.abs(dc)!==1){api.say(t(UI.notNext),'info');return;}SFX.tap();const k=at(r,c);const b=cells[cellKey(r,c)];
+    if(k==='quick'||k==='thorn'||k==='nest'){api.mistake({to:[r,c],hazard:k});seen.add(cellKey(r,c));api.say(t(UI.hazard,{x:t(UI.items[k]).toLowerCase()}),'bad');b.classList.add('no');setTimeout(()=>b.classList.remove('no'),500);draw(false);helpPeek();return;}
+    const before=dist(pos);pos=[r,c];if(k)seen.add(cellKey(r,c));api.log('step',{to:pos,item:k});
+    if(dist(pos)>=before){api.mistake({to:pos,farther:true});api.say(t(UI.farther),'bad');helpPeek();}else api.say('','info');
+    draw(false);if(k==='oasis'){phase=3;SFX.good();dust(false);api.complete({});}}
+  function helpPeek(){if(peeked||S.jobs[j.id].mistakes<3)return;peeked=true;api.say(t(UI.peekMap),'info');draw(true);tmr=setTimeout(()=>draw(false),1500);}
+  return {studying:()=>phase===1,destroy(){clearTimeout(tmr);if(raf)cancelAnimationFrame(raf);dust(false);}};
+};
+
+TASKS.spot=api=>{
+  const j=api.job,V=j.v;let part=0;const area=h('div',{style:{display:'flex',flexDirection:'column',gap:'8px'}});api.el.append(area);
+  const parts=[()=>{ // oasis vs mirages
+      const W=360,H=160;let g=`<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FD3F0"/><stop offset="1" stop-color="#E9F5FB"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#sk)"/><rect y="92" width="${W}" height="68" fill="#E3B878"/><path d="M0 92 Q60 88 120 92 T240 92 T360 92" stroke="#F4EEDF" stroke-width="2" fill="none"/><circle cx="330" cy="22" r="13" fill="#FFF2B0"/>`;
+      V.cand.forEach((ty,i)=>{const x=45+i*90;g+=`<g class="cand" data-i="${i}"><rect x="${x-44}" y="40" width="88" height="110" fill="#000" opacity="0"/>`;
+        if(ty==='real'){g+=`<ellipse cx="${x}" cy="108" rx="30" ry="7" fill="#4A86B0"/><path d="M${x-18} 108 q6 -2 12 0 M${x+2} 110 q6 -2 12 0" stroke="#9CC7E0" stroke-width="1.5" fill="none"/>`;
+          g+=`<rect x="${x+22}" y="84" width="2.5" height="24" fill="#8B6A43"/><path d="M${x+23} 86 q-9 -2 -11 4 M${x+23} 86 q9 -2 11 4 M${x+23} 86 q-3 -7 -9 -5" stroke="#3E9B4F" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+          g+=`<ellipse cx="${x-28}" cy="109" rx="5" ry="2.5" fill="#5E8F3A"/><ellipse cx="${x-20}" cy="113" rx="4" ry="2" fill="#5E8F3A"/><ellipse cx="${x+14}" cy="114" rx="4" ry="2" fill="#5E8F3A"/>`;
+          if(V.cue==='birds')g+=`<path d="M${x-14} 62 q3 -3 6 0 q3 -3 6 0 M${x+2} 56 q2.5 -2.5 5 0 q2.5 -2.5 5 0" stroke="#3A2419" stroke-width="1.6" fill="none"/>`;
+          else g+=[0,1,2,3,4].map(k=>`<ellipse cx="${x-6+k*2.5}" cy="${148-k*7}" rx="1.8" ry="1.1" fill="#8B6A43"/><ellipse cx="${x+1+k*2.5}" cy="${146-k*7}" rx="1.8" ry="1.1" fill="#8B6A43"/>`).join('');}
+        else{g+=`<rect x="${x-34}" y="100" width="68" height="9" rx="4" fill="#BFE3F5"><animate attributeName="opacity" values=".55;.95;.55" dur="1.3s" repeatCount="indefinite"/></rect><path d="M${x-30} 114 q8 -3 16 0 t16 0 t16 0" stroke="#F4EEDF" stroke-width="2" fill="none" opacity=".8"/>`;
+          if(ty==='inverted')g+=`<g opacity=".8"><rect x="${x+16}" y="76" width="3" height="18" fill="#8B6A43"/><ellipse cx="${x+17}" cy="72" rx="9" ry="6" fill="#6F8F3A"/></g><g opacity=".45"><rect x="${x+16}" y="101" width="3" height="6" fill="#8B6A43"/><ellipse cx="${x+17}" cy="108" rx="9" ry="3" fill="#6F8F3A"/></g>`;
+          if(ty==='plain')g+=`<g opacity=".75"><rect x="${x-20}" y="78" width="2" height="14" fill="#8B6A43"/><path d="M${x-19} 79 q-6 -1 -8 3 M${x-19} 79 q6 -1 8 3" stroke="#4E8F55" stroke-width="2.5" fill="none"/></g>`;
+          if(ty==='dead')g+=`<path d="M${x-20} 100 l0 -22 M${x-20} 86 l-8 -8 M${x-20} 82 l7 -9" stroke="#7A6A55" stroke-width="2.5" fill="none"/>`;
+          if(ty==='road')g+=`<path d="M${x+14} 90 l3 -6 l4 0 l2 -4 l3 4 l0 6" stroke="#6E4B2E" stroke-width="2" fill="none" opacity=".7"/><path d="M${x-30} 96 q6 -4 12 0 t12 0 t12 0 t12 0 M${x-26} 88 q6 -4 12 0 t12 0 t12 0" stroke="#FFFFFF" stroke-width="1.5" fill="none" opacity=".7"/>`;}
+        g+=`<text x="${x}" y="30" font-size="15" font-weight="800" text-anchor="middle" fill="#25160F">${'ABCD'[i]}</text></g>`;});
+      const pano=h('div',{class:'pano'},g+'</svg>');area.append(pano);
+      pano.querySelectorAll('.cand').forEach(el=>el.addEventListener('click',()=>{const i=+el.dataset.i;SFX.tap();api.log('tap_oasis',{i,type:V.cand[i]});
+        if(V.cand[i]==='real'){api.say(t(UI.realOasis),'good');SFX.good();setTimeout(nextPart,900);}
+        else{api.mistake({type:V.cand[i]});api.say(t(UI.isMirage[V.cand[i]]),'bad');el.style.opacity=.35;}}));},
+    ()=>spotGrid('b3',[0,1,2,3,4,5].map(i=>({key:'b'+i,svg:bushSvg(V.bushShape[i],V.thorny.includes(i)),bad:V.thorny.includes(i)})),UI.noThorns),
+    ()=>spotGrid('',V.kit.map(k=>({key:k,svg:kitSvg(k,V.broken.includes(k)),bad:V.broken.includes(k),name:S.mission.kit[k]})),UI.kitOk)];
+  function spotGrid(cls,items,okMsg){const need=items.filter(x=>x.bad).length;let found=0,wrong=0;const prog=h('div',{class:'meta'},esc(t(UI.found,{n:0,m:need})));const g=h('div',{class:'sgrid '+cls});
+    items.forEach(it=>{const b=h('button',{class:'sitem','aria-label':it.name?t(it.name):it.key},`<svg viewBox="0 0 100 100">${it.svg}</svg>${it.name?`<small>${esc(t(it.name))}</small>`:''}`);
+      b.onclick=()=>{if(b.classList.contains('found'))return;SFX.tap();api.log('spot',{part,key:it.key,bad:it.bad});
+        if(it.bad){b.classList.add('found');found++;prog.textContent=t(UI.found,{n:found,m:need});SFX.tone(990,.1,'triangle',.15);if(found===need)setTimeout(nextPart,600);}
+        else{wrong++;api.mistake({part,key:it.key});api.say(t(okMsg),'bad');b.classList.add('no');setTimeout(()=>b.classList.remove('no'),450);
+          if(wrong>=3)[...g.children].forEach((x,k)=>{if(items[k].bad&&!x.classList.contains('found'))x.classList.add('hint');});}};g.append(b);});
+    area.append(prog,g);}
+  function nextPart(){part++;area.innerHTML='';api.say('','info');if(part>=3){SFX.good();api.complete({});return;}api.setPrompt(j.prompts[part]);parts[part]();}
+  api.setPrompt(j.prompts[0]);parts[0]();
+  return {destroy(){}};
+};
+
+TASKS.still=api=>{
+  const j=api.job,V=j.v;const placed=[];let done=false;const art=h('div',{class:'still'});const tiles=h('div',{class:'tiles'});const btns={};
+  const draw=drops=>{art.innerHTML=`<svg viewBox="0 0 330 170">${stillSvg(placed,false,drops)}</svg>`;};draw(false);
+  const valid=k=>j.parts[k]&&!placed.includes(k)&&j.parts[k].needs.every(n=>placed.includes(n));
+  const hint=()=>{Object.values(btns).forEach(b=>b.classList.remove('hint'));if(S.jobs[j.id].mistakes<3)return;const k=j.order.find(valid);if(k)btns[k].classList.add('hint');};
+  V.order.forEach(k=>{const it=j.parts[k]||j.decoys[k];const b=h('button',{},esc(t(it)));b.onclick=()=>press(k);btns[k]=b;tiles.append(b);});
+  function press(k){if(done||placed.includes(k))return;SFX.tap();
+    if(j.decoys[k]){api.mistake({item:k,decoy:true});api.say(t(j.decoys[k].why),'bad');btns[k].classList.add('shake-x');setTimeout(()=>btns[k].classList.remove('shake-x'),400);hint();return;}
+    if(!valid(k)){api.mistake({item:k,placed:placed.slice()});api.say(t(UI.stillNeed),'bad');btns[k].classList.add('shake-x');setTimeout(()=>btns[k].classList.remove('shake-x'),400);hint();return;}
+    placed.push(k);btns[k].classList.add('done');api.log('place',{item:k,order:placed.length});draw(false);SFX.tone(600+placed.length*70,.1,'triangle',.14);api.say('✓ '+t(j.parts[k]),'info');hint();
+    if(placed.length===6){done=true;R.props.sheet.visible=true;R.props.stone.visible=true;draw(true);api.say(t(UI.stillDone),'good');setTimeout(()=>api.complete({order:placed.slice()}),1500);}}
+  api.el.append(art,tiles);
+  return {destroy(){}};
+};
+
+TASKS.reflex=api=>{
+  const j=api.job;let seq=j.v,run=0,busy=false,timer=null,raf=null;
+  const rule=h('div',{class:'rxrule'},esc(t(UI.dayRule)));const card=h('div',{class:'rxcard'},`<span style="font-size:40px">🌪️</span>`);const bar=h('div',{class:'timebar'},'<i></i>');
+  const btns=h('div',{class:'rxbtns'});const B={};['go','stay','cover'].forEach(a=>{const b=h('button',{class:a},esc(t(UI[a])));b.onclick=()=>press(a);B[a]=b;btns.append(b);});
+  const score=h('div',{class:'score3'});const start=h('button',{class:'big'},'▶ '+t(UI.rxStart));
+  api.el.append(rule,card,bar,btns,score,h('div',{class:'row'}));api.el.lastChild.append(start);
+  let cur=null,shownAt=0,right=0,wrong=0,slow=0,answers=[];
+  const evById=id=>j.events.find(e=>e.id===id);
+  const drawScore=()=>{score.innerHTML=`<span>✅ ${right}</span><span>❌ ${wrong}</span><span>⏳ ${slow}</span>`;};drawScore();
+  start.onclick=()=>{if(busy)return;start.remove();go();};
+  async function go(){busy=true;right=wrong=slow=0;answers=[];drawScore();run++;api.log('reflex_start',{run});dust(true,j.station.x,j.station.z);
+    const list=seq.day.map(id=>({id,night:false})).concat(seq.night.map(id=>({id,night:true})));
+    for(let i=0;i<list.length;i++){
+      if(i===seq.day.length){rule.textContent=t(UI.nightRule);rule.className='rxrule night flash';card.classList.add('night');card.innerHTML='<span style="font-size:46px">🌙</span>';SFX.sting();setStory('night');await sleep(1700);}
+      const ev=evById(list[i].id);const need=list[i].night?ev.night:ev.day;const win=j.windowMs[list[i].night?1:0];
+      cur={need,ev,night:list[i].night,done:false};card.classList.remove('hit','miss');card.innerHTML=`<span class="e">${ev.icon}</span><span>${esc(t(ev))}</span>`;shownAt=performance.now();SFX.tone(700,.05,'square',.05);
+      await new Promise(res=>{const f=()=>{const e=performance.now()-shownAt;bar.firstChild.style.width=Math.max(0,100-e/win*100)+'%';if(cur.done){res();return;}if(e>=win){cur.done=true;slow++;answers.push({id:ev.id,night:cur.night,need,got:null});card.classList.add('miss');meterMistake('storm');drawScore();res();return;}raf=requestAnimationFrame(f);};f();});
+      await sleep(j.gapMs);
+    }
+    cur=null;dust(false);busy=false;const ok=right>=j.pass;api.log('reflex_end',{run,right,wrong,slow});
+    const r=api.answer(ok,{right,wrong,slow,answers});
+    if(ok)api.say(t(UI.rxPass,{n:right}),'good');
+    else if(!r.final){api.say(t(UI.rxFail,{n:right,p:j.pass}),'bad');const again=h('button',{class:'big'},'↻ '+t(UI.rxAgain));again.onclick=()=>{again.remove();seq=genReflex(rnd(hashStr(S.ver.seed+'|retry')),S.base.jobs.find(x=>x.id==='storm'));rule.textContent=t(UI.dayRule);rule.className='rxrule';card.classList.remove('night');setStory('evening');go();};api.el.lastChild.append(again);}
+  }
+  function press(a){if(!cur||cur.done)return;cur.done=true;const rt=performance.now()-shownAt;if(rt<S.base.fairPlay.reactFloorMs)S.fp.fastReacts++;
+    const good=a===cur.need;answers.push({id:cur.ev.id,night:cur.night,need:cur.need,got:a,rt:Math.round(rt)});
+    if(good){right++;card.classList.add('hit');SFX.tone(880,.06,'triangle',.12);}else{wrong++;card.classList.add('miss');SFX.bad();meterMistake('storm');}
+    drawScore();api.mark();}
+  return {destroy(){if(raf)cancelAnimationFrame(raf);dust(false);}};
+};
+
+/* ================= game flow ================= */
+function isUnlocked(j){if(j.unlock==='start')return true;return S.jobs[j.unlock]&&S.jobs[j.unlock].status==='done';}
+function nextJob(){return S.mission.jobs.find(j=>S.jobs[j.id].status!=='done'&&isUnlocked(j));}
+function jobById(id){return S.mission.jobs.find(j=>j.id===id);}
+function renderHUD(){
+  const tm=$('#timer');tm.textContent='⏱ '+fmtTime(Math.max(0,S.windowLeft)*1000);tm.classList.toggle('low',S.windowLeft<=120);
+  $('#score').textContent='★ '+fmt(S.points);const st=$('#streak');if(S.streak>=2){st.classList.remove('hidden');st.textContent='🔥'+S.streak;}else st.classList.add('hidden');
+  $('#coins').textContent=S.coins;$('#lang').textContent=S.lang==='en'?'हिं':'EN';$('#snd').textContent=S.sound?'🔊':'🔇';
+  $('#meters').classList.toggle('hidden',!(S.phase==='play'||S.phase==='rescue'));renderMeters();
+}
+function renderJobbar(){
+  const jb=$('#jobbar');jb.innerHTML='';const nx=nextJob();
+  S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];const locked=!isUnlocked(j);const done=st.status==='done';
+    const b=h('button',{class:'jb'+(locked?' lock':'')+(done?' done':'')+(nx&&nx.id===j.id?' next':''),style:{'--c':SP[j.superpower].c},'aria-label':t(j.label)},`<span class="ic">${ICON[j.superpower]}</span><span>${done?'★'.repeat(st.stars):(locked?'🔒 ':'')+esc(t(j.label))}</span>`);
+    b.onclick=()=>goToStation(j.id);jb.append(b);});
+}
+function renderBubble(){const b=$('#bubble');if(S.phase!=='play'||S.active||$('#lower3')){b.classList.add('hidden');return;}b.classList.remove('hidden');
+  const nx=nextJob();b.textContent=(S.mode==='ranked'?'🏆 ':'')+(S.jobs.plan.status!=='done'?t(UI.goFirst):(nx?t(UI.tapStation)+' · '+t(nx.label):t(UI.goCamp))+(S.beat!=null?' · 🎯 '+fmt(S.beat):''));}
+function refreshAll(){if(!S.active&&(S.phase==='play'||S.phase==='intro'))showMarkers(true);renderHUD();renderJobbar();renderBubble();refreshMarkerLabels();}
+function toast(msg,ms=2600){const e=h('div',{class:'toast'},esc(msg));document.body.append(e);setTimeout(()=>e.remove(),ms);}
+
+let clockId=null;
+function startClock(){S.windowStart=performance.now();clearInterval(clockId);clockId=setInterval(()=>{if(S.phase!=='play'){clearInterval(clockId);return;}
+  S.windowLeft=S.mission.windowSec-Math.floor((performance.now()-S.windowStart)/1000);
+  if(S.windowLeft<=0&&!S.windowClosedShown){S.windowClosedShown=true;toast(t(UI.windowClosed),4000);log('window_closed');SFX.bad();}renderHUD();renderBubble();},500);}
+
+function goToStation(id){
+  if(S.phase!=='play'||S.active)return;const j=jobById(id);const st=S.jobs[id];
+  if(st.status==='done'){SFX.tap();return;}
+  if(!isUnlocked(j)){toast(t(UI.locked),1800);SFX.bad();return;}
+  SFX.tap();log('walk_to',id);
+  walkTo(j.station.x,j.station.z,()=>{R.avatar.rotation.y=Math.PI;arrive(j);});
+  renderBubble();
+}
+function camPoseFor(j){const s=j.station;const portrait=innerWidth<innerHeight;const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  return {pos:V(s.x+3,portrait?9:7,s.z+(portrait?11:9)),look:V(s.x,portrait?-3:1,s.z-4)};}
+function showMarkers(v){Object.values(R.markers).forEach(mk=>mk.g.visible=v);if(v)R.avatar.visible=true;}
+function arrive(j){
+  showMarkers(false);const st=S.jobs[j.id];if(!st.learnDone)st.learnOpen=performance.now();S.active={job:j,task:null};st.status='open';log('job_arrive',j.id,{learn_done:st.learnDone});
+  S.camMode='job';S.camPose=camPoseFor(j);renderBubble();$('#jobbar').classList.add('hidden');HOST.stop();
+  if(!st.learnDone)showLearn(j,0,false);else startJob(j);
+}
+
+/* ---------- learn cards ---------- */
+let ovEl=null;
+function closeOv(){if(ovEl){ovEl.remove();ovEl=null;}}
+function openOv(){closeOv();ovEl=h('div',{class:'ov'});const c=h('div',{class:'card',role:'dialog','aria-modal':'true'});ovEl.append(c);document.body.append(ovEl);return c;}
+function showLearn(j,si,peek){
+  const sl=j.learn[si];const c=openOv();c.style.setProperty('--c',SP[j.superpower].c);
+  const head=h('div',{class:'ph'},`<div class="badge">${ICON[j.superpower]}</div><div class="pt"><small>${esc(t(SP[j.superpower]))} · ${j.competency} ${COMP[j.competency]||''}</small><b>${esc(t(j.label))}</b></div>`);
+  const body=h('div',{class:'pb'});c.append(head,body);
+  body.append(h('div',{class:'kicker'},`${esc(t(UI.learn))} ${j.learn.length>1?(si+1)+'/'+j.learn.length:''}`));
+  if(sl.art&&ART[sl.art])body.append(h('div',{class:'art'},ART[sl.art]()));
+  const txt=h('div',{class:'learn-text'},esc(t(sl.text)));
+  if(sl.bullets){const ul=h('ul');sl.bullets.forEach((b,i)=>ul.append(h('li',{},`<b>${i+1}</b>${esc(t(b))}`)));txt.append(ul);}
+  if(sl.tail)txt.append(h('div',{class:'tail',style:{marginTop:'6px'}},esc(t(sl.tail))));
+  body.append(txt);
+  const row=h('div',{class:'row'});
+  if(si>0)row.append(h('button',{class:'big alt',onclick:()=>showLearn(j,si-1,peek)},'◀'));
+  if(si<j.learn.length-1)row.append(h('button',{class:'big',onclick:()=>showLearn(j,si+1,peek)},t(UI.next)+' ▶'));
+  else if(peek)row.append(h('button',{class:'big',onclick:()=>{closeOv();S.learnView=null;}},t(UI.backToJob)));
+  else row.append(h('button',{class:'big',onclick:()=>{const st=S.jobs[j.id];if(st.learnOpen!=null){st.learnMs+=performance.now()-st.learnOpen;st.learnOpen=null;}st.learnDone=true;log('learn_done',j.id,{learn_ms:Math.round(st.learnMs)});closeOv();S.learnView=null;startJob(j);}},t(UI.startJob)+' ▶'));
+  if(!peek)row.prepend(h('button',{class:'big alt',onclick:()=>{const st=S.jobs[j.id];if(st.learnOpen!=null){st.learnMs+=performance.now()-st.learnOpen;st.learnOpen=null;}closeOv();S.learnView=null;leaveJob(false);}},'✕'));
+  body.append(row);S.learnView={j,si,peek};
+}
+
+/* ---------- job panel ---------- */
+let panelEl=null;
+function closePanel(){if(panelEl){panelEl.remove();panelEl=null;}}
+function startJob(j){
+  const st=S.jobs[j.id];const sc=S.mission.scoring;closePanel();
+  panelEl=h('div',{class:'panel tall'});panelEl.style.setProperty('--c',SP[j.superpower].c);
+  const head=h('div',{class:'ph'});const tt=h('div',{class:'pt'});let curPrompt=j.prompt;
+  const setTitle=()=>{tt.innerHTML=`<small>${esc(t(SP[j.superpower]))} · ${j.competency} ${COMP[j.competency]||''}</small><b>${esc(t(j.label))}</b>`;};setTitle();
+  head.append(h('div',{class:'badge'},ICON[j.superpower]),tt,h('button',{class:'x','aria-label':t(UI.close),onclick:()=>leaveJob(true)},'×'));
+  const body=h('div',{class:'pb'});const prompt=h('div',{class:'prompt'},esc(t(j.prompt)));
+  const meta=h('div',{class:'meta'});const mtxt=h('span');const notes=h('button',{class:'notes'});meta.append(mtxt,notes);
+  const area=h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}});const fb=h('div',{class:'fb info','aria-live':'polite'});
+  body.append(prompt,meta,fb,area);panelEl.append(head,body);document.body.append(panelEl);
+  const attemptTask=['dayplan','reflex'].includes(j.task);
+  const drawMeta=()=>{mtxt.textContent=attemptTask?`${t(UI.tries)} ${Math.min(st.tries+1,2)}/2`:`${t(UI.mistakes)}: ${st.mistakes}`;
+    notes.innerHTML=st.notes?`📒 ${esc(t(UI.notes))} ✓`:`📒 ${esc(t(UI.notes))} <i class="coin"></i>-${sc.coins.notesCost}`;notes.disabled=!st.notes&&S.coins<sc.coins.notesCost;};
+  drawMeta();
+  notes.onclick=()=>{if(!st.notes){if(S.coins<sc.coins.notesCost)return;S.coins-=sc.coins.notesCost;st.notes=true;SFX.coin();log('notes',j.id,{coins_left:S.coins});renderHUD();drawMeta();}showLearn(j,0,true);};
+  st.startedAt=performance.now();log('job_start',j.id);
+  let finished=false;const mark=()=>{if(st.firstActMs==null&&st.startedAt!=null)st.firstActMs=Math.round(performance.now()-st.startedAt);};
+  const api={job:j,el:area,mark,
+    say(msg,kind='info'){fb.className='fb '+kind;fb.textContent=msg;},
+    setPrompt(p){curPrompt=p;prompt.textContent=t(p);},
+    log(ev,p){mark();log(ev,j.id,p);},
+    mistake(p={}){if(finished)return;mark();st.mistakes++;SFX.bad();meterMistake(j.id);log('mistake',j.id,p);drawMeta();},
+    complete(p={}){if(finished)return;finished=true;const lvl=st.mistakes===0?'first':st.mistakes===1?'second':'helped';finishJob(j,lvl,p);},
+    answer(correct,p={}){
+      if(finished)return{final:true};mark();st.tries++;log('attempt',j.id,{n:st.tries,correct,...p});
+      if(correct){finished=true;setTimeout(()=>finishJob(j,st.tries===1?'first':'second',p),700);return{final:true};}
+      meterMistake(j.id);
+      if(st.tries>=2){finished=true;SFX.bad();setTimeout(()=>finishJob(j,'failed',p),1600);return{final:true};}
+      SFX.bad();drawMeta();return{final:false};}
+  };
+  S.active.api=api;S.active.setTitle=()=>{setTitle();prompt.textContent=t(curPrompt);drawMeta();};
+  S.active.task=TASKS[j.task](api);
+}
+function leaveJob(fromPanel){
+  const a=S.active;if(!a)return;const st=S.jobs[a.job.id];
+  if(a.task&&a.task.destroy)a.task.destroy();
+  if(st.startedAt!=null){st.timeMs+=performance.now()-st.startedAt;st.startedAt=null;}
+  if(st.status==='open')st.status='new';
+  log('job_leave',a.job.id,{time_ms:Math.round(st.timeMs)});
+  closePanel();closeOv();S.active=null;S.camMode='follow';$('#jobbar').classList.remove('hidden');refreshAll();
+}
+const ORDER_PH=['dawn','morning','noon','afternoon','evening','night'];
+function finishJob(j,level,p){
+  const st=S.jobs[j.id];const sc=S.mission.scoring,js=sc.job,sk=sc.skillCredit,M=S.mission.meter;
+  if(st.startedAt!=null){st.timeMs+=performance.now()-st.startedAt;st.startedAt=null;}
+  st.level=level;st.status='done';
+  let base=level==='first'?js.first:level==='second'?js.second:level==='helped'?js.helped:0;if(st.notes)base*=js.notesFactor;
+  if(level==='first'&&!st.notes){S.streak++;}else S.streak=0;S.bestStreak=Math.max(S.bestStreak,S.streak);
+  const mult=(level==='first'&&!st.notes)?js.streak[Math.min(S.streak,js.streak.length)-1]:1;
+  const speed=level==='failed'?0:Math.round(js.speedMax*Math.max(0,1-st.timeMs/1000/j.targetSec));
+  st.points=Math.round(base*mult)+speed;S.points+=st.points;
+  st.credit=level==='first'?sk.first:level==='second'?sk.second:sk.later;if(st.notes)st.credit=Math.max(0,st.credit-sk.notesPenalty);
+  st.stars=level==='first'?3:level==='second'?2:1;
+  if(level==='first')S.coins+=sc.coins.perFirstTry;
+  // Survival Meter (fun only)
+  const use=M.perJob[j.phase]||[0.3,8];let dw=-use[0],de=-use[1],db=-M.batteryPerJob;
+  if(j.id==='still'&&level!=='failed')dw+=0.4;if(j.id==='plan'&&level==='first')de+=10;if(j.id==='mirage')dw+=0.3;
+  meterChange(dw,de,db,'job_done');
+  log('job_done',j.id,{level,mistakes:st.mistakes,tries:st.tries,notes:st.notes,time_ms:Math.round(st.timeMs),points:st.points,skill_credit:st.credit});
+  renderHUD();
+  const body=panelEl.querySelector('.pb');body.innerHTML='';
+  const ok=level==='first'||level==='second';if(ok)SFX.good();
+  const dn=h('div',{class:'done'});
+  dn.innerHTML=`<div class="starrow">${[0,1,2].map(i=>`<span class="${i<st.stars?'':'off'}">★</span>`).join('')}</div><b style="font-size:22px">${esc(t(ok?UI.great:UI.helped))}</b>
+   <div class="gain"><span class="piece">${esc(t(SP[j.superpower]))}</span><span class="piece" style="color:var(--sun)">+${fmt(st.points)} ${esc(t(UI.points))}</span>${mult>1?`<span class="piece" style="background:linear-gradient(90deg,#FF7A3D,#FF3D7F)">🔥 x${mult}</span>`:''}</div>
+   ${answersOpen()?`<div class="fb ${ok?'good':'bad'}" style="text-align:left">${esc(t(j.explain))}</div>`:`<div class="fb info">${esc(t(UI.answersLater,{t:hhmm(S.slot.end)}))}</div>`}`;
+  dn.append(h('button',{class:'big',onclick:()=>{if(S.active&&S.active.task&&S.active.task.destroy)S.active.task.destroy();closePanel();S.active=null;S.camMode='follow';$('#jobbar').classList.remove('hidden');
+    const nx=nextJob();if(nx){const ph=nx.phase;if(ph!==S.story)setStory(ph);const line=S.mission.host.after[j.id];if(line){HOST.say(t(line));SFX.sting();}refreshAll();}
+    else{refreshAll();rescue();}}},t(UI.back)+' ▶'));
+  body.append(dn);refreshMarkerLabels();
+}
+
+/* ---------- ending: helicopter or walk to camp ---------- */
+async function rescue(){
+  S.phase='rescue';S.active=null;$('#jobbar').classList.add('hidden');showMarkers(false);renderBubble();setStory('night');
+  const M=S.mission.meter;const heli=S.meter.battery>=M.heliBattery;S.run.ending=heli?'heli':'walk';log('rescue_start',null,{ending:S.run.ending,meter:S.meter});
+  const c=S.mission.camp;
+  HOST.say(t(heli?S.mission.host.heliCall:S.mission.host.walkCall),5000);
+  if(heli){
+    await new Promise(r=>walkTo(R.avatar.position.x+2,R.avatar.position.z-3,r));
+    const hg=R.heli;const av=R.avatar.position.clone();hg.visible=true;hg.position.set(av.x+50,28,av.z-50);S.camMode='heli';SFX.rumble(4);
+    await new Promise(r=>tween(4,k=>{const e=1-Math.pow(1-k,3);hg.position.set(av.x+50*(1-e),28-25*e+2,av.z-50*(1-e));},r));
+    R.avatar.userData.ride=true;await new Promise(r=>tween(1,k=>{R.avatar.position.y=groundHeight(av.x,av.z)+k*2.2;},r));R.avatar.visible=false;
+    const p0=hg.position.clone();SFX.rumble(4);await new Promise(r=>tween(4,k=>{const e=k*k;hg.position.set(p0.x+(c.x+6-p0.x)*k,p0.y+Math.sin(Math.PI*k)*12,p0.z+(c.z+3-p0.z)*k);},r));
+    R.avatar.position.set(c.x+4,0,c.z+5);R.avatar.visible=true;R.avatar.userData.ride=false;
+  }else{
+    S.camMode='follow';await new Promise(r=>walkTo(c.x-1,c.z+5,r));
+  }
+  S.camMode='follow';const tt=h('div',{class:'endtitle'},(heli?'🚁 ':'🐪 ')+esc(t(UI.rescued)));document.body.append(tt);SFX.good();confetti();
+  HOST.say(t(heli?S.mission.host.heliEnd:S.mission.host.walkEnd),4000);
+  endRun();await sleep(2600);tt.remove();S.phase='results';renderHUD();showResults();
+}
+function rankFor(p){const rs=S.mission.scoring.ranks;let r=rs[0],nx=null;for(let i=0;i<rs.length;i++){if(p>=rs[i].min){r=rs[i];nx=rs[i+1]||null;}}return{r,nx};}
+function endBadges(){const M=S.mission.meter,m=S.meter;return[{k:S.run.ending==='heli'?'heli':'walk',on:true},{k:'water',on:m.water>=M.waterKeeper},{k:'iron',on:m.energy>=M.ironWill}];}
+function endRun(){const m=S.mission;
+  const bonus=Math.max(0,S.windowLeft)*m.scoring.windowBonusPerSec;S.run.window_bonus=bonus;S.points+=bonus;
+  S.run.ended_at=new Date().toISOString();S.run.completed=true;S.run.points=S.points;S.run.stars=m.jobs.reduce((a,j)=>a+S.jobs[j.id].stars,0);S.run.first_try=m.jobs.filter(j=>S.jobs[j.id].level==='first').length;S.run.best_streak=S.bestStreak;S.run.coins_end=S.coins;S.run.rank=rankFor(S.points).r.en;
+  S.run.meter_end=Object.assign({},S.meter);S.run.badges=endBadges().filter(b=>b.on).map(b=>b.k);
+  S.run.credibility=computeCred();
+  if(S.mode==='ranked'){const now=Date.now();const dev=store.get('fsl.devRanked.desert',[]).filter(x=>now-x.at<7*864e5);dev.push({child:S.childId,slot:S.slot.key,at:now,points:S.points,plan:S.ver.plan,zone:S.ver.zone});store.set('fsl.devRanked.desert',dev);
+    store.set('fsl.ranked.desert.'+S.slot.key+'.'+S.childId,{at:now,points:S.points,end:S.slot.end,answers:m.jobs.map(j=>({label:j.label,explain:j.explain}))});}
+  log('run_end',null,{points:S.points,window_bonus:S.run.window_bonus,rank:S.run.rank,ending:S.run.ending,badges:S.run.badges});renderHUD();}
+function confetti(){const cv=$('#confetti');cv.hidden=false;const dpr=Math.min(2,devicePixelRatio||1);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';const g=cv.getContext('2d');g.scale(dpr,dpr);
+  const cols=Object.values(SP).map(s=>s.hex);const ps=Array.from({length:140},()=>({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.5,vx:(Math.random()-.5)*2,vy:2+Math.random()*3,r:Math.random()*6.28,s:5+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();(function f(){const e=performance.now()-t0;g.clearRect(0,0,innerWidth,innerHeight);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;g.save();g.translate(p.x,p.y);g.rotate(p.r);g.fillStyle=p.c;g.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);g.restore();});if(e<4500)requestAnimationFrame(f);else cv.hidden=true;})();}
+
+/* ---------- results ---------- */
+function crewKey(){return 'fsl.crew.'+S.mission.id+'.'+S.mission.band;}
+function showResults(){
+  const m=S.mission;const c=openOv();const totalMs=new Date(S.run.ended_at)-new Date(S.run.started_at);const {r,nx}=rankFor(S.points);
+  const body=h('div',{class:'intro'});let beat='';if(S.beat!=null)beat=`<div class="beat">${esc(t(S.points>S.beat?UI.beatWin:UI.beatLose,{n:fmt(S.beat)}))}</div>`;
+  const bd=endBadges();
+  body.innerHTML=`<div class="eyebrow">${esc(t(m.title))} · ${esc(t(m.zone.name))}</div><h1>${S.run.ending==='heli'?'🚁':'🐪'} ${esc(t(UI.rescued))}</h1>${beat}
+   <div class="endbadges">${bd.map(b=>`<div class="${b.on?'':'off'}"><span>${UI.badges[b.k].i}</span>${esc(t(UI.badges[b.k]))}</div>`).join('')}</div>
+   <div class="note">${esc(t(UI.badgeWhy[S.run.ending],{b:Math.round(S.meter.battery)}))} ${esc(t(UI.meterNote))}</div>
+   <div><div class="res-big">${fmt(S.points)}</div><div class="rank">${esc(t(r))}</div><div class="note">${nx?esc(t(UI.nextRank,{n:fmt(nx.min-S.points),r:t(nx)})):esc(t(UI.topRank))}</div></div>
+   <div class="res-grid"><div><b>${S.run.first_try}/${m.jobs.length}</b>${esc(t(UI.firstTry))}</div><div><b>${S.run.stars}/${m.jobs.length*3}</b>${esc(t(UI.stars))}</div><div><b>${S.meter.water.toFixed(1)} L</b>${esc(t(UI.waterLeft))}</div><div><b>${fmtTime(totalMs)}</b>${esc(t(UI.time))}</div></div>
+   ${S.run.window_bonus?`<div class="note">${esc(t(UI.windowBonus))}: <b style="color:var(--sun)">+${fmt(S.run.window_bonus)}</b></div>`:''}`;
+  const list=h('div',{class:'res-list'});m.jobs.forEach(j=>{const st=S.jobs[j.id];list.append(h('div',{},`<span class="badge" style="--c:${SP[j.superpower].c}">${ICON[j.superpower]}</span><span class="l">${esc(t(j.label))}<br><small style="color:var(--muted);font-weight:600">${esc(t(SP[j.superpower]))} · ${fmtTime(st.timeMs)}</small></span><em>${'★'.repeat(st.stars)}${'☆'.repeat(3-st.stars)}</em>`));});
+  body.append(list);
+  const board=h('div',{class:'board'});const acc=Math.round(S.run.first_try/m.jobs.length*100);
+  const drawBoard=me=>{const rows=store.get(crewKey(),[]).sort((a,b)=>b.points-a.points).slice(0,10);board.innerHTML=`<h4>🏆 ${esc(t(UI.crew))}</h4>`;if(!rows.length)board.append(h('div',{class:'note'},esc(t(UI.noScores))));rows.forEach((x,i)=>board.append(h('div',{class:'r'+(x.id===me?' me':'')},`<span>${i+1}</span><span>${esc(x.name)}</span><small>${x.acc}%</small><b>${fmt(x.points)}</b>`)));};
+  const nameRow=h('div',{class:'namerow'});const inp=h('input',{id:'crewName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});const sv=h('button',{class:'big',style:{padding:'8px 16px',fontSize:'17px'}},t(UI.save));
+  sv.onclick=()=>{const name=(inp.value||'').trim().slice(0,14)||'Player';store.set('fsl.name',name);const rows=store.get(crewKey(),[]);if(!rows.find(x=>x.id===S.run.run_id))rows.push({id:S.run.run_id,name:name+' · '+(S.run.ending==='heli'?'🚁':'🐪'),points:S.points,acc,date:new Date().toISOString().slice(0,10)});store.set(crewKey(),rows.sort((a,b)=>b.points-a.points).slice(0,50));S.run.player_name=name;saveRun();log('crew_save',null,{name});sv.disabled=true;drawBoard(S.run.run_id);};
+  nameRow.append(inp,sv);drawBoard();body.append(nameRow,board);
+  const row=h('div',{class:'row'});const msg=h('div',{class:'note'});
+  if(S.mode==='ranked'){const open=answersOpen();body.append(h('div',{class:'ranked-rules'},open?'':esc(t(UI.answersLater,{t:hhmm(S.slot.end)}))),h('button',{class:'big alt',disabled:!open,onclick:()=>showAnswers(m.jobs.map(j=>({label:j.label,explain:j.explain})),showResults)},'🔓 '+t(UI.seeAnswers)));}
+  row.append(h('button',{class:'big',onclick:()=>shareCard()},t(UI.share)),h('button',{class:'big alt',onclick:()=>copyChallenge(msg)},t(UI.copyLink)),h('button',{class:'big alt',onclick:()=>{if(S.mode==='ranked'){S.mode='practice';setWatermark(false);toast(t(UI.nowPractice),2500);}restart();}},t(UI.playAgain)));
+  body.append(row,msg,h('div',{class:'note'},esc(t(UI.starNote))));c.append(body);
+}
+function challengeUrl(){return `${location.origin}${location.pathname}#beat-${Math.round(S.points)}`;}
+function showAnswers(list,back){const c=openOv();const b=h('div',{class:'intro'});b.append(h('h1',{style:{fontSize:'24px'}},esc(t(UI.answersTitle))));const l=h('div',{class:'ans-list'});list.forEach(x=>l.append(h('div',{},`<b>${esc(t(x.label))}</b>${esc(t(x.explain))}`)));b.append(l,h('button',{class:'big alt',onclick:()=>back()},t(UI.back)));c.append(b);}
+function copyChallenge(el){const url=challengeUrl();log('share',null,{kind:'link'});const fail=()=>{el.innerHTML=`${esc(t(UI.copyFail))}<br><span style="user-select:text;-webkit-user-select:text;color:var(--ink)">${esc(url)}</span>`;};try{navigator.clipboard.writeText(url).then(()=>{el.textContent=t(UI.copied);},fail);}catch(e){fail();}}
+function rr(g,x,y,w,hh,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+hh,r);g.arcTo(x+w,y+hh,x,y+hh,r);g.arcTo(x,y+hh,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+async function shareCard(){
+  log('share',null,{kind:'card'});try{await document.fonts.ready;}catch(e){}
+  const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#E2774A');gr.addColorStop(.55,'#F0B47A');gr.addColorStop(.56,'#D9A55F');gr.addColorStop(1,'#8A5A32');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  g.fillStyle='#FFF2B0';g.beginPath();g.arc(W/2,560,150,0,6.3);g.fill();
+  g.fillStyle='#C98A4B';g.beginPath();g.moveTo(0,760);g.quadraticCurveTo(300,600,620,760);g.quadraticCurveTo(860,660,1080,740);g.lineTo(1080,800);g.lineTo(0,800);g.fill();
+  const F="'Baloo 2','Nirmala UI','Noto Sans Devanagari',sans-serif";g.textAlign='center';
+  g.fillStyle='#E0243A';rr(g,W/2-90,60,180,56,28);g.fill();g.fillStyle='#fff';g.font=`800 34px ${F}`;g.fillText('● LIVE',W/2,100);
+  g.fillStyle='#25160F';g.font=`800 64px ${F}`;g.fillText(t(S.mission.title),W/2,210);
+  g.font=`120px ${F}`;g.fillText(S.run.ending==='heli'?'🚁':'🐪',W/2,620);
+  g.fillStyle='#FFF6EA';g.font=`700 44px ${F}`;g.fillText(t(UI.cardScored,{zone:t(S.mission.zone.name)}),W/2,890);g.fillStyle='#FFB627';g.font=`800 170px ${F}`;g.fillText(fmt(S.points),W/2,1050);
+  g.fillStyle='#FFF6EA';g.font=`800 58px ${F}`;g.fillText(t(rankFor(S.points).r),W/2,1125);
+  g.font=`700 38px ${F}`;g.fillText(`${S.run.first_try}/6 ${t(UI.firstTry)}  ·  ★ ${S.run.stars}/18`,W/2,1185);
+  g.font=`800 56px ${F}`;g.fillText(t(UI.cardBeat),W/2,1290);
+  const url=cv.toDataURL('image/png');
+  try{const blob=await (await fetch(url)).blob();const file=new File([blob],'fsl-desert-score.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:`${t(UI.cardBeat)} ${challengeUrl()}`});return;}}catch(e){}
+  const c=openOv();const b=h('div',{class:'intro'});b.append(h('img',{src:url,class:'cardimg',alt:'Score card'}),h('div',{class:'note'},esc(t(UI.saveCard))),h('button',{class:'big alt',onclick:()=>showResults()},t(UI.back)));c.append(b);
+}
+
+/* ---------- intro / restart ---------- */
+function zoneSvg(z){return `<svg viewBox="0 0 120 84"><rect width="120" height="84" rx="10" fill="${z.id==='nubra'?'#B8CDE0':z.id==='kutch'?'#CFE6F2':'#F2B98A'}"/><circle cx="${z.id==='nubra'?30:92}" cy="22" r="10" fill="#FFF2B0"/>${z.id==='nubra'?'<path d="M0 50 L25 22 L45 44 L70 14 L100 46 L120 30 V84 H0 Z" fill="#8F8A86"/><path d="M62 24 L70 14 L78 24 Z" fill="#fff"/>':''}<path d="M0 62 Q30 44 60 60 T120 56 V84 H0 Z" fill="${z.dune}"/><path d="M0 72 Q40 62 80 72 T120 70 V84 H0 Z" fill="${z.ground}"/>${z.id==='kutch'?'<path d="M10 76 h20 M50 78 h24 M90 75 h18" stroke="#fff" stroke-width="2"/>':''}</svg>`;}
+function gearSvg(col){return `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="142" rx="34" ry="6" fill="#000" opacity=".3"/><rect x="40" y="96" width="16" height="42" rx="6" fill="#5B4532"/><rect x="64" y="96" width="16" height="42" rx="6" fill="#5B4532"/>
+  <rect x="34" y="56" width="52" height="50" rx="12" fill="#F3E7D3"/><rect x="32" y="54" width="56" height="14" rx="7" fill="${col}"/><rect x="18" y="60" width="14" height="40" rx="7" fill="#F3E7D3"/><rect x="88" y="60" width="14" height="40" rx="7" fill="#F3E7D3"/><rect x="80" y="76" width="10" height="20" rx="4" fill="#4EC3FF"/>
+  <circle cx="60" cy="38" r="17" fill="#C68B59"/><ellipse cx="60" cy="24" rx="34" ry="6" fill="#E9D2A6"/><rect x="44" y="8" width="32" height="16" rx="6" fill="#E9D2A6"/><rect x="44" y="18" width="32" height="5" fill="${col}"/><circle cx="53" cy="40" r="2.5" fill="#25160F"/><circle cx="67" cy="40" r="2.5" fill="#25160F"/><path d="M54 47q6 4 12 0" stroke="#25160F" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;}
+function showIntro(step){
+  S.phase='intro';if(step==null)step=S.introStep||0;S.introStep=step;const m=S.mission;const ranked=S.mode==='ranked';const N=4;
+  const c=openOv();const body=h('div',{class:'intro wiz'});
+  const dots=h('div',{class:'dots'});for(let i=0;i<N;i++)dots.append(h('i',{class:i===step?'on':(i<step?'done':'')}));
+  const langB=h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro(step);}},S.lang==='en'?'हिंदी में खेलो':'Play in English');
+  const nav=(nextLabel,onNext)=>{const row=h('div',{class:'row'});if(step>0)row.append(h('button',{class:'big alt',onclick:()=>{SFX.tap();showIntro(step-1);}},'◀'));row.append(h('button',{class:'big',onclick:onNext},nextLabel));return row;};
+  const next=()=>{SFX.ensure();SFX.tap();showIntro(step+1);};
+  body.append(dots);
+  if(step===0){
+    const beat=S.beat!=null?`<div class="beat">${esc(t(UI.beatBanner,{n:fmt(S.beat)}))}</div>`:'';
+    const rk=ranked?`<div class="beat">🏆 ${esc(t(UI.rankedTitle))} · ${hhmm(S.slot.start)}–${hhmm(S.slot.end)}${S.slot.test?' · '+esc(t(UI.testSlot)):''}</div>`:'';
+    body.append(h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.eyebrow))} ${m.band}</div><div class="hero">🏜️</div><span class="chip live" style="align-self:center">LIVE</span><h1>${esc(t(m.title))}</h1>${rk}${beat}<p>${esc(t(m.story))}</p>`),nav(t(UI.letsGo)+' ▶',next),langB);
+  } else if(step===1){
+    const steps=[[UI.how1,'🚶'],[UI.how2,'📖'],[UI.how3,'✋'],[UI.how4,'🚁']];
+    const ul=h('div',{class:'howlist'});steps.forEach(([x,ic])=>ul.append(h('div',{},`<span class="n">${ic}</span><span>${esc(t(x,{min:Math.round(m.windowSec/60),jobs:m.jobs.length}))}</span>`)));
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.howTitle))}</div><h1>${esc(t(UI.howHead))}</h1>`);wb.append(ul);
+    if(ranked)wb.append(h('div',{class:'ranked-rules'},esc(t(UI.rulesR,{t:hhmm(S.slot.end)}))));else wb.append(h('div',{class:'note'},esc(t(UI.starNote))));
+    body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(step===2){
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:3,m:N}))}</div><h1>${esc(t(UI.pickSuit))}</h1>`);
+    const prev=h('div',{class:'suitprev'});const draw=()=>{prev.innerHTML=gearSvg('#'+SUITS[S.suit].toString(16).padStart(6,'0'));};draw();
+    const suits=h('div',{class:'suits'});SUITS.forEach((col,i)=>{const b=h('button',{class:i===S.suit?'on':'',style:{'--c':'#'+col.toString(16).padStart(6,'0')},'aria-label':'colour '+(i+1)});b.onclick=()=>{S.suit=i;store.set('fsl.suit',i);R.suitMat.color.setHex(col);suits.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');draw();SFX.tap();};suits.append(b);});
+    wb.append(prev,suits);body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(!ranked){
+    const cur=store.get('fsl.zone','random');
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:4,m:N}))}</div><h1>${esc(t(UI.pickZone))}</h1>`);
+    const dp=h('div',{class:'dests'});
+    S.base.zones.forEach(z=>{const bt=h('button',{class:cur===z.id?'on':'','aria-label':t(z.name)},zoneSvg(z)+`<span>${esc(t(z.name))}</span><small>${esc(t(z.place))}</small>`);bt.onclick=()=>{store.set('fsl.zone',z.id);SFX.tap();showIntro(step);};dp.append(bt);});
+    const rb=h('button',{class:cur==='random'?'on':'','aria-label':t(UI.randomZone)},`<span style="font-size:34px;line-height:44px">🎲</span><span>${esc(t(UI.randomZone))}</span><small>?</small>`);rb.onclick=()=>{store.set('fsl.zone','random');SFX.tap();showIntro(step);};dp.append(rb);
+    wb.append(dp,h('div',{class:'note'},esc(t(UI.sameRules))));body.append(wb,nav(t(UI.enter)+' 🚁',()=>{S.introStep=0;enter();}));
+  } else {
+    const sl=S.slot;const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:4,m:N}))} · 🏆 ${esc(t(UI.rankedTitle))}</div><h1>${esc(t(UI.whoPlays))}</h1>`);
+    const idIn=h('input',{id:'childId',maxlength:'16',placeholder:t(UI.fslId),value:store.get('fsl.childId','')});const nmIn=h('input',{id:'childName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});
+    const pl=h('label',{class:'pledge'});const cb=h('input',{type:'checkbox',id:'pledge'});pl.append(cb,h('span',{},esc(t(UI.pledge))));const info=h('div',{class:'note'});
+    const col=h('div',{class:'fields'});col.append(idIn,nmIn);wb.append(col,pl,info,h('div',{class:'note'},esc(t(UI.zoneAssigned))));
+    body.append(wb,nav(t(UI.startRanked)+' 🏆',()=>{const id=(idIn.value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');const nm=(nmIn.value||'').trim().slice(0,14);
+      if(!id||!cb.checked){info.textContent=t(UI.needId);SFX.bad();return;}
+      const prev=store.get('fsl.ranked.desert.'+sl.key+'.'+id,null);
+      if(prev){if(Date.now()>prev.end){showAnswers(prev.answers,()=>showIntro(step));}else{info.textContent=t(UI.already,{t:hhmm(prev.end)});SFX.bad();}return;}
+      const st=slotState();if(st==='before'){info.textContent=t(UI.opensAt,{t:hhmm(sl.start)});SFX.bad();return;}
+      if(st!=='open'){info.innerHTML='';info.append(esc(t(UI.startClosed,{m:Math.round(sl.grace/60000)})),h('br'));info.append(h('button',{class:'big alt',style:{marginTop:'8px'},onclick:()=>{S.mode='practice';showIntro(3);}},t(UI.playPractice)));return;}
+      S.childId=id;S.childName=nm||id;store.set('fsl.childId',id);if(nm)store.set('fsl.name',nm);
+      try{const el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen().then(()=>{S.fsOn=true;},()=>{});}catch(e){}
+      S.introStep=0;enter();}));
+  }
+  c.append(body);
+}
+function resetWorld(){R.props.sheet.visible=false;R.props.stone.visible=false;R.heli.visible=false;R.avatar.userData.ride=false;R.avatar.visible=true;dust(false);applyZone();setStory('dawn',true);}
+function enter(){SFX.ensure();closeOv();
+  if(S.mode==='ranked'){const used=store.get('fsl.devRanked.desert',[]).filter(x=>x.slot===S.slot.key&&x.child!==S.childId);applyVersion(makeVersion(S.childId+'|'+S.base.id+'|'+S.slot.key,{zone:used.map(x=>x.zone),plan:used.map(x=>x.plan)}));setWatermark(true);}
+  else{S.childId=store.get('fsl.childId',null);const pz=store.get('fsl.zone','random');applyVersion(makeVersion('practice|'+uuid(),{},pz==='random'?null:pz));}
+  newRun();S.run.player_id=S.childId;S.run.player_name=S.childName||store.get('fsl.name',null);resetWorld();
+  showBriefing(()=>{closeOv();S.phase='play';S.run.lang=S.lang;S.run.started_at=new Date().toISOString();log('run_start',null,{beat_target:S.beat,suit:S.suit,mode:S.mode,version:S.ver});startClock();
+    R.avatar.position.set(0,0,34);S.camMode='follow';walkTo(0,30);$('#jobbar').classList.remove('hidden');refreshAll();HOST.say(t(S.mission.host.intro),5000);SFX.sting();});}
+function showBriefing(go){const z=S.mission.zone;const c=openOv();const b=h('div',{class:'brief'});
+  b.innerHTML=`<div class="eyebrow">${esc(t(UI.yourDrop))}${S.mode==='ranked'?' · 🏆 '+esc(t(UI.rankedTitle)):''}</div><div class="zone-ic">${zoneSvg(z)}</div><h1>${esc(t(z.name))}</h1>
+   <div class="brief-rows"><div><span>📍</span>${esc(t(z.place))}</div><div><span>💡</span>${esc(t(z.fact))}</div><div><span>🎒 ${esc(t(UI.startKit))}</span>${esc(t(UI.kitLine,{w:S.ver.water.toFixed(1),b:S.ver.battery}))}</div></div>
+   <div class="note">${esc(t(UI.sameRules))} ${esc(t(UI.meterNote))}</div>`;
+  b.append(h('button',{class:'big',onclick:()=>{log('briefing_go',null,{zone:z.id});go();}},t(UI.goDrop)+' 🎬'));c.append(b);}
+function restart(){closeOv();closePanel();clearInterval(clockId);HOST.stop();S.phase='intro';newRun();resetWorld();S.camMode='follow';R.avatar.position.set(0,0,34);refreshAll();$('#jobbar').classList.add('hidden');showIntro(0);}
+
+/* ---------- debug ---------- */
+let tTaps=0,tTimer=null;
+function showLog(){const c=openOv();const b=h('div',{class:'intro',style:{alignItems:'stretch',textAlign:'left'}});const runs=store.get(RUNKEY,[]);
+  b.append(h('h1',{style:{fontSize:'22px'}},esc(t(UI.log))));
+  if(S.run&&S.run.started_at){const cr=S.run.credibility||computeCred();const col=cr.band==='Green'?'var(--good)':cr.band==='Amber'?'var(--sun)':'var(--bad)';
+    const cv=h('div',{class:'cred'},`<span style="font-size:16px">Credibility <b style="color:${col}">${cr.score} · ${cr.band}</b>${S.run.credibility?'':' (run not finished)'} · mode ${esc(S.mode)}${S.childId?' · ID '+esc(S.childId):''}</span>`);
+    if(!cr.flags.length)cv.append(h('span',{},'No flags.'));cr.flags.forEach(f=>cv.append(h('span',{},`${f.id} (${f.points}): ${esc(f.detail)}`)));b.append(cv);}
+  const pre=h('pre',{class:'dbg'});pre.textContent=JSON.stringify({current:{run:S.run,job_results:S.run?jobResults():[],events:S.events},saved_runs:runs.length},null,1);b.append(pre);
+  const row=h('div',{class:'row'});const msg=h('div',{class:'note'});row.append(h('button',{class:'big alt',onclick:()=>{try{navigator.clipboard.writeText(JSON.stringify(runs,null,1)).then(()=>msg.textContent='Copied',()=>msg.textContent='Select the text above to copy');}catch(e){msg.textContent='Select the text above to copy';}}},t(UI.copyLog)),h('button',{class:'big',onclick:()=>{closeOv();if(S.phase==='intro')showIntro();else if(S.phase==='results')showResults();}},t(UI.close)));b.append(row,msg);c.append(b);}
+
+/* ---------- boot ---------- */
+async function boot(){
+  let m=null;const qs=new URLSearchParams(location.search);
+  if(qs.get('mission')){try{m=await (await fetch(qs.get('mission'))).json();}catch(e){}}
+  if(!m){m=JSON.parse($('#mission-data').textContent);}
+  S.base=m;applyVersion(makeVersion('boot|'+uuid()));
+  if(qs.get('mode')==='ranked'){S.mode='ranked';const F=m.fairPlay;const mins=+(qs.get('mins')||F.slotMin);const grace=+(qs.get('grace')||F.startGraceMin);let st=qs.get('slot')?Date.parse(qs.get('slot')):NaN;const test=isNaN(st);if(test)st=Date.now();
+    S.slot={start:st,end:st+mins*60000,grace:grace*60000,key:(test?'test-':'')+new Date(st).toISOString().slice(0,16),test};}
+  S.lang=store.get('fsl.lang',qs.get('lang')||'en');if(qs.get('lang'))S.lang=qs.get('lang');if(!['en','hi'].includes(S.lang))S.lang='en';S.sound=store.get('fsl.sound',true);S.suit=store.get('fsl.suit',0)|0;if(S.suit<0||S.suit>3)S.suit=0;
+  const hm=/^#beat-(\d{1,6})$/.exec(location.hash);if(hm)S.beat=+hm[1];
+  newRun();
+  if(typeof THREE==='undefined'||!init3D()){if(typeof THREE==='undefined')document.body.append(h('div',{class:'nogl'},esc(t(UI.noGL))));return;}
+  S.camMode='follow';refreshAll();
+  $('#lang').onclick=()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);if(S.run)S.run.lang=S.lang;refreshAll();
+    if(ovEl&&S.learnView&&S.active)showLearn(S.learnView.j,S.learnView.si,S.learnView.peek);else if(S.active&&S.active.setTitle)S.active.setTitle();else if(S.phase==='intro')showIntro();else if(S.phase==='results')showResults();};
+  $('#snd').onclick=()=>{S.sound=!S.sound;store.set('fsl.sound',S.sound);if(!S.sound)try{speechSynthesis.cancel();}catch(e){}renderHUD();};
+  $('#timer').onclick=()=>{tTaps++;clearTimeout(tTimer);tTimer=setTimeout(()=>tTaps=0,1500);if(tTaps>=5){tTaps=0;showLog();}};
+  document.fonts&&document.fonts.ready.then(()=>refreshMarkerLabels());
+  if(location.hash==='#debug')showLog();else showIntro();
+  window.__fsl={S,R,goToStation,tap,computeCred,makeVersion,applyVersion,planSim,finishJob,rescue};
+}
+boot();
+
+</script>
+
+</body>
+</html>
