@@ -1,0 +1,2084 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="FSL Round 2 mission: learn real rocket science, fix the rocket and launch it.">
+</head>
+<body>
+<title>Space Rocket Launch Day</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: one-screen mission room. Top bar (launch window, score, coins) + fix bar, illustrated scene, each fix opens a sheet: learn, then test. Single dark "space" look by design. */
+:root{
+  color-scheme:dark;
+  --space:#0A0E2E; --panel:#171D52; --panel2:#222A6E; --raise:#2C3584; --deep:#0B1138;
+  --ink:#F5F6FF; --muted:#AEB5E8; --line:rgba(255,255,255,.14);
+  --sun:#FFC83D; --good:#3DDC97; --bad:#FF5D73;
+  --sp1:#FFC83D; --sp2:#B39BFF; --sp3:#2ED3C0; --sp4:#FF8A5C; --sp5:#4EA8FF; --sp6:#FF7EC8;
+  --font:'Baloo 2','Nirmala UI','Noto Sans Devanagari','Mangal',system-ui,sans-serif;
+}
+html,body{height:100%}
+body{background:var(--space);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-size:16px;line-height:1.3}
+button{font-family:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+#app{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));gap:6px;padding-block:6px}
+.top{display:flex;align-items:center;gap:3px;min-width:0}
+.logo{width:30px;height:30px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+.logo svg{width:22px;height:22px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-weight:800;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.timer.low{background:var(--bad);border-color:var(--bad)}
+.chip.streak{background:linear-gradient(90deg,#FF7A3D,#FF3D7F);border:0}
+.chip small{font-weight:600;color:var(--muted);font-size:12px}
+.sp{flex:1;min-width:0}
+.iconbtn{background:var(--panel);border:1px solid var(--line);border-radius:999px;height:32px;min-width:32px;padding:0 8px;font-weight:700;font-size:14px;flex:none}
+.coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE89A,#FFB800 60%,#C98A00);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);display:inline-block;flex:none}
+.fixbar{display:flex;gap:5px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 8px}
+.seg{flex:1;height:30px;border-radius:9px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0A0E2E;letter-spacing:-1px}
+.seg svg{width:18px;height:18px;opacity:.5;filter:invert(1)}
+.seg.pop{animation:pop .5s}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+.scene{position:relative;border-radius:22px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.scene>svg{display:block;width:100%;height:100%}
+.scene.shake{animation:shake .12s linear infinite}
+@keyframes shake{0%{transform:translate(1px,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,2px)}100%{transform:translate(0,0)}}
+.hint-line{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:rgba(10,14,46,.8);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+.hint-line.go{background:var(--sun);color:#2A1A00;cursor:pointer;font-size:15px;animation:pop 1.2s infinite;white-space:normal;text-align:center;width:max-content;max-width:90%}
+.hs{position:absolute;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(255,255,255,.85),0 4px 14px rgba(0,0,0,.4)}
+.hs svg{width:28px;height:28px}
+.hs::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--c);animation:ring 1.6s ease-out infinite}
+@keyframes ring{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.7);opacity:0}}
+.hs .tag{position:absolute;top:100%;margin-top:6px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;background:rgba(10,14,46,.88);padding:1px 8px;border-radius:999px;white-space:nowrap;pointer-events:none}
+.hs.done{box-shadow:0 0 0 3px var(--good),0 4px 14px rgba(0,0,0,.4)}
+.hs.done::before{display:none}
+.hs .st{position:absolute;bottom:-4px;right:-12px;background:var(--space);border-radius:999px;padding:0 5px;font-size:11px;color:var(--sun);font-weight:800;border:1px solid var(--line)}
+#rocket{transition:transform 3s cubic-bezier(.45,0,.75,.45)}
+#flame{transform-origin:215px 488px;transform:scaleY(0);transition:transform .6s}
+.lit #flame{transform:scaleY(1)}
+#flame ellipse{animation:flick .09s infinite alternate}
+@keyframes flick{from{opacity:.85}to{opacity:1}}
+.twk{animation:tw 2.4s ease-in-out infinite alternate}
+@keyframes tw{from{opacity:.2}to{opacity:1}}
+.blink{animation:bl 1.2s steps(2) infinite}
+@keyframes bl{50%{opacity:.15}}
+
+.ov{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:rgba(4,6,24,.62)}
+.ov.center{align-items:center;padding:16px}
+.sheet{width:100%;max-width:560px;max-height:96%;background:var(--panel);border-radius:26px 26px 0 0;border:1px solid var(--line);border-bottom:0;display:flex;flex-direction:column;overflow:hidden;animation:up .28s ease-out;padding-bottom:env(safe-area-inset-bottom,0px)}
+.center .sheet{border-radius:26px;border-bottom:1px solid var(--line);max-height:100%}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sh-head{display:flex;align-items:center;gap:10px;padding:12px 16px 8px}
+.badge{width:42px;height:42px;border-radius:14px;background:var(--c);display:flex;align-items:center;justify-content:center;flex:none}
+.badge svg{width:26px;height:26px}
+.sh-title{flex:1;min-width:0}
+.sh-title small{display:block;font-size:12px;color:var(--c);font-weight:700}
+.sh-title b{font-size:19px;font-weight:800;display:block;line-height:1.1}
+.x{width:38px;height:38px;border-radius:50%;background:var(--panel2);font-size:20px;font-weight:700;flex:none}
+.sh-body{padding:0 16px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.steps-top{display:flex;gap:4px;align-items:center}
+.steps-top i{flex:1;height:6px;border-radius:9px;background:var(--panel2)}
+.steps-top i.on{background:var(--c)}
+.steps-top i.ok{background:var(--good)}
+.steps-top i.no{background:var(--bad)}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+.prompt{font-size:18px;font-weight:700;text-wrap:balance}
+.learn-text{font-size:17px;font-weight:600;color:#E3E7FF}
+.learn-text ul{margin:6px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.learn-text li{background:var(--panel2);border-radius:12px;padding:6px 10px;display:flex;gap:8px;align-items:center}
+.learn-text li b{color:var(--sun)}
+.tail{color:var(--sun);font-weight:800}
+.art{background:var(--deep);border-radius:18px;padding:8px;display:flex;justify-content:center;position:relative}
+.art svg{width:100%;max-width:320px;height:auto;display:block}
+.art .part{cursor:pointer;transition:filter .2s}
+.art .part.sel{filter:drop-shadow(0 0 6px #FFC83D)}
+.art .part.right{filter:drop-shadow(0 0 8px #3DDC97)}
+.art .part.wrong{filter:drop-shadow(0 0 8px #FF5D73)}
+.infobox{background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:600;min-height:44px}
+.infobox b{color:var(--sun)}
+.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dots{display:flex;gap:4px;align-items:center;font-size:13px;color:var(--muted);font-weight:600}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--good);display:inline-block}
+.dots i.used{background:var(--panel2);border:1px solid var(--line)}
+.qtime{font-size:13px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.peek{margin-left:auto;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.peek[disabled]{opacity:.5;cursor:default}
+.fb{border-radius:14px;padding:10px 12px;font-weight:700;font-size:15px}
+.fb.good{background:rgba(61,220,151,.14);border:1px solid var(--good)}
+.fb.bad{background:rgba(255,93,115,.12);border:1px solid var(--bad)}
+.fb.try{color:var(--bad);text-align:center;padding:2px}
+.fb b{display:block;font-size:17px}
+.fb .pts{color:var(--sun)}
+.big{background:linear-gradient(180deg,#FFD45C,#FFB21E);color:#2A1A00;font-weight:800;font-size:19px;border-radius:16px;padding:11px 22px;box-shadow:0 4px 0 #C98500}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 #C98500}
+.big.alt{background:var(--raise);color:var(--ink);box-shadow:0 4px 0 #161B4F}
+.big[disabled]{opacity:.45}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.shake-x{animation:sx .35s}
+@keyframes sx{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts.two{flex-direction:row}
+.opts.two .opt{flex:1;justify-content:center;font-size:24px;padding:16px}
+.opt{background:var(--panel2);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;border:3px solid transparent;font-size:16px;font-weight:700;text-align:left}
+.opt .k{width:26px;height:26px;border-radius:8px;background:var(--raise);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.opt.wrong{border-color:var(--bad);opacity:.6}
+.opt.right{border-color:var(--good)}
+.opt[disabled]{cursor:default}
+.opt.go{background:#1D5F48} .opt.nogo{background:#6B2333}
+
+.readings{background:var(--deep);border-radius:16px;padding:10px;display:grid;gap:8px}
+.rd{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:12px;padding:8px 10px;font-weight:700}
+.rd svg{width:30px;height:30px;flex:none}
+.rd span{flex:1}
+.rd b{font-size:20px;font-variant-numeric:tabular-nums}
+.rd.note{background:rgba(255,200,61,.12);color:#FFE5A0;font-size:14px}
+
+.thr{display:flex;flex-direction:column;gap:10px;align-items:center}
+.thr .stand{width:100%;height:220px;border-radius:16px;background:linear-gradient(#0B1138,#1E2470);position:relative;overflow:hidden}
+.thr .stand svg{position:absolute;left:50%;bottom:6px;width:120px;height:200px;margin-left:-60px;transition:transform 2s cubic-bezier(.5,0,.9,.6)}
+.thr .stand .wt{position:absolute;right:10px;top:10px;background:var(--panel);border-radius:10px;padding:4px 10px;font-weight:800}
+.thr .stand .pe{position:absolute;left:10px;top:10px;background:var(--panel);border-radius:10px;padding:4px 10px;font-weight:800;color:var(--sp4)}
+.thr .stand .res{position:absolute;left:10px;right:10px;bottom:10px;text-align:center;font-weight:800;font-size:18px}
+.stepper{display:flex;align-items:center;gap:14px;font-weight:800;font-size:18px}
+.stepper button{width:52px;height:52px;border-radius:16px;background:var(--raise);font-size:28px;font-weight:800;box-shadow:0 4px 0 #161B4F}
+.stepper b{font-size:30px;min-width:40px;text-align:center}
+.shake-y{animation:sy .12s linear 10}
+@keyframes sy{50%{transform:translateY(-3px)}}
+
+.ord-slots{display:flex;flex-direction:column;gap:6px}
+.slot{min-height:42px;border-radius:12px;border:2px dashed var(--line);display:flex;align-items:center;gap:8px;padding:4px 10px;font-weight:700;background:none;text-align:left}
+.slot .n{width:24px;height:24px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+.slot.f{border-style:solid;border-color:var(--sp3);background:rgba(46,211,192,.1)}
+.slot.ok{border-color:var(--good);background:rgba(61,220,151,.15)}
+.slot.bad{border-color:var(--bad)}
+.ord-pool{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{background:var(--raise);border-radius:12px;padding:8px 12px;font-weight:700;font-size:15px;box-shadow:0 3px 0 #161B4F;text-align:left}
+.chipbtn[disabled]{opacity:.25}
+
+.timeline{display:flex;flex-direction:column;gap:6px;position:relative}
+.tl{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:12px;padding:6px 10px;font-weight:700;opacity:.35;transition:opacity .3s}
+.tl.on{opacity:1}
+.tl .n{width:26px;height:26px;border-radius:50%;background:var(--sp3);color:#0A0E2E;display:flex;align-items:center;justify-content:center;flex:none;font-weight:800}
+
+.rule{text-align:center;font-size:19px;font-weight:800;border-radius:14px;padding:8px;background:var(--panel2)}
+.rule.flash{animation:fl .6s 2}
+@keyframes fl{50%{background:var(--sun);color:#2A1A00}}
+.holes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:330px;width:100%;margin:0 auto}
+.hole{aspect-ratio:1.2;border-radius:16px;background:var(--deep);border:2px solid #2C3584;position:relative;display:flex;align-items:center;justify-content:center}
+.gauge{width:86%;height:80%;border-radius:12px;background:#E9ECFF;color:#0A0E2E;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:pin .15s ease-out;padding:0}
+.gauge b{font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.gauge small{font-size:11px;font-weight:700;color:#5A628F}
+@keyframes pin{from{transform:scale(.3)}to{transform:scale(1)}}
+.gauge.hit{background:var(--good);animation:hitp .25s forwards}
+.gauge.oops{background:var(--bad);animation:sx .3s}
+@keyframes hitp{to{transform:scale(1.3);opacity:0}}
+.timebar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.timebar i{display:block;height:100%;background:var(--sp5);width:100%}
+.score3{display:flex;justify-content:center;gap:16px;font-weight:700;font-size:15px;color:var(--muted)}
+
+.tiles{display:grid;gap:5px;max-width:340px;width:100%;margin:0 auto;padding:8px;border-radius:16px;background:#3A3F5C}
+.tile{min-width:0;aspect-ratio:1;border-radius:6px;background:none;padding:0}
+.tile svg{width:100%;height:100%;pointer-events:none}
+.tile.wrong{animation:sx .35s}
+.tile.found{outline:4px solid var(--good);border-radius:6px}
+.tile.missed{outline:4px solid var(--sun);border-radius:6px}
+
+.done{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:6px 0}
+.done .bigbadge{width:80px;height:80px;border-radius:24px;background:var(--c);display:flex;align-items:center;justify-content:center;animation:pop .6s}
+.done .bigbadge svg{width:50px;height:50px}
+.starrow{font-size:38px;letter-spacing:4px;line-height:1;color:var(--sun)}
+.starrow .off{opacity:.2;color:var(--ink)}
+.done h3{margin:0;font-size:24px;font-weight:800}
+.done p{margin:0;color:var(--muted);font-weight:600}
+.gain{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.piece{font-size:15px;font-weight:700;background:var(--panel2);border-radius:999px;padding:4px 12px;display:inline-flex;gap:6px;align-items:center}
+.learned{background:var(--panel2);border-radius:14px;padding:8px 12px;font-size:14px;font-weight:600;text-align:left;width:100%}
+.learned b{color:var(--good)}
+
+.intro{padding:20px 18px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;overflow:auto}
+.intro h1{margin:0;font-size:30px;line-height:1.02;font-weight:800;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--sun);font-weight:700}
+.intro p{margin:0;font-size:16px;font-weight:600;color:#DADFFF;max-width:38ch}
+.howto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
+.howto div{background:var(--panel2);border-radius:12px;padding:8px 4px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.15}
+.howto b{display:block;color:var(--ink);font-size:20px}
+.sprow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;width:100%;max-width:340px}
+.sprow div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:700;color:var(--muted);line-height:1.05;text-align:center}
+.sprow .badge{width:38px;height:38px;border-radius:12px}
+.sprow .badge svg{width:22px;height:22px}
+.beat{background:linear-gradient(90deg,#FF7A3D,#FF3D7F);border-radius:14px;padding:8px 14px;font-weight:800}
+.res-big{font-size:54px;font-weight:800;line-height:1;color:var(--sun);font-variant-numeric:tabular-nums}
+.rank{font-size:22px;font-weight:800;background:linear-gradient(90deg,#B39BFF,#4EA8FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.res-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+.res-grid div{background:var(--panel2);border-radius:14px;padding:8px 2px;font-weight:700;font-size:12px;color:var(--muted)}
+.res-grid b{display:block;color:var(--ink);font-size:20px;font-variant-numeric:tabular-nums}
+.res-list{width:100%;display:flex;flex-direction:column;gap:6px}
+.res-list>div{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:6px 10px;font-weight:700;font-size:14px;text-align:left}
+.res-list .badge{width:32px;height:32px;border-radius:10px}
+.res-list .badge svg{width:20px;height:20px}
+.res-list span.l{flex:1;min-width:0}
+.res-list em{font-style:normal;color:var(--sun);white-space:nowrap}
+.board{width:100%;background:var(--deep);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:4px;text-align:left}
+.board h4{margin:0 0 4px;font-size:16px}
+.board .r{display:grid;grid-template-columns:28px 1fr auto auto;gap:8px;align-items:center;padding:4px 8px;border-radius:10px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.board .r.me{background:rgba(255,200,61,.15);color:var(--sun)}
+.board .r small{color:var(--muted);font-weight:600}
+.namerow{display:flex;gap:8px;width:100%}
+.namerow input{flex:1;min-width:0;background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 17px var(--font);padding:8px 12px;user-select:text;-webkit-user-select:text}
+.note{font-size:13px;color:var(--muted);font-weight:600;max-width:42ch}
+.cardimg{width:100%;max-width:340px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.countdown{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;font-size:150px;font-weight:800;color:var(--sun);text-shadow:0 0 40px rgba(255,200,61,.6);pointer-events:none}
+.countdown span{animation:cd 1s ease-out forwards}
+@keyframes cd{from{transform:scale(1.6);opacity:0}30%{opacity:1}to{transform:scale(.8);opacity:0}}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;background:var(--bad);color:#fff;font-weight:800;padding:8px 16px;border-radius:999px;max-width:92%;text-align:center;animation:up .3s}
+.cmd-timer{height:12px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.cmd-timer i{display:block;height:100%;background:var(--sun);width:100%}
+#confetti{position:fixed;inset:0;z-index:25;pointer-events:none}
+pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text;font-family:ui-monospace,monospace;text-align:left}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}.hs::before{display:none}}
+</style>
+
+<div id="app">
+  <div class="top">
+    <span class="chip timer" id="timer" title="Launch window" role="button">⏱ 15:00</span>
+    <span class="chip" id="score" title="Score">★ 0</span>
+    <span class="chip streak" id="streak" hidden></span>
+    <span class="sp"></span>
+    <span class="chip" title="Coins"><i class="coin"></i><span id="coins">0</span></span>
+    <button class="iconbtn" id="lang" aria-label="Change language">हिं</button>
+    <button class="iconbtn" id="snd" aria-label="Sound on or off">♪</button>
+  </div>
+  <div class="fixbar" id="fixbar"></div>
+  <div class="stage" id="stage"><div class="scene" id="scene"></div></div>
+</div>
+<canvas id="confetti" hidden></canvas>
+
+<script type="application/json" id="mission-data">{
+ "id": "space-rocket-launch",
+ "version": 2,
+ "round": "R2",
+ "band": "J",
+ "title": {
+  "en": "Space Rocket Launch Day",
+  "hi": "स्पेस रॉकेट लॉन्च डे"
+ },
+ "story": {
+  "en": "You are the launch engineer! Six real rocket jobs must be done before the launch window closes in 15 minutes. Learn each one, pass its test, then win the final countdown.",
+  "hi": "तुम लॉन्च इंजीनियर हो! 15 मिनट में लॉन्च विंडो बंद होने से पहले रॉकेट के 6 असली काम पूरे करने हैं। हर काम सीखो, उसका टेस्ट पास करो, फिर फ़ाइनल काउंटडाउन जीतो।"
+ },
+ "windowSec": 900,
+ "scene": {
+  "type": "builtin",
+  "name": "launchpad",
+  "width": 360,
+  "height": 560
+ },
+ "scoring": {
+  "coins": {
+   "start": 3,
+   "perFirstTry": 1,
+   "peekCost": 1
+  },
+  "question": {
+   "base": 100,
+   "secondTry": 50,
+   "peekFactor": 0.5,
+   "speedMax": 50,
+   "streak": [
+    1,
+    1.2,
+    1.5,
+    2
+   ]
+  },
+  "skillCredit": {
+   "firstTry": 1,
+   "secondTry": 0.5,
+   "later": 0,
+   "peekPenalty": 0.25
+  },
+  "commander": {
+   "base": 150,
+   "speedMax": 50,
+   "sec": 12
+  },
+  "windowBonusPerSec": 2,
+  "ranks": [
+   {
+    "min": 0,
+    "en": "Space Cadet",
+    "hi": "स्पेस कैडेट"
+   },
+   {
+    "min": 1200,
+    "en": "Rocket Pilot",
+    "hi": "रॉकेट पायलट"
+   },
+   {
+    "min": 2200,
+    "en": "Launch Engineer",
+    "hi": "लॉन्च इंजीनियर"
+   },
+   {
+    "min": 3200,
+    "en": "Flight Director",
+    "hi": "फ़्लाइट डायरेक्टर"
+   },
+   {
+    "min": 4000,
+    "en": "Mission Commander",
+    "hi": "मिशन कमांडर"
+   }
+  ]
+ },
+ "fixes": [
+  {
+   "id": "parts",
+   "superpower": "SP2",
+   "competency": "C2.3",
+   "x": 59.7,
+   "y": 46.8,
+   "label": {
+    "en": "Rocket Parts",
+    "hi": "रॉकेट के हिस्से"
+   },
+   "learn": [
+    {
+     "art": "anatomy",
+     "interactive": true,
+     "text": {
+      "en": "A rocket has 5 main parts. Tap each part to see its job.",
+      "hi": "रॉकेट के 5 मुख्य हिस्से होते हैं। हर हिस्से पर टैप करके उसका काम देखो।"
+     }
+    }
+   ],
+   "questions": [
+    {
+     "id": "parts-1",
+     "type": "label",
+     "competency": "C2.3",
+     "art": "anatomy",
+     "answer": "nose",
+     "tries": 2,
+     "targetSec": 20,
+     "prompt": {
+      "en": "Labels are hidden. Tap the part that carries the satellite.",
+      "hi": "नाम छिपे हैं। उस हिस्से पर टैप करो जो सैटेलाइट ले जाता है।"
+     },
+     "explain": {
+      "en": "The nose cone carries the satellite. Its pointed shape cuts through the air.",
+      "hi": "नोज़ कोन सैटेलाइट ले जाता है। नुकीला आकार हवा को चीरता है।"
+     }
+    },
+    {
+     "id": "parts-2",
+     "type": "label",
+     "competency": "C2.3",
+     "art": "anatomy",
+     "answer": "oxi",
+     "tries": 2,
+     "targetSec": 20,
+     "prompt": {
+      "en": "Tap the part that carries oxygen for the fire.",
+      "hi": "उस हिस्से पर टैप करो जो आग के लिए ऑक्सीजन रखता है।"
+     },
+     "explain": {
+      "en": "The oxidiser tank holds oxygen, because fire needs oxygen.",
+      "hi": "ऑक्सीडाइज़र टैंक ऑक्सीजन रखता है, क्योंकि आग को ऑक्सीजन चाहिए।"
+     }
+    },
+    {
+     "id": "parts-3",
+     "type": "mcq",
+     "competency": "C4.3",
+     "tries": 2,
+     "targetSec": 25,
+     "prompt": {
+      "en": "There is no air in space. How does the rocket engine keep burning?",
+      "hi": "अंतरिक्ष में हवा नहीं है। फिर रॉकेट का इंजन कैसे जलता रहता है?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "It carries its own oxygen",
+        "hi": "वह अपनी ऑक्सीजन साथ ले जाता है"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "The Sun lights the fire",
+        "hi": "सूरज आग जलाता है"
+       },
+       "error": "sun"
+      },
+      {
+       "text": {
+        "en": "The fins make air",
+        "hi": "फ़िन हवा बनाते हैं"
+       },
+       "error": "fins"
+      },
+      {
+       "text": {
+        "en": "Space is full of fire",
+        "hi": "अंतरिक्ष में आग भरी है"
+       },
+       "error": "space-fire"
+      }
+     ],
+     "explain": {
+      "en": "The oxidiser tank carries oxygen, so the engine burns even where there is no air.",
+      "hi": "ऑक्सीडाइज़र टैंक ऑक्सीजन ले जाता है, इसलिए बिना हवा के भी इंजन जलता है।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "engine",
+   "superpower": "SP4",
+   "competency": "C4.3",
+   "x": 17.8,
+   "y": 58.4,
+   "label": {
+    "en": "Engine Power",
+    "hi": "इंजन की ताकत"
+   },
+   "learn": [
+    {
+     "art": "newton",
+     "text": {
+      "en": "The engine pushes hot gas down, so the gas pushes the rocket up. Every push has an equal push back.",
+      "hi": "इंजन गर्म गैस को नीचे धकेलता है, तो गैस रॉकेट को ऊपर धकेलती है। हर धक्के का बराबर उल्टा धक्का होता है।"
+     }
+    },
+    {
+     "art": "balance",
+     "text": {
+      "en": "The rocket lifts off only when the engine's push (thrust) is bigger than the rocket's weight.",
+      "hi": "रॉकेट तभी उठता है जब इंजन का धक्का (थ्रस्ट) रॉकेट के वज़न से ज़्यादा हो।"
+     }
+    }
+   ],
+   "questions": [
+    {
+     "id": "engine-1",
+     "type": "mcq",
+     "competency": "C4.3",
+     "art": "balloon",
+     "tries": 2,
+     "targetSec": 20,
+     "prompt": {
+      "en": "Air rushes out of the balloon to the left. Which way will the balloon zoom?",
+      "hi": "गुब्बारे से हवा बाईं ओर निकल रही है। गुब्बारा किस ओर भागेगा?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "Right, away from the air",
+        "hi": "दाईं ओर, हवा से उल्टा"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "Left, with the air",
+        "hi": "बाईं ओर, हवा के साथ"
+       },
+       "error": "same-way"
+      },
+      {
+       "text": {
+        "en": "Straight up",
+        "hi": "सीधा ऊपर"
+       },
+       "error": "up"
+      },
+      {
+       "text": {
+        "en": "It stays still",
+        "hi": "वहीं रुका रहेगा"
+       },
+       "error": "still"
+      }
+     ],
+     "explain": {
+      "en": "Air pushed one way pushes the balloon the other way. A rocket works the same way.",
+      "hi": "हवा एक ओर धकेली जाए तो गुब्बारा उल्टी ओर जाता है। रॉकेट भी ऐसे ही चलता है।"
+     }
+    },
+    {
+     "id": "engine-2",
+     "type": "thrust",
+     "competency": "C1.3",
+     "weight": 60,
+     "perEngine": 25,
+     "maxEngines": 5,
+     "answer": 3,
+     "tries": 2,
+     "targetSec": 40,
+     "prompt": {
+      "en": "The rocket weighs 60 tonnes. Each engine pushes 25 tonnes. Use the fewest engines that lift it off, then press Test fire.",
+      "hi": "रॉकेट का वज़न 60 टन है। हर इंजन 25 टन धक्का देता है। सबसे कम इंजन लगाओ जो इसे उठा दें, फिर टेस्ट फायर दबाओ।"
+     },
+     "explain": {
+      "en": "3 engines push 75 tonnes, more than 60. 2 engines push only 50, so the rocket stays down.",
+      "hi": "3 इंजन 75 टन धक्का देते हैं, जो 60 से ज़्यादा है। 2 इंजन सिर्फ़ 50 देते हैं, तो रॉकेट नहीं उठता।"
+     }
+    },
+    {
+     "id": "engine-3",
+     "type": "mcq",
+     "competency": "C4.3",
+     "tries": 2,
+     "targetSec": 25,
+     "prompt": {
+      "en": "A rocket is too heavy and cannot lift off. Which fix works?",
+      "hi": "रॉकेट बहुत भारी है और उठ नहीं पा रहा। कौन-सा उपाय काम करेगा?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "Take out some cargo",
+        "hi": "कुछ सामान निकाल दो"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "Paint it a lighter colour",
+        "hi": "हल्का रंग कर दो"
+       },
+       "error": "colour"
+      },
+      {
+       "text": {
+        "en": "Make the launch tower taller",
+        "hi": "लॉन्च टावर ऊँचा कर दो"
+       },
+       "error": "tower"
+      },
+      {
+       "text": {
+        "en": "Load more cargo",
+        "hi": "और सामान भर दो"
+       },
+       "error": "more-weight"
+      }
+     ],
+     "explain": {
+      "en": "Less weight means the same thrust can now beat it.",
+      "hi": "वज़न कम होगा तो वही थ्रस्ट उसे उठा पाएगा।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "weather",
+   "superpower": "SP1",
+   "competency": "C1.2",
+   "x": 17.2,
+   "y": 32,
+   "label": {
+    "en": "Weather Check",
+    "hi": "मौसम जाँच"
+   },
+   "learn": [
+    {
+     "art": "rules",
+     "text": {
+      "en": "Before launch, every team says GO or NO-GO. Real rockets follow rules like these. Our rocket launches only if ALL 3 are true:",
+      "hi": "लॉन्च से पहले हर टीम 'गो' या 'नो-गो' कहती है। असली रॉकेट ऐसे ही नियम मानते हैं। हमारा रॉकेट तभी उड़ेगा जब तीनों बातें सही हों:"
+     },
+     "bullets": [
+      {
+       "en": "Wind is below 30 km/h",
+       "hi": "हवा 30 km/h से कम हो"
+      },
+      {
+       "en": "No lightning storm nearby",
+       "hi": "आस-पास बिजली वाला तूफ़ान न हो"
+      },
+      {
+       "en": "Fuel tanks are 100% full",
+       "hi": "ईंधन टैंक 100% भरे हों"
+      }
+     ],
+     "tail": {
+      "en": "One NO means NO-GO.",
+      "hi": "एक भी 'नहीं' मतलब नो-गो।"
+     }
+    }
+   ],
+   "questions": [
+    {
+     "id": "weather-1",
+     "type": "mcq",
+     "competency": "C1.2",
+     "style": "gonogo",
+     "tries": 1,
+     "targetSec": 15,
+     "readings": {
+      "wind": 18,
+      "storm": 0,
+      "fuel": 100
+     },
+     "prompt": {
+      "en": "Read the panel. GO or NO-GO?",
+      "hi": "पैनल पढ़ो। गो या नो-गो?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "GO",
+        "hi": "गो"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "NO-GO",
+        "hi": "नो-गो"
+       },
+       "error": "over-cautious"
+      }
+     ],
+     "explain": {
+      "en": "All 3 rules pass, so it is GO.",
+      "hi": "तीनों नियम पूरे हैं, इसलिए गो।"
+     }
+    },
+    {
+     "id": "weather-2",
+     "type": "mcq",
+     "competency": "C1.2",
+     "style": "gonogo",
+     "tries": 1,
+     "targetSec": 15,
+     "readings": {
+      "wind": 12,
+      "storm": 8,
+      "fuel": 100
+     },
+     "prompt": {
+      "en": "Read the panel. GO or NO-GO?",
+      "hi": "पैनल पढ़ो। गो या नो-गो?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "GO",
+        "hi": "गो"
+       },
+       "error": "missed-storm"
+      },
+      {
+       "text": {
+        "en": "NO-GO",
+        "hi": "नो-गो"
+       },
+       "correct": true
+      }
+     ],
+     "explain": {
+      "en": "A storm is nearby. Lightning can hit the rocket, so it is NO-GO.",
+      "hi": "पास में तूफ़ान है। बिजली रॉकेट पर गिर सकती है, इसलिए नो-गो।"
+     }
+    },
+    {
+     "id": "weather-3",
+     "type": "mcq",
+     "competency": "C1.3",
+     "style": "gonogo",
+     "tries": 1,
+     "targetSec": 30,
+     "readings": {
+      "wind": 24,
+      "storm": 0,
+      "fuel": 100,
+      "note": {
+       "en": "Wind is rising 3 km/h every 10 minutes. Launch is in 30 minutes.",
+       "hi": "हवा हर 10 मिनट में 3 km/h बढ़ रही है। लॉन्च 30 मिनट बाद है।"
+      }
+     },
+     "prompt": {
+      "en": "Can we say GO for launch time?",
+      "hi": "क्या लॉन्च के समय के लिए गो कह सकते हैं?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "GO",
+        "hi": "गो"
+       },
+       "error": "ignored-trend"
+      },
+      {
+       "text": {
+        "en": "NO-GO",
+        "hi": "नो-गो"
+       },
+       "correct": true
+      }
+     ],
+     "explain": {
+      "en": "In 30 minutes the wind will be 24 + 9 = 33 km/h. That is above 30, so NO-GO.",
+      "hi": "30 मिनट में हवा 24 + 9 = 33 km/h होगी। यह 30 से ज़्यादा है, इसलिए नो-गो।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sequence",
+   "superpower": "SP3",
+   "competency": "C3.1",
+   "x": 89.4,
+   "y": 82.5,
+   "label": {
+    "en": "Launch Sequence",
+    "hi": "लॉन्च सीक्वेंस"
+   },
+   "learn": [
+    {
+     "art": "steps",
+     "text": {
+      "en": "A launch follows exact steps. Change the order and the mission fails.",
+      "hi": "लॉन्च तय कदमों से होता है। क्रम बदला तो मिशन फेल।"
+     },
+     "steps": [
+      {
+       "en": "Fill the fuel tanks",
+       "hi": "ईंधन टैंक भरो"
+      },
+      {
+       "en": "Switch to the rocket's own power",
+       "hi": "रॉकेट की अपनी बिजली चालू करो"
+      },
+      {
+       "en": "Start the engines",
+       "hi": "इंजन चालू करो"
+      },
+      {
+       "en": "Engines at full power: release the clamps. Lift-off!",
+       "hi": "इंजन पूरी ताकत पर: क्लैंप छोड़ो। उड़ान!"
+      },
+      {
+       "en": "Drop the empty first stage",
+       "hi": "खाली पहला स्टेज गिराओ"
+      },
+      {
+       "en": "Release the satellite in orbit",
+       "hi": "कक्षा में सैटेलाइट छोड़ो"
+      }
+     ]
+    }
+   ],
+   "questions": [
+    {
+     "id": "sequence-1",
+     "type": "order",
+     "competency": "C3.1",
+     "tries": 2,
+     "targetSec": 45,
+     "prompt": {
+      "en": "Tap the steps in the right order.",
+      "hi": "कदमों को सही क्रम में टैप करो।"
+     },
+     "items": [
+      {
+       "en": "Fill the fuel tanks",
+       "hi": "ईंधन टैंक भरो"
+      },
+      {
+       "en": "Start the engines",
+       "hi": "इंजन चालू करो"
+      },
+      {
+       "en": "Release the clamps",
+       "hi": "क्लैंप छोड़ो"
+      },
+      {
+       "en": "Drop the empty first stage",
+       "hi": "खाली पहला स्टेज गिराओ"
+      },
+      {
+       "en": "Release the satellite",
+       "hi": "सैटेलाइट छोड़ो"
+      }
+     ],
+     "explain": {
+      "en": "Fuel, engines, clamps, drop stage, satellite. Each step needs the one before it.",
+      "hi": "ईंधन, इंजन, क्लैंप, स्टेज गिराना, सैटेलाइट। हर कदम को पिछले कदम की ज़रूरत है।"
+     }
+    },
+    {
+     "id": "sequence-2",
+     "type": "mcq",
+     "competency": "C3.1",
+     "tries": 2,
+     "targetSec": 25,
+     "prompt": {
+      "en": "Why are the clamps released only after the engines reach full power?",
+      "hi": "क्लैंप इंजन के पूरी ताकत पर पहुँचने के बाद ही क्यों छोड़े जाते हैं?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "So the rocket has enough push and does not fall back",
+        "hi": "ताकि रॉकेट के पास पूरा धक्का हो और वह वापस न गिरे"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "To save fuel",
+        "hi": "ईंधन बचाने के लिए"
+       },
+       "error": "fuel"
+      },
+      {
+       "text": {
+        "en": "Because the clamps are hot",
+        "hi": "क्योंकि क्लैंप गर्म होते हैं"
+       },
+       "error": "hot"
+      },
+      {
+       "text": {
+        "en": "To make a loud sound",
+        "hi": "ज़ोर की आवाज़ के लिए"
+       },
+       "error": "sound"
+      }
+     ],
+     "explain": {
+      "en": "If thrust is less than weight at release, the rocket would sink or tip over.",
+      "hi": "छोड़ते समय थ्रस्ट वज़न से कम हो तो रॉकेट गिर या झुक सकता है।"
+     }
+    },
+    {
+     "id": "sequence-3",
+     "type": "mcq",
+     "competency": "C4.3",
+     "tries": 2,
+     "targetSec": 25,
+     "prompt": {
+      "en": "Why does the rocket drop its empty first stage?",
+      "hi": "रॉकेट खाली पहला स्टेज क्यों गिरा देता है?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "Less weight to carry, so it goes faster",
+        "hi": "कम वज़न, इसलिए तेज़ जाता है"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "The stage is broken",
+        "hi": "स्टेज टूट गया है"
+       },
+       "error": "broken"
+      },
+      {
+       "text": {
+        "en": "To make fireworks",
+        "hi": "आतिशबाज़ी के लिए"
+       },
+       "error": "fireworks"
+      },
+      {
+       "text": {
+        "en": "To cool the engine",
+        "hi": "इंजन ठंडा करने के लिए"
+       },
+       "error": "cool"
+      }
+     ],
+     "explain": {
+      "en": "An empty tank is dead weight. Dropping it lets the next engine push a lighter rocket.",
+      "hi": "खाली टैंक बेकार वज़न है। उसे गिराने से अगला इंजन हल्के रॉकेट को धकेलता है।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "monitor",
+   "superpower": "SP5",
+   "competency": "C5.2",
+   "x": 18.6,
+   "y": 83,
+   "label": {
+    "en": "Flight Monitor",
+    "hi": "फ़्लाइट मॉनिटर"
+   },
+   "learn": [
+    {
+     "art": "gauges",
+     "text": {
+      "en": "Mission control watches engine heat. Below the limit is safe. Above the limit is danger, and must be tapped fast.",
+      "hi": "मिशन कंट्रोल इंजन की गर्मी देखता है। सीमा से नीचे सुरक्षित है। सीमा से ऊपर खतरा है, उसे तुरंत टैप करो।"
+     }
+    },
+    {
+     "art": "stages",
+     "text": {
+      "en": "After the first stage drops, the new engine has a lower limit: 60 instead of 80. Watch for the rule change!",
+      "hi": "पहला स्टेज गिरने के बाद नए इंजन की सीमा कम हो जाती है: 80 की जगह 60। नियम बदलने पर ध्यान दो!"
+     }
+    }
+   ],
+   "questions": [
+    {
+     "id": "monitor-1",
+     "type": "monitor",
+     "competency": "C5.2",
+     "tries": 2,
+     "targetSec": 30,
+     "holes": 6,
+     "spawnMs": 900,
+     "stayMs": 1500,
+     "dangerShare": 0.55,
+     "phases": [
+      {
+       "limit": 80,
+       "sec": 10,
+       "label": {
+        "en": "Stage 1: tap readings ABOVE 80",
+        "hi": "स्टेज 1: 80 से ऊपर वाली रीडिंग टैप करो"
+       }
+      },
+      {
+       "limit": 60,
+       "sec": 10,
+       "label": {
+        "en": "Stage 2: tap readings ABOVE 60",
+        "hi": "स्टेज 2: 60 से ऊपर वाली रीडिंग टैप करो"
+       }
+      }
+     ],
+     "pass": {
+      "minHitRate": 0.6,
+      "maxWrong": 3
+     },
+     "prompt": {
+      "en": "Watch the engine heat. Tap only the danger readings.",
+      "hi": "इंजन की गर्मी देखो। सिर्फ़ खतरे वाली रीडिंग टैप करो।"
+     },
+     "explain": {
+      "en": "Good controllers switch rules fast when the stage changes.",
+      "hi": "अच्छे कंट्रोलर स्टेज बदलते ही नियम तुरंत बदल लेते हैं।"
+     }
+    },
+    {
+     "id": "monitor-2",
+     "type": "mcq",
+     "competency": "C5.2",
+     "tries": 1,
+     "targetSec": 15,
+     "prompt": {
+      "en": "Stage 2 is flying. The heat reading is 72. What do you do?",
+      "hi": "स्टेज 2 उड़ रहा है। गर्मी की रीडिंग 72 है। तुम क्या करोगे?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "Tap it: it is above 60, danger",
+        "hi": "टैप करो: यह 60 से ऊपर है, खतरा"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "Ignore it: it is below 80",
+        "hi": "छोड़ दो: यह 80 से कम है"
+       },
+       "error": "old-rule"
+      },
+      {
+       "text": {
+        "en": "Turn off all the screens",
+        "hi": "सारी स्क्रीन बंद कर दो"
+       },
+       "error": "off"
+      },
+      {
+       "text": {
+        "en": "Wait for Stage 3",
+        "hi": "स्टेज 3 का इंतज़ार करो"
+       },
+       "error": "wait"
+      }
+     ],
+     "explain": {
+      "en": "In Stage 2 the limit is 60, so 72 is danger.",
+      "hi": "स्टेज 2 में सीमा 60 है, इसलिए 72 खतरा है।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "shield",
+   "superpower": "SP6",
+   "competency": "C6.2",
+   "x": 59.7,
+   "y": 76,
+   "label": {
+    "en": "Heat Shield",
+    "hi": "हीट शील्ड"
+   },
+   "learn": [
+    {
+     "art": "heat",
+     "text": {
+      "en": "Coming back from space, the capsule hits the air so fast that the outside gets hotter than 1,500 °C. That is hotter than lava!",
+      "hi": "अंतरिक्ष से लौटते समय कैप्सूल इतनी तेज़ी से हवा से टकराता है कि बाहर 1,500 °C से ज़्यादा गर्म हो जाता है। यह लावा से भी ज़्यादा गर्म है!"
+     }
+    },
+    {
+     "art": "tiles",
+     "text": {
+      "en": "Heat shield tiles keep the crew cool. One cracked tile can let the heat in, so engineers check every single tile.",
+      "hi": "हीट शील्ड की टाइलें अंदर ठंडक रखती हैं। एक टूटी टाइल से गर्मी अंदर आ सकती है, इसलिए इंजीनियर हर टाइल जाँचते हैं।"
+     }
+    }
+   ],
+   "questions": [
+    {
+     "id": "shield-1",
+     "type": "spot",
+     "competency": "C6.2",
+     "cols": 6,
+     "rows": 4,
+     "damaged": [
+      [
+       5,
+       "crack"
+      ],
+      [
+       17,
+       "chip"
+      ]
+     ],
+     "tries": 4,
+     "targetSec": 35,
+     "prompt": {
+      "en": "Find the 2 damaged tiles.",
+      "hi": "2 खराब टाइलें ढूँढो।"
+     },
+     "explain": {
+      "en": "One tile had a crack and one had a broken corner. Both would let heat in.",
+      "hi": "एक टाइल में दरार थी और एक का कोना टूटा था। दोनों से गर्मी अंदर आ जाती।"
+     }
+    },
+    {
+     "id": "shield-2",
+     "type": "mcq",
+     "competency": "C4.3",
+     "tries": 2,
+     "targetSec": 25,
+     "prompt": {
+      "en": "Why does the capsule get so hot when it comes back?",
+      "hi": "लौटते समय कैप्सूल इतना गर्म क्यों हो जाता है?"
+     },
+     "options": [
+      {
+       "text": {
+        "en": "It rushes into the air very fast and squeezes it",
+        "hi": "वह बहुत तेज़ी से हवा में घुसता है और उसे दबाता है"
+       },
+       "correct": true
+      },
+      {
+       "text": {
+        "en": "It flies close to the Sun",
+        "hi": "वह सूरज के पास से उड़ता है"
+       },
+       "error": "sun"
+      },
+      {
+       "text": {
+        "en": "Its engines are still on",
+        "hi": "उसके इंजन अभी भी चालू हैं"
+       },
+       "error": "engine"
+      },
+      {
+       "text": {
+        "en": "Space is very hot",
+        "hi": "अंतरिक्ष बहुत गर्म है"
+       },
+       "error": "space-hot"
+      }
+     ],
+     "explain": {
+      "en": "At very high speed, the air in front is squeezed and rubbed until it glows hot.",
+      "hi": "बहुत तेज़ रफ़्तार पर सामने की हवा दबती और रगड़ खाती है और चमकने तक गर्म हो जाती है।"
+     }
+    }
+   ]
+  }
+ ],
+ "commander": {
+  "title": {
+   "en": "Final countdown",
+   "hi": "फ़ाइनल काउंटडाउन"
+  },
+  "sub": {
+   "en": "5 quick questions from what you learned. 12 seconds each. Answer right to launch with bonus points!",
+   "hi": "जो सीखा उससे 5 तेज़ सवाल। हर सवाल के 12 सेकंड। सही जवाब दो और बोनस अंकों के साथ लॉन्च करो!"
+  },
+  "questions": [
+   {
+    "id": "cmd-1",
+    "superpower": "SP2",
+    "competency": "C2.3",
+    "prompt": {
+     "en": "Which part carries the satellite?",
+     "hi": "कौन-सा हिस्सा सैटेलाइट ले जाता है?"
+    },
+    "options": [
+     {
+      "text": {
+       "en": "Nose cone",
+       "hi": "नोज़ कोन"
+      },
+      "correct": true
+     },
+     {
+      "text": {
+       "en": "Fins",
+       "hi": "फ़िन"
+      }
+     },
+     {
+      "text": {
+       "en": "Nozzle",
+       "hi": "नोज़ल"
+      }
+     },
+     {
+      "text": {
+       "en": "Fuel tank",
+       "hi": "ईंधन टैंक"
+      }
+     }
+    ]
+   },
+   {
+    "id": "cmd-2",
+    "superpower": "SP1",
+    "competency": "C1.2",
+    "prompt": {
+     "en": "Wind is 35 km/h. GO or NO-GO?",
+     "hi": "हवा 35 km/h है। गो या नो-गो?"
+    },
+    "options": [
+     {
+      "text": {
+       "en": "GO",
+       "hi": "गो"
+      }
+     },
+     {
+      "text": {
+       "en": "NO-GO",
+       "hi": "नो-गो"
+      },
+      "correct": true
+     }
+    ]
+   },
+   {
+    "id": "cmd-3",
+    "superpower": "SP4",
+    "competency": "C4.3",
+    "prompt": {
+     "en": "To lift off, thrust must be ___ than weight.",
+     "hi": "उड़ने के लिए थ्रस्ट को वज़न से ___ होना चाहिए।"
+    },
+    "options": [
+     {
+      "text": {
+       "en": "bigger",
+       "hi": "ज़्यादा"
+      },
+      "correct": true
+     },
+     {
+      "text": {
+       "en": "smaller",
+       "hi": "कम"
+      }
+     },
+     {
+      "text": {
+       "en": "equal",
+       "hi": "बराबर"
+      }
+     }
+    ]
+   },
+   {
+    "id": "cmd-4",
+    "superpower": "SP3",
+    "competency": "C3.1",
+    "prompt": {
+     "en": "What comes right after 'Start the engines'?",
+     "hi": "'इंजन चालू करो' के ठीक बाद क्या आता है?"
+    },
+    "options": [
+     {
+      "text": {
+       "en": "Release the clamps",
+       "hi": "क्लैंप छोड़ो"
+      },
+      "correct": true
+     },
+     {
+      "text": {
+       "en": "Fill the fuel tanks",
+       "hi": "ईंधन टैंक भरो"
+      }
+     },
+     {
+      "text": {
+       "en": "Release the satellite",
+       "hi": "सैटेलाइट छोड़ो"
+      }
+     }
+    ]
+   },
+   {
+    "id": "cmd-5",
+    "superpower": "SP6",
+    "competency": "C6.2",
+    "prompt": {
+     "en": "What protects the capsule when it comes back?",
+     "hi": "लौटते समय कैप्सूल को कौन बचाता है?"
+    },
+    "options": [
+     {
+      "text": {
+       "en": "Heat shield",
+       "hi": "हीट शील्ड"
+      },
+      "correct": true
+     },
+     {
+      "text": {
+       "en": "Fins",
+       "hi": "फ़िन"
+      }
+     },
+     {
+      "text": {
+       "en": "Nose cone",
+       "hi": "नोज़ कोन"
+      }
+     },
+     {
+      "text": {
+       "en": "Clamps",
+       "hi": "क्लैंप"
+      }
+     }
+    ]
+   }
+  ]
+ }
+}</script>
+<script>
+"use strict";
+/* ================= FSL Mission Room engine v2 =================
+   A mission = JSON: 6 fixes (each: learn slides + test questions) + a Commander round.
+   Question types: mcq, label, order, thrust, monitor, spot. Learn arts: see ART.
+   Competitive layer: launch window timer, streaks, speed bonus, ranks, crew board, challenge link.
+   Only first-try correctness feeds skill credit (the Star level). Everything else is for fun.
+   Run data -> localStorage fsl.missionRuns.v2, shaped for Supabase:
+   mission_runs, mission_question_results, mission_events.                                  */
+
+const SP = {
+  SP1:{en:'Smart Logic',hi:'स्मार्ट लॉजिक',c:'var(--sp1)',hex:'#FFC83D'},
+  SP2:{en:'Super Memrix',hi:'सुपर मेमरिक्स',c:'var(--sp2)',hex:'#B39BFF'},
+  SP3:{en:'Master Algo',hi:'मास्टर एल्गो',c:'var(--sp3)',hex:'#2ED3C0'},
+  SP4:{en:'Sci Idea',hi:'साइ आइडिया',c:'var(--sp4)',hex:'#FF8A5C'},
+  SP5:{en:'Speed Flex',hi:'स्पीड फ्लेक्स',c:'var(--sp5)',hex:'#4EA8FF'},
+  SP6:{en:'Pro Focus',hi:'प्रो फोकस',c:'var(--sp6)',hex:'#FF7EC8'}
+};
+const COMP = {
+  'C1.1':'Pattern Recognition','C1.2':'Logical Deduction','C1.3':'Quantitative Reasoning',
+  'C2.1':'Mental Rotation','C2.2':'Working Memory','C2.3':'Diagram & Mechanism Reading',
+  'C3.1':'Algorithmic Thinking','C3.2':'Decomposition & Planning','C3.3':'Optimisation & Trade-offs',
+  'C4.1':'Observation & Inference','C4.2':'Experimental Design','C4.3':'Cause, Effect & Systems',
+  'C5.1':'Processing Speed','C5.2':'Cognitive Flexibility','C5.3':'Learn & Transfer',
+  'C6.1':'Sustained Attention','C6.2':'Detail & Error Detection','C6.3':'Critical Evaluation of Information'
+};
+const ICON = {
+  SP1:'<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="#0A0E2E"/><rect x="8.5" y="18" width="7" height="2" rx="1" fill="#0A0E2E"/><rect x="9.5" y="21" width="5" height="1.6" rx=".8" fill="#0A0E2E"/><path d="M10 9l2 3 2-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>',
+  SP2:'<svg viewBox="0 0 24 24"><path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 1 5 3 3 0 0 0 4 4 2 2 0 0 0 2-1V4a2 2 0 0 0-2-1zm6 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-1 5 3 3 0 0 1-4 4 2 2 0 0 1-2-1V4a2 2 0 0 1 2-1z" fill="#0A0E2E"/></svg>',
+  SP3:'<svg viewBox="0 0 24 24"><rect x="2" y="3" width="8" height="5" rx="1.5" fill="#0A0E2E"/><rect x="8" y="10" width="8" height="5" rx="1.5" fill="#0A0E2E"/><rect x="14" y="17" width="8" height="5" rx="1.5" fill="#0A0E2E"/><path d="M6 8v4h2M12 15v4h2" stroke="#0A0E2E" stroke-width="1.8" fill="none"/></svg>',
+  SP4:'<svg viewBox="0 0 24 24"><path d="M9 2h6v2h-1v5l5.5 9.5A2.3 2.3 0 0 1 17.5 22h-11a2.3 2.3 0 0 1-2-3.5L10 9V4H9z" fill="#0A0E2E"/><path d="M7 16h10l1.5 2.6c.3.6-.1 1.4-.8 1.4H6.3c-.7 0-1.1-.8-.8-1.4z" fill="#fff" opacity=".85"/></svg>',
+  SP5:'<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#0A0E2E"/></svg>',
+  SP6:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#0A0E2E"/><circle cx="12" cy="12" r="6.5" fill="#fff"/><circle cx="12" cy="12" r="3.5" fill="#0A0E2E"/></svg>',
+  rocket:'<svg viewBox="0 0 24 24"><path d="M12 2c-3 3-4 7-4 11h8c0-4-1-8-4-11z" fill="#FF5D73"/><rect x="8" y="12" width="8" height="6" fill="#EEF1FF"/><circle cx="12" cy="10" r="1.6" fill="#4EA8FF"/><path d="M8 14l-3 5 3-1zM16 14l3 5-3-1z" fill="#FF5D73"/><path d="M10 18h4l-2 4z" fill="#FFC83D"/></svg>'
+};
+
+const UI = {
+  eyebrow:{en:'FSL Round 2 · Band',hi:'FSL राउंड 2 · बैंड'},
+  start:{en:'Start the clock',hi:'घड़ी शुरू करो'},
+  window:{en:'min launch window',hi:'मिनट लॉन्च विंडो'},
+  jobs:{en:'real rocket jobs',hi:'रॉकेट के असली काम'},
+  qs:{en:'questions + final round',hi:'सवाल + फ़ाइनल राउंड'},
+  findSpots:{en:'Tap a glowing spot to start a job',hi:'काम शुरू करने के लिए चमकते निशान पर टैप करो'},
+  goFinal:{en:'All jobs done! Tap for the final countdown',hi:'सब काम पूरे! फ़ाइनल काउंटडाउन के लिए टैप करो'},
+  learn:{en:'Learn',hi:'सीखो'},
+  test:{en:'Test',hi:'टेस्ट'},
+  next:{en:'Next',hi:'आगे'},
+  testMe:{en:'I’m ready. Test me!',hi:'मैं तैयार हूँ। टेस्ट लो!'},
+  question:{en:'Question',hi:'सवाल'},
+  of:{en:'of',hi:'/'},
+  tries:{en:'Tries',hi:'कोशिश'},
+  notes:{en:'Notes',hi:'नोट्स'},
+  backToQ:{en:'Back to the question',hi:'सवाल पर वापस'},
+  tryAgain:{en:'Not quite. Try again!',hi:'अभी नहीं। फिर कोशिश करो!'},
+  correct:{en:'Correct!',hi:'सही!'},
+  wrongFinal:{en:'The answer is shown in green.',hi:'सही जवाब हरे रंग में है।'},
+  done:{en:'Job done!',hi:'काम पूरा!'},
+  badge:{en:'badge',hi:'बैज'},
+  back:{en:'Back to the rocket',hi:'रॉकेट पर वापस'},
+  check:{en:'Check',hi:'जाँचो'},
+  inPlace:{en:'{n} of {m} in the right place',hi:'{m} में से {n} सही जगह पर'},
+  testFire:{en:'Test fire',hi:'टेस्ट फायर'},
+  engines:{en:'engines',hi:'इंजन'},
+  weight:{en:'Weight',hi:'वज़न'},
+  perEngine:{en:'Each engine',hi:'हर इंजन'},
+  liftOff:{en:'Lift-off! Push {p} t is more than {w} t.',hi:'उड़ान! धक्का {p} टन, वज़न {w} टन से ज़्यादा।'},
+  noLift:{en:'Too weak. Push {p} t is not more than {w} t.',hi:'कमज़ोर। धक्का {p} टन, वज़न {w} टन से ज़्यादा नहीं।'},
+  extra:{en:'It flies, but uses extra engines. Fewer can do it.',hi:'उड़ गया, पर ज़्यादा इंजन लगे। कम से भी हो सकता है।'},
+  go:{en:'Start',hi:'शुरू'},
+  switchRule:{en:'STAGE 2! Rule changed',hi:'स्टेज 2! नियम बदला'},
+  caught:{en:'Caught',hi:'पकड़े'},
+  wrongTaps:{en:'Wrong taps',hi:'गलत टैप'},
+  found:{en:'Found {n} of {m}',hi:'{m} में से {n} मिलीं'},
+  wind:{en:'Wind',hi:'हवा'},
+  storm:{en:'Lightning storm',hi:'बिजली वाला तूफ़ान'},
+  none:{en:'None',hi:'नहीं'},
+  kmAway:{en:'{n} km away',hi:'{n} km दूर'},
+  fuel:{en:'Fuel',hi:'ईंधन'},
+  tapParts:{en:'Tapped {n} of 5 parts',hi:'5 में से {n} हिस्से देखे'},
+  cmdGo:{en:'Start final countdown',hi:'फ़ाइनल काउंटडाउन शुरू करो'},
+  timeUp:{en:'Time up!',hi:'समय खत्म!'},
+  launch:{en:'LAUNCH',hi:'लॉन्च'},
+  launched:{en:'Launch successful!',hi:'लॉन्च सफल!'},
+  points:{en:'points',hi:'अंक'},
+  accuracy:{en:'Right first time',hi:'पहली बार सही'},
+  stars:{en:'Stars',hi:'सितारे'},
+  time:{en:'Time',hi:'समय'},
+  final:{en:'Final',hi:'फ़ाइनल'},
+  nextRank:{en:'{n} more points to become {r}',hi:'{r} बनने के लिए {n} अंक और'},
+  topRank:{en:'Top rank reached!',hi:'सबसे ऊँची रैंक!'},
+  windowBonus:{en:'Launch window bonus',hi:'लॉन्च विंडो बोनस'},
+  windowClosed:{en:'Launch window closed! Finish fast. No time bonus now.',hi:'लॉन्च विंडो बंद! जल्दी खत्म करो। अब टाइम बोनस नहीं।'},
+  crew:{en:'Crew board on this device',hi:'इस डिवाइस का क्रू बोर्ड'},
+  yourName:{en:'Your name',hi:'तुम्हारा नाम'},
+  save:{en:'Save',hi:'सेव'},
+  share:{en:'Make my score card',hi:'मेरा स्कोर कार्ड बनाओ'},
+  copyLink:{en:'Challenge a friend',hi:'दोस्त को चैलेंज करो'},
+  copied:{en:'Link copied. Send it to a friend!',hi:'लिंक कॉपी हो गया। दोस्त को भेजो!'},
+  copyFail:{en:'Copy this link:',hi:'यह लिंक कॉपी करो:'},
+  playAgain:{en:'Play again',hi:'फिर से खेलो'},
+  starNote:{en:'Your Star level counts only answers right on the first try. Points, speed, streaks and coins are for the leaderboard and for fun.',hi:'तुम्हारा स्टार लेवल सिर्फ़ पहली बार में सही जवाबों से बनता है। अंक, स्पीड, स्ट्रीक और सिक्के लीडरबोर्ड और मज़े के लिए हैं।'},
+  beatBanner:{en:'Your friend scored {n}. Can you beat it?',hi:'तुम्हारे दोस्त ने {n} अंक बनाए। क्या तुम आगे निकल सकते हो?'},
+  beatWin:{en:'You beat your friend’s {n}!',hi:'तुमने दोस्त के {n} अंक पार कर लिए!'},
+  beatLose:{en:'Your friend has {n}. Play again to beat it!',hi:'दोस्त के {n} अंक हैं। फिर खेलो और आगे निकलो!'},
+  saveCard:{en:'Press and hold the card to save or share it.',hi:'कार्ड को दबाकर रखो और सेव या शेयर करो।'},
+  streak:{en:'Streak',hi:'स्ट्रीक'},
+  cardBeat:{en:'Beat my score!',hi:'मेरा स्कोर हराओ!'},
+  cardScored:{en:'I launched the rocket and scored',hi:'मैंने रॉकेट लॉन्च किया और बनाए'},
+  close:{en:'Close',hi:'बंद करो'},
+  log:{en:'Run log (for the team)',hi:'रन लॉग (टीम के लिए)'},
+  copyLog:{en:'Copy log JSON',hi:'लॉग JSON कॉपी करो'},
+  youLearned:{en:'You learned',hi:'तुमने सीखा'}
+};
+const PARTS = {
+  nose:{en:'Nose cone',hi:'नोज़ कोन',info:{en:'Carries the satellite. Its pointed shape cuts through the air.',hi:'सैटेलाइट ले जाता है। नुकीला आकार हवा को चीरता है।'}},
+  fuel:{en:'Fuel tank',hi:'ईंधन टैंक',info:{en:'Holds the fuel that burns.',hi:'जलने वाला ईंधन रखता है।'}},
+  oxi:{en:'Oxidiser tank',hi:'ऑक्सीडाइज़र टैंक',info:{en:'Holds oxygen. Space has no air, and fire needs oxygen.',hi:'ऑक्सीजन रखता है। अंतरिक्ष में हवा नहीं होती, और आग को ऑक्सीजन चाहिए।'}},
+  engine:{en:'Engine + nozzle',hi:'इंजन + नोज़ल',info:{en:'Burns fuel with oxygen and blasts hot gas down.',hi:'ईंधन को ऑक्सीजन के साथ जलाकर गर्म गैस नीचे फेंकता है।'}},
+  fins:{en:'Fins',hi:'फ़िन',info:{en:'Keep the rocket flying straight.',hi:'रॉकेट को सीधा उड़ाते हैं।'}}
+};
+
+/* ---------- helpers ---------- */
+const $ = (s,el=document)=>el.querySelector(s);
+const h = (tag,attrs={},html='')=>{const e=document.createElement(tag);for(const k in attrs){const v=attrs[k];if(k==='style'&&typeof v==='object'){for(const sk in v){if(sk.startsWith('--'))e.style.setProperty(sk,v[sk]);else e.style[sk]=v[sk];}}else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?'':v);}if(html)e.innerHTML=html;return e;};
+const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+const uuid = ()=>(crypto.randomUUID?crypto.randomUUID():'r-'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+function t(x,vars){let s=(x&&typeof x==='object')?(x[S.lang]||x.en||''):(x||'');if(vars)for(const k in vars)s=s.split('{'+k+'}').join(vars[k]);return s;}
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const fmt = n=>Math.round(n).toLocaleString('en-IN');
+function fmtTime(ms){const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+/* ---------- sound ---------- */
+const SFX = {ctx:null,
+  ensure(){if(!S.sound)return null;try{if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state==='suspended')this.ctx.resume();}catch(e){return null;}return this.ctx;},
+  tone(f,d=.15,type='sine',v=.18,when=0){const c=this.ensure();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;const t0=c.currentTime+when;g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+d+.02);},
+  good(){[523,659,784].forEach((f,i)=>this.tone(f,.16,'triangle',.18,i*.08));},
+  bad(){this.tone(200,.22,'sawtooth',.1);},
+  tap(){this.tone(880,.05,'square',.06);},
+  coin(){this.tone(988,.08,'square',.08);this.tone(1319,.12,'square',.08,.07);},
+  rumble(sec=3){const c=this.ensure();if(!c)return;const n=c.sampleRate*sec,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();f.type='lowpass';f.frequency.value=260;g.gain.value=.5;s.buffer=b;s.connect(f).connect(g).connect(c.destination);s.start();}
+};
+
+
+
+/* ---------- state ---------- */
+const S = {mission:null,lang:'en',sound:true,coins:0,streak:0,bestStreak:0,points:0,fixes:{},qres:{},run:null,events:[],beat:null,phase:'intro',windowStart:null,windowLeft:null,windowClosedShown:false,commander:null,openFix:null};
+
+function newRun(){
+  const m=S.mission;
+  S.coins=m.scoring.coins.start;S.streak=0;S.bestStreak=0;S.points=0;S.events=[];S.phase='intro';S.windowStart=null;S.windowLeft=m.windowSec;S.windowClosedShown=false;S.commander=null;
+  S.fixes={};S.qres={};
+  m.fixes.forEach(f=>{S.fixes[f.id]={status:'new',qi:0,stars:0,points:0,timeMs:0,openedAt:null,learnDone:false};f.questions.forEach(q=>S.qres[q.id]={fix_id:f.id,tries:0,peeked:false,correct:null,first:false,timeMs:0,points:0,credit:0});});
+  S.run={run_id:uuid(),player_id:null,player_name:null,mission_id:m.id,mission_version:m.version,round:m.round,band:m.band,lang:S.lang,started_at:null,ended_at:null,completed:false,points:0,stars:0,first_try_correct:0,questions:Object.keys(S.qres).length,commander_correct:0,window_bonus:0,best_streak:0,rank:null,coins_end:null,beat_target:S.beat,client:{ua:navigator.userAgent.slice(0,120),w:innerWidth,h:innerHeight}};
+  S.t0=performance.now();
+}
+function log(event,ids={},payload={}){
+  S.events.push({run_id:S.run.run_id,seq:S.events.length+1,ts:new Date().toISOString(),t_ms:Math.round(performance.now()-S.t0),event,fix_id:ids.fix||null,question_id:ids.q||null,competency:ids.comp||null,payload});
+  saveRun();
+}
+function questionResults(){const out=[];S.mission.fixes.forEach(f=>f.questions.forEach(q=>{const r=S.qres[q.id];out.push({run_id:S.run.run_id,fix_id:f.id,question_id:q.id,superpower:f.superpower,competency:q.competency||f.competency,type:q.type,correct:r.correct,first_try:r.first,tries:r.tries,peeked:r.peeked,time_ms:Math.round(r.timeMs),skill_credit:r.credit,points:r.points});}));
+  if(S.commander)S.commander.res.forEach(c=>out.push({run_id:S.run.run_id,fix_id:'commander',question_id:c.id,superpower:c.sp,competency:c.comp,type:'mcq-timed',correct:c.correct,first_try:c.correct,tries:1,peeked:false,time_ms:c.ms,skill_credit:c.correct?1:0,points:c.points}));
+  return out;}
+function saveRun(){
+  const runs=store.get('fsl.missionRuns.v2',[]);
+  const rec={run:S.run,question_results:questionResults(),events:S.events};
+  const i=runs.findIndex(r=>r.run.run_id===S.run.run_id);
+  if(i>=0)runs[i]=rec;else runs.push(rec);
+  while(runs.length>20)runs.shift();
+  store.set('fsl.missionRuns.v2',runs);
+}
+
+/* ---------- builtin scenes ---------- */
+function rnd(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const SCENES = {
+ launchpad(){
+  const r=rnd(11);let stars='';
+  for(let i=0;i<80;i++){const x=(r()*360).toFixed(1),y=(r()*430).toFixed(1),rr=(r()*1.3+.3).toFixed(2);stars+=`<circle cx="${x}" cy="${y}" r="${rr}" fill="#fff" ${i%4===0?'class="twk" style="animation-delay:'+(r()*2).toFixed(2)+'s"':'opacity="'+(.3+r()*.6).toFixed(2)+'"'}/>`;}
+  let tiles='';for(let row=0;row<2;row++)for(let col=0;col<4;col++){const x=193+col*11.5,y=404+row*13;tiles+=`<rect x="${x}" y="${y}" width="10" height="11" rx="2" fill="#2C335F"/><circle cx="${x+2.5}" cy="${y+2.5}" r=".9" fill="#9AA3D6"/><circle cx="${x+7.5}" cy="${y+8.5}" r=".9" fill="#9AA3D6"/>`;}
+  let lattice='';for(let y=200;y<488;y+=24){lattice+=`<path d="M274 ${y} L296 ${y+24} M296 ${y} L274 ${y+24}" stroke="#7A82B8" stroke-width="1.5"/><path d="M272 ${y} H298" stroke="#9AA3D6" stroke-width="2"/>`;}
+  return `<svg viewBox="0 0 360 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+   <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#060A26"/><stop offset=".55" stop-color="#1D1A5C"/><stop offset="1" stop-color="#4B2C7A"/></linearGradient>
+   <linearGradient id="rb" x1="0" x2="1"><stop offset="0" stop-color="#C9D0F0"/><stop offset=".45" stop-color="#FFFFFF"/><stop offset="1" stop-color="#A8B1DC"/></linearGradient>
+   <linearGradient id="tank" x1="0" x2="1"><stop offset="0" stop-color="#B9C1EA"/><stop offset=".45" stop-color="#F4F6FF"/><stop offset="1" stop-color="#9AA3D6"/></linearGradient>
+   <radialGradient id="fl" cx=".5" cy=".2" r=".8"><stop offset="0" stop-color="#FFF6C8"/><stop offset=".35" stop-color="#FFC83D"/><stop offset=".75" stop-color="#FF6A3D"/><stop offset="1" stop-color="#FF3D3D" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="360" height="560" fill="url(#sky)"/>
+  ${stars}
+  <g><circle cx="298" cy="82" r="30" fill="#FF9F6B"/><path d="M276 64a30 30 0 0 1 44 6" stroke="#FFC9A3" stroke-width="5" fill="none" opacity=".7"/><ellipse cx="298" cy="82" rx="50" ry="10" fill="none" stroke="#FFD7B0" stroke-width="3" transform="rotate(-16 298 82)"/></g>
+  <circle cx="56" cy="58" r="9" fill="#E8E6FF"/><circle cx="53" cy="55" r="2" fill="#C9C6EE"/>
+  <path d="M0 470 Q50 432 110 462 T220 452 T360 458 V560 H0Z" fill="#2B2366"/>
+  <rect y="494" width="360" height="66" fill="#191E4C"/>
+  <path d="M0 494 H360" stroke="#3A4497" stroke-width="2"/>
+  <g stroke="#2A3172" stroke-width="2">${Array.from({length:9},(_,i)=>`<path d="M${i*45-10} 560 L${i*45+20} 494"/>`).join('')}</g>
+  <!-- radar (SP5) -->
+  <g><path d="M62 262 V214" stroke="#7A82B8" stroke-width="5"/><g transform="translate(62 186) rotate(-25)"><path d="M-32 -6 Q0 40 32 -6 Z" fill="#DDE2FA" stroke="#9AA3D6" stroke-width="2"/><path d="M0 14 L0 -22" stroke="#9AA3D6" stroke-width="2.5"/><circle cx="0" cy="-24" r="4" fill="#FF5D73" class="blink"/></g>
+  <circle cx="112" cy="150" r="7" fill="#8A7F9E"/><circle cx="110" cy="148" r="2" fill="#6E6585"/><path d="M119 146 l14 -6" stroke="#FFC83D" stroke-width="2" opacity=".7"/>
+  <circle cx="132" cy="196" r="4" fill="#8A7F9E"/></g>
+  <!-- fuel tank (SP4) -->
+  <g><rect x="34" y="262" width="60" height="130" rx="28" fill="url(#tank)" stroke="#7A82B8" stroke-width="2"/><rect x="34" y="300" width="60" height="9" fill="#FF8A5C"/><rect x="34" y="346" width="60" height="9" fill="#FF8A5C"/>
+  <circle cx="64" cy="328" r="11" fill="#0B1138"/><path d="M64 328 L71 322" stroke="#3DDC97" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M94 368 H190" stroke="#8C93C4" stroke-width="7"/><path d="M94 368 H190" stroke="#C9CFF5" stroke-width="2"/><rect x="42" y="392" width="6" height="40" fill="#7A82B8"/><rect x="80" y="392" width="6" height="40" fill="#7A82B8"/></g>
+  <!-- tower -->
+  <g><rect x="272" y="196" width="26" height="292" fill="none" stroke="#9AA3D6" stroke-width="2.5"/>${lattice}<path d="M240 252 H272" stroke="#9AA3D6" stroke-width="5"/><circle cx="285" cy="190" r="4" fill="#FF5D73" class="blink"/></g>
+  <!-- pad -->
+  <rect x="158" y="486" width="114" height="12" rx="3" fill="#5A628F"/><rect x="166" y="498" width="10" height="10" fill="#3E4577"/><rect x="254" y="498" width="10" height="10" fill="#3E4577"/>
+  <!-- rocket -->
+  <g id="rocket">
+   <g id="flame"><ellipse cx="215" cy="520" rx="22" ry="46" fill="url(#fl)"/><ellipse cx="215" cy="506" rx="11" ry="24" fill="#FFF6C8" opacity=".9"/></g>
+   <path d="M215 150 C200 174 192 198 190 220 H240 C238 198 230 174 215 150Z" fill="#FF5D73"/>
+   <rect x="190" y="218" width="50" height="252" fill="url(#rb)"/>
+   <rect x="190" y="300" width="50" height="9" fill="#4EA8FF"/>
+   <circle cx="215" cy="262" r="13" fill="#4EA8FF" stroke="#1C2B6B" stroke-width="4"/><path d="M208 256a9 9 0 0 1 9-4" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+   <text x="215" y="350" text-anchor="middle" font-family="Baloo 2, system-ui, sans-serif" font-weight="800" font-size="15" fill="#1C2B6B">FSL</text>
+   ${tiles}
+   <path d="M190 408 L164 472 L190 466Z" fill="#FF5D73"/><path d="M240 408 L266 472 L240 466Z" fill="#FF5D73"/>
+   <path d="M200 470 H230 L237 488 H193Z" fill="#6B7299"/>
+  </g>
+  <!-- robot (SP3) -->
+  <g><path d="M141 268 V260 M127 258 H155" stroke="#9AA3D6" stroke-width="3" stroke-linecap="round"/><rect x="122" y="270" width="38" height="32" rx="10" fill="#EEF1FF" stroke="#7A82B8" stroke-width="2"/><rect x="128" y="277" width="26" height="12" rx="6" fill="#0B1138"/><circle cx="135" cy="283" r="3" fill="#2ED3C0"/><circle cx="147" cy="283" r="3" fill="#2ED3C0"/><path d="M160 292 l12 6 l4 -4" stroke="#9AA3D6" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+  <!-- console (SP1) -->
+  <g><rect x="14" y="432" width="106" height="64" rx="10" fill="#2C3470" stroke="#5A63B5" stroke-width="2"/>
+   <rect x="22" y="440" width="26" height="22" rx="4" fill="#0B1138"/><circle cx="35" cy="451" r="3.2" fill="#FF5D73"/>
+   <rect x="54" y="440" width="26" height="22" rx="4" fill="#0B1138"/><circle cx="62" cy="451" r="3" fill="#4EA8FF"/><circle cx="72" cy="451" r="3" fill="#4EA8FF"/>
+   <rect x="86" y="440" width="26" height="22" rx="4" fill="#0B1138"/><text x="99" y="457" text-anchor="middle" font-size="15" font-weight="800" fill="#FFC83D">?</text>
+   <circle cx="30" cy="480" r="5" fill="#3DDC97"/><circle cx="46" cy="480" r="5" fill="#FFC83D"/><rect x="62" y="476" width="48" height="7" rx="3.5" fill="#0B1138"/></g>
+  <!-- ignition box (SP2) -->
+  <g><rect x="317" y="476" width="8" height="20" fill="#5A63B5"/><rect x="296" y="432" width="52" height="46" rx="9" fill="#2C3470" stroke="#5A63B5" stroke-width="2"/>
+   <circle cx="311" cy="446" r="7" fill="#3DDC97"/><circle cx="333" cy="446" r="7" fill="#FFC83D"/><circle cx="311" cy="465" r="7" fill="#4EA8FF"/><circle cx="333" cy="465" r="7" fill="#FF5D73"/></g>
+  <g id="smoke"></g>
+ </svg>`;}
+};
+
+
+
+/* ================= learn / question art ================= */
+const ART = {
+ anatomy(o={}){
+  const lab=o.labels!==false;const L=k=>esc(t(PARTS[k]));
+  const label=(k,x,y,anchor,lx1,ly1)=>lab?`<path d="M${lx1} ${ly1} L${anchor==='end'?x+4:x-4} ${y-4}" stroke="#AEB5E8" stroke-width="1.5"/><text x="${x}" y="${y}" text-anchor="${anchor}" font-size="12" font-weight="700" fill="#F5F6FF" font-family="Baloo 2,Nirmala UI,sans-serif">${L(k)}</text>`:'';
+  return `<svg viewBox="-14 0 328 290">
+   <ellipse cx="150" cy="268" rx="10" ry="16" fill="#FF8A3D" opacity=".8"/>
+   <g class="part" data-part="fins"><path d="M125 178 L98 240 L125 233Z M175 178 L202 240 L175 233Z" fill="#FF5D73"/></g>
+   <g class="part" data-part="nose"><path d="M150 12 C132 42 126 64 125 82 H175 C174 64 168 42 150 12Z" fill="#FF5D73"/><circle cx="150" cy="58" r="8" fill="#4EA8FF"/></g>
+   <g class="part" data-part="fuel"><rect x="125" y="82" width="50" height="72" fill="#EEF1FF"/><rect x="125" y="110" width="50" height="6" fill="#FF8A5C"/></g>
+   <g class="part" data-part="oxi"><rect x="125" y="154" width="50" height="60" fill="#CFE9FF"/><text x="150" y="190" text-anchor="middle" font-size="15" font-weight="800" fill="#1F6FD1">O₂</text></g>
+   <g class="part" data-part="engine"><path d="M132 214 H168 L177 246 H123Z" fill="#6B7299"/></g>
+   ${label('nose',92,52,'end',138,48)}${label('fuel',208,122,'start',175,118)}${label('oxi',92,188,'end',125,184)}${label('engine',208,236,'start',172,232)}${label('fins',92,252,'end',108,226)}
+  </svg>`;},
+ newton(){return `<svg viewBox="0 0 300 220"><defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3DDC97"/></marker><marker id="ah2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF8A3D"/></marker></defs>
+   <path d="M150 20 C138 40 134 54 134 66 H166 C166 54 162 40 150 20Z" fill="#FF5D73"/><rect x="134" y="66" width="32" height="70" fill="#EEF1FF"/><path d="M134 116 L120 146 L134 142Z M166 116 L180 146 L166 142Z" fill="#FF5D73"/><path d="M140 136 H160 L164 148 H136Z" fill="#6B7299"/>
+   <ellipse cx="150" cy="170" rx="14" ry="22" fill="#FF8A3D"/><ellipse cx="150" cy="164" rx="7" ry="12" fill="#FFF0A8"/>
+   <path d="M210 110 V40" stroke="#3DDC97" stroke-width="7" marker-end="url(#ah)"/><text x="222" y="80" font-size="14" font-weight="800" fill="#3DDC97" font-family="Baloo 2,sans-serif">${esc(t({en:'Rocket goes up',hi:'रॉकेट ऊपर'}))}</text>
+   <path d="M70 150 V210" stroke="#FF8A3D" stroke-width="7" marker-end="url(#ah2)"/><text x="70" y="140" text-anchor="middle" font-size="14" font-weight="800" fill="#FF8A3D" font-family="Baloo 2,sans-serif">${esc(t({en:'Gas goes down',hi:'गैस नीचे'}))}</text>
+  </svg>`;},
+ balance(){return `<svg viewBox="0 0 300 220"><defs><marker id="b1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3DDC97"/></marker><marker id="b2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF5D73"/></marker></defs>
+   <path d="M150 40 C140 58 136 70 136 80 H164 C164 70 160 58 150 40Z" fill="#FF5D73"/><rect x="136" y="80" width="28" height="60" fill="#EEF1FF"/><path d="M142 140 H158 L161 150 H139Z" fill="#6B7299"/><ellipse cx="150" cy="168" rx="11" ry="17" fill="#FF8A3D"/>
+   <path d="M95 160 V40" stroke="#3DDC97" stroke-width="10" marker-end="url(#b1)"/><text x="95" y="196" text-anchor="middle" font-size="15" font-weight="800" fill="#3DDC97" font-family="Baloo 2,sans-serif">${esc(t({en:'Thrust',hi:'थ्रस्ट'}))}</text>
+   <path d="M205 60 V140" stroke="#FF5D73" stroke-width="7" marker-end="url(#b2)"/><text x="205" y="176" text-anchor="middle" font-size="15" font-weight="800" fill="#FF5D73" font-family="Baloo 2,sans-serif">${esc(t({en:'Weight',hi:'वज़न'}))}</text>
+   <text x="150" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="#FFC83D" font-family="Baloo 2,sans-serif">${esc(t({en:'Thrust > Weight = Lift-off',hi:'थ्रस्ट > वज़न = उड़ान'}))}</text>
+  </svg>`;},
+ balloon(){return `<svg viewBox="0 0 300 150"><ellipse cx="170" cy="70" rx="60" ry="44" fill="#FF5D73"/><ellipse cx="150" cy="54" rx="16" ry="9" fill="#fff" opacity=".35"/><path d="M110 70 L96 62 L96 78Z" fill="#E04A5F"/>
+   ${[0,1,2].map(i=>`<path d="M${86-i*22} ${70+(i-1)*12} q-8 -6 -16 0 q-8 6 -16 0" stroke="#CFE9FF" stroke-width="4" fill="none" stroke-linecap="round"/>`).join('')}
+   <text x="40" y="130" font-size="14" font-weight="800" fill="#CFE9FF" font-family="Baloo 2,sans-serif">${esc(t({en:'air out',hi:'हवा बाहर'}))}</text></svg>`;},
+ rules(){return `<svg viewBox="0 0 300 90">${[['wind',50],['storm',150],['fuel',250]].map(([k,x])=>`<g transform="translate(${x-30} 10)">${MINI[k]}</g>`).join('')}</svg>`;},
+ gauges(){const g=(x,v,danger)=>`<g transform="translate(${x} 20)"><rect width="110" height="90" rx="14" fill="#E9ECFF"/><text x="55" y="58" text-anchor="middle" font-size="40" font-weight="800" fill="#0A0E2E" font-family="Baloo 2,sans-serif">${v}</text><text x="55" y="80" text-anchor="middle" font-size="13" font-weight="800" fill="${danger?'#D93850':'#1E9E6A'}" font-family="Baloo 2,sans-serif">${esc(t(danger?{en:'DANGER: tap!',hi:'खतरा: टैप!'}:{en:'safe',hi:'सुरक्षित'}))}</text></g>`;
+   return `<svg viewBox="0 0 300 150">${g(20,45,false)}${g(170,88,true)}<text x="150" y="140" text-anchor="middle" font-size="14" font-weight="800" fill="#FFC83D" font-family="Baloo 2,sans-serif">${esc(t({en:'Limit: 80',hi:'सीमा: 80'}))}</text></svg>`;},
+ stages(){return `<svg viewBox="0 0 300 140"><g transform="translate(30 10)"><rect width="100" height="70" rx="12" fill="#2C3584"/><text x="50" y="32" text-anchor="middle" font-size="16" font-weight="800" fill="#F5F6FF" font-family="Baloo 2,sans-serif">${esc(t({en:'Stage 1',hi:'स्टेज 1'}))}</text><text x="50" y="58" text-anchor="middle" font-size="22" font-weight="800" fill="#FFC83D" font-family="Baloo 2,sans-serif">&gt; 80</text></g>
+   <path d="M140 45 H160" stroke="#FFC83D" stroke-width="4"/><path d="M156 38 L166 45 L156 52Z" fill="#FFC83D"/>
+   <g transform="translate(170 10)"><rect width="100" height="70" rx="12" fill="#2C3584" stroke="#FF5D73" stroke-width="3"/><text x="50" y="32" text-anchor="middle" font-size="16" font-weight="800" fill="#F5F6FF" font-family="Baloo 2,sans-serif">${esc(t({en:'Stage 2',hi:'स्टेज 2'}))}</text><text x="50" y="58" text-anchor="middle" font-size="22" font-weight="800" fill="#FF5D73" font-family="Baloo 2,sans-serif">&gt; 60</text></g>
+   <text x="150" y="118" text-anchor="middle" font-size="14" font-weight="700" fill="#AEB5E8" font-family="Baloo 2,sans-serif">${esc(t({en:'70 is safe in Stage 1, but danger in Stage 2',hi:'70 स्टेज 1 में सुरक्षित, पर स्टेज 2 में खतरा'}))}</text></svg>`;},
+ heat(){return `<svg viewBox="0 0 300 180"><defs><radialGradient id="hg" cx=".5" cy="1" r=".9"><stop offset="0" stop-color="#FFF0A8"/><stop offset=".4" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FF3D3D" stop-opacity="0"/></radialGradient></defs>
+   <ellipse cx="150" cy="140" rx="110" ry="40" fill="url(#hg)"/><path d="M110 40 H190 L222 130 H78Z" fill="#C9CFF5"/><path d="M78 130 Q150 160 222 130" fill="#3A3F5C" stroke="#FF8A3D" stroke-width="4"/><circle cx="150" cy="80" r="12" fill="#4EA8FF"/>
+   <text x="250" y="40" text-anchor="middle" font-size="22" font-weight="800" fill="#FF8A3D" font-family="Baloo 2,sans-serif">1,500°C</text></svg>`;},
+ tiles(){let s='';for(let i=0;i<6;i++){s+=`<g transform="translate(${30+i*42} 30)">${tileSvg(i===3?'crack':null).replace(/<\/?svg[^>]*>/g,'')}</g>`;}return `<svg viewBox="0 0 300 110"><g transform="scale(1)">${s}</g><text x="150" y="100" text-anchor="middle" font-size="13" font-weight="700" fill="#FFC83D" font-family="Baloo 2,sans-serif">${esc(t({en:'Can you see the cracked one?',hi:'क्या तुम्हें टूटी टाइल दिख रही है?'}))}</text></svg>`;}
+};
+const MINI = {
+ wind:'<svg viewBox="0 0 60 60" width="60" height="60"><circle cx="30" cy="30" r="28" fill="#2C3584"/><path d="M12 24h24a6 6 0 1 0-6-6M12 32h30a6 6 0 1 1-6 6M12 40h14" stroke="#CFE9FF" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+ storm:'<svg viewBox="0 0 60 60" width="60" height="60"><circle cx="30" cy="30" r="28" fill="#2C3584"/><path d="M16 30a9 9 0 0 1 4-17 11 11 0 0 1 21 3 7 7 0 0 1 1 14z" fill="#AEB5E8"/><path d="M31 32l-6 10h6l-3 9 9-13h-6l3-6z" fill="#FFC83D"/></svg>',
+ fuel:'<svg viewBox="0 0 60 60" width="60" height="60"><circle cx="30" cy="30" r="28" fill="#2C3584"/><rect x="20" y="12" width="20" height="36" rx="5" fill="#EEF1FF"/><rect x="23" y="22" width="14" height="23" rx="3" fill="#3DDC97"/></svg>'
+};
+function tileSvg(dmg){return `<svg viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="5" fill="#15172A"/><rect x="4" y="4" width="32" height="32" rx="3" fill="#23263D"/>${dmg==='crack'?'<path d="M9 8 L17 17 L14 22 L24 28 L31 34" stroke="#FF8A3D" stroke-width="1.6" fill="none"/>':''}${dmg==='chip'?'<path d="M26 1 H39 V14 Z" fill="#3A3F5C"/><path d="M26 4 L36 14" stroke="#9AA3D6" stroke-width="1"/>':''}</svg>`;}
+function rocketThrust(n){let eng='';const w=Math.max(1,n);const gap=22,start=60-(w-1)*gap/2;for(let i=0;i<n;i++){const x=start+i*gap;eng+=`<path d="M${x-7} 168 H${x+7} L${x+10} 180 H${x-10}Z" fill="#6B7299"/><g class="fl"><ellipse cx="${x}" cy="192" rx="7" ry="13" fill="#FF8A3D"/><ellipse cx="${x}" cy="188" rx="3.5" ry="7" fill="#FFF0A8"/></g>`;}
+ return `<svg viewBox="0 0 120 200"><path d="M60 10 C46 32 40 50 40 64 H80 C80 50 74 32 60 10Z" fill="#FF5D73"/><rect x="40" y="64" width="40" height="104" fill="#EEF1FF"/><circle cx="60" cy="90" r="9" fill="#4EA8FF"/><path d="M40 140 L22 172 L40 168Z M80 140 L98 172 L80 168Z" fill="#FF5D73"/>${eng}</svg>`;}
+
+/* ================= question types =================
+   Each type: (ctx) -> {destroy()}; calls ctx.answer({correct, payload}) -> {final:boolean}; ctx.reveal handled by type via returned reveal() */
+const QT = {};
+
+QT.mcq = ctx=>{
+  const q=ctx.q;const two=q.options.length===2;
+  if(q.readings)ctx.el.append(readingsPanel(q.readings));
+  else if(q.art&&ART[q.art])ctx.el.append(h('div',{class:'art'},ART[q.art]()));
+  const order=two?q.options.map((o,i)=>i):shuffle(q.options.map((o,i)=>i));
+  const box=h('div',{class:'opts'+(two?' two':'')});
+  const btns=[];
+  order.forEach((i,k)=>{const o=q.options[i];const b=h('button',{class:'opt'+(q.style==='gonogo'?(o.text.en==='GO'?' go':' nogo'):'')},(two?'':`<span class="k">${'ABCD'[k]}</span>`)+`<span>${esc(t(o.text))}</span>`);
+    b.onclick=()=>{if(b.disabled)return;SFX.tap();const r=ctx.answer(!!o.correct,{choice:i,error:o.error||null,display_order:order});
+      if(o.correct){b.classList.add('right');btns.forEach(x=>x.disabled=true);}
+      else{b.classList.add('wrong','shake-x');b.disabled=true;if(r.final){btns.forEach(x=>x.disabled=true);btns[order.indexOf(q.options.findIndex(x=>x.correct))].classList.add('right');}}};
+    btns.push(b);box.append(b);});
+  ctx.el.append(box);
+  return {destroy(){}};
+};
+function readingsPanel(r){
+  const p=h('div',{class:'readings'});
+  p.append(h('div',{class:'rd'},`${MINI.wind}<span>${esc(t(UI.wind))}</span><b>${r.wind} km/h</b>`));
+  p.append(h('div',{class:'rd'},`${MINI.storm}<span>${esc(t(UI.storm))}</span><b>${r.storm?esc(t(UI.kmAway,{n:r.storm})):esc(t(UI.none))}</b>`));
+  p.append(h('div',{class:'rd'},`${MINI.fuel}<span>${esc(t(UI.fuel))}</span><b>${r.fuel}%</b>`));
+  if(r.note)p.append(h('div',{class:'rd note'},esc(t(r.note))));
+  return p;
+}
+
+QT.label = ctx=>{
+  const q=ctx.q;const art=h('div',{class:'art'},ART.anatomy({labels:false}));ctx.el.append(art);
+  let done=false;
+  art.querySelectorAll('.part').forEach(p=>p.addEventListener('click',()=>{
+    if(done)return;const k=p.dataset.part;SFX.tap();
+    const ok=k===q.answer;const r=ctx.answer(ok,{tapped:k});
+    if(ok){done=true;p.classList.add('right');}
+    else{p.classList.add('wrong');setTimeout(()=>p.classList.remove('wrong'),700);if(r.final){done=true;art.querySelector(`[data-part="${q.answer}"]`).classList.add('right');}}
+  }));
+  return {destroy(){}};
+};
+
+QT.order = ctx=>{
+  const q=ctx.q;const n=q.items.length;let pick=[];let locked=false;
+  const slots=h('div',{class:'ord-slots'});const pool=h('div',{class:'ord-pool'});
+  const poolOrder=shuffle(q.items.map((x,i)=>i));
+  const poolBtns={};
+  poolOrder.forEach(i=>{const b=h('button',{class:'chipbtn'},esc(t(q.items[i])));b.onclick=()=>{if(locked||b.disabled||pick.length>=n)return;SFX.tap();pick.push(i);b.disabled=true;draw();};poolBtns[i]=b;pool.append(b);});
+  const chk=h('button',{class:'big',disabled:true},t(UI.check));
+  const msg=h('div',{class:'note',style:{textAlign:'center',width:'100%'}});
+  function draw(state){slots.innerHTML='';for(let k=0;k<n;k++){const i=pick[k];const cls=state?(state[k]?' ok':' bad'):'';const s=h('button',{class:'slot'+(i!=null?' f':'')+cls},`<span class="n">${k+1}</span><span>${i!=null?esc(t(q.items[i])):''}</span>`);
+      s.onclick=()=>{if(locked||i==null||state)return;pick.splice(k,1);poolBtns[i].disabled=false;draw();};slots.append(s);}
+    chk.disabled=pick.length<n||locked;}
+  chk.onclick=()=>{if(pick.length<n||locked)return;const state=pick.map((i,k)=>i===k);const ok=state.every(Boolean);const right=state.filter(Boolean).length;
+    const r=ctx.answer(ok,{order:pick.slice(),in_place:right});draw(state);
+    if(ok||r.final){locked=true;chk.hidden=true;if(!ok){pick=q.items.map((x,i)=>i);draw(pick.map(()=>true));}}
+    else{msg.textContent=t(UI.inPlace,{n:right,m:n});locked=true;setTimeout(()=>{locked=false;
+      /* keep only the correct opening steps, return the rest to the pool */ const keep=[];for(let k=0;k<n;k++){if(state[k])keep.push(pick[k]);else break;}
+      q.items.forEach((x,i)=>poolBtns[i].disabled=keep.includes(i));pick=keep;draw();},1100);}};
+  draw();ctx.el.append(slots,pool,h('div',{class:'row'},''),msg);ctx.el.lastChild.previousSibling.append(chk);
+  return {destroy(){}};
+};
+
+QT.thrust = ctx=>{
+  const q=ctx.q;let n=1,busy=false,done=false;
+  const wrap=h('div',{class:'thr'});
+  const stand=h('div',{class:'stand'});
+  const draw=()=>{stand.innerHTML=`<div class="wt">${esc(t(UI.weight))}: ${q.weight} t</div><div class="pe">${esc(t(UI.perEngine))}: ${q.perEngine} t</div>${rocketThrust(n)}<div class="res"></div>`;};
+  draw();
+  const stepper=h('div',{class:'stepper'});
+  const minus=h('button',{'aria-label':'fewer engines'},'−'),plus=h('button',{'aria-label':'more engines'},'+'),val=h('b',{},String(n));
+  minus.onclick=()=>{if(busy||done||n<=1)return;n--;val.textContent=n;SFX.tap();draw();};
+  plus.onclick=()=>{if(busy||done||n>=q.maxEngines)return;n++;val.textContent=n;SFX.tap();draw();};
+  stepper.append(minus,h('span',{},''),val,h('span',{style:{fontSize:'15px',color:'var(--muted)'}},t(UI.engines)),plus);
+  const fire=h('button',{class:'big'},'🔥 '+t(UI.testFire));
+  fire.onclick=async()=>{if(busy||done)return;busy=true;const push=n*q.perEngine;const lifts=push>q.weight;const svg=stand.querySelector('svg');const res=stand.querySelector('.res');SFX.rumble(1.6);
+    if(lifts){svg.style.transform='translateY(-170px)';await sleep(1700);res.textContent=n===q.answer?t(UI.liftOff,{p:push,w:q.weight}):t(UI.extra);}
+    else{svg.classList.add('shake-y');await sleep(1300);svg.classList.remove('shake-y');res.textContent=t(UI.noLift,{p:push,w:q.weight});}
+    res.style.color=n===q.answer?'var(--good)':'var(--bad)';
+    const r=ctx.answer(n===q.answer,{engines:n,push,error:n<q.answer?'too-few':(n>q.answer?'not-fewest':null)});
+    busy=false;if(n===q.answer||r.final){done=true;fire.hidden=true;if(n!==q.answer){await sleep(900);n=q.answer;val.textContent=n;draw();stand.querySelector('.res').textContent=t(UI.liftOff,{p:n*q.perEngine,w:q.weight});stand.querySelector('.res').style.color='var(--good)';}}
+    else{await sleep(900);draw();}};
+  wrap.append(stand,stepper,fire);ctx.el.append(wrap);
+  return {destroy(){}};
+};
+
+QT.monitor = ctx=>{
+  const q=ctx.q;let alive=true,running=false,timers=[],stats;
+  const rule=h('div',{class:'rule'},esc(t(q.phases[0].label)));
+  const tb=h('div',{class:'timebar'},'<i></i>');
+  const holes=h('div',{class:'holes'});const holeEls=[];for(let i=0;i<q.holes;i++){const e=h('div',{class:'hole'});holes.append(e);holeEls.push(e);}
+  const sc=h('div',{class:'score3'});
+  const btn=h('button',{class:'big'},t(UI.go)+' ▶');
+  ctx.el.append(rule,tb,holes,sc,h('div',{class:'row'}));ctx.el.lastChild.append(btn);
+  const later=(fn,ms)=>{const id=setTimeout(()=>{if(alive)fn();},ms);timers.push(id);};
+  const drawScore=()=>{sc.innerHTML=`<span>${esc(t(UI.caught))}: <b style="color:var(--good)">${stats.hits}</b></span><span>${esc(t(UI.wrongTaps))}: <b style="color:var(--bad)">${stats.wrong}</b></span>`;};
+  btn.onclick=()=>{
+    if(running)return;running=true;btn.hidden=true;
+    stats={hits:0,wrong:0,targets:0,missed:0,rt:[],phase:q.phases.map(p=>({limit:p.limit,targets:0,hits:0,wrong:0,trap_taps:0}))};drawScore();
+    ctx.log('monitor_start',{});
+    const total=q.phases.reduce((a,p)=>a+p.sec,0)*1000;let ph=0;const t0=performance.now();
+    rule.textContent=t(q.phases[0].label);
+    const tick=()=>{if(!alive||!running)return;const e=performance.now()-t0;tb.firstChild.style.width=Math.max(0,100-e/total*100)+'%';
+      let acc=0,np=0;for(let i=0;i<q.phases.length;i++){acc+=q.phases[i].sec*1000;np=i;if(e<acc)break;}
+      if(np!==ph){ph=np;rule.textContent=t(q.phases[ph].label);rule.classList.remove('flash');void rule.offsetWidth;rule.classList.add('flash');ctx.flash(t(UI.switchRule));SFX.tone(330,.2,'square',.12);SFX.tone(440,.2,'square',.12,.15);
+        holeEls.forEach(x=>{const g=x.firstChild;if(g&&!g.dataset.done){g.dataset.done=1;g.remove();}});}
+      if(e>=total){end();return;}requestAnimationFrame(tick);};
+    requestAnimationFrame(tick);
+    const spawn=()=>{if(!alive||!running)return;if(performance.now()-t0>total-400)return;
+      const free=holeEls.filter(x=>!x.firstChild);if(free.length){const hole=free[Math.floor(Math.random()*free.length)];
+        const lim=q.phases[ph].limit;const prev=ph>0?q.phases[ph-1].limit:null;let v,danger=Math.random()<q.dangerShare;
+        if(danger)v=lim+1+Math.floor(Math.random()*(99-lim));
+        else{const trap=prev!=null&&Math.random()<.5;v=trap?Math.min(lim,30+Math.floor(Math.random()*(lim-29))):30+Math.floor(Math.random()*(lim-29));if(prev==null&&Math.random()<.4)v=Math.max(30,lim-1-Math.floor(Math.random()*20));}
+        const myPh=ph;if(danger){stats.targets++;stats.phase[myPh].targets++;}
+        const born=performance.now();
+        const g=h('button',{class:'gauge','aria-label':'reading '+v},`<b>${v}</b><small>°</small>`);
+        g.addEventListener('pointerdown',ev=>{ev.preventDefault();if(g.dataset.done)return;g.dataset.done=1;
+          if(v>q.phases[ph].limit){stats.hits++;stats.phase[ph].hits++;stats.rt.push(Math.round(performance.now()-born));g.classList.add('hit');SFX.tone(990,.06,'triangle',.12);}
+          else{stats.wrong++;stats.phase[ph].wrong++;if(ph>0&&v>q.phases[0].limit-20)stats.phase[ph].trap_taps++;g.classList.add('oops');SFX.bad();}
+          drawScore();later(()=>g.remove(),260);});
+        hole.append(g);
+        later(()=>{if(!g.dataset.done){g.dataset.done=1;if(danger)stats.missed++;g.remove();}},q.stayMs);}
+      later(spawn,q.spawnMs);};
+    later(spawn,400);
+    function end(){running=false;timers.forEach(clearTimeout);timers=[];holeEls.forEach(x=>x.innerHTML='');
+      const hr=stats.targets?stats.hits/stats.targets:0;const ok=hr>=q.pass.minHitRate&&stats.wrong<=q.pass.maxWrong;
+      const r=ctx.answer(ok,{hits:stats.hits,targets:stats.targets,wrong:stats.wrong,missed:stats.missed,hit_rate:+hr.toFixed(2),mean_rt_ms:stats.rt.length?Math.round(stats.rt.reduce((a,b)=>a+b,0)/stats.rt.length):null,phases:stats.phase});
+      if(!ok&&!r.final){btn.hidden=false;btn.textContent=t(UI.go)+' ▶';rule.textContent=t(q.phases[0].label);tb.firstChild.style.width='100%';}}
+  };
+  return {destroy(){alive=false;running=false;timers.forEach(clearTimeout);}};
+};
+
+QT.spot = ctx=>{
+  const q=ctx.q;const n=q.cols*q.rows;const dmg={};q.damaged.forEach(([i,k])=>dmg[i]=k);
+  const need=q.damaged.length;let found=0,wrong=0,done=false;
+  const g=h('div',{class:'tiles',style:{gridTemplateColumns:`repeat(${q.cols},minmax(0,1fr))`}});
+  const els=[];const info=h('div',{class:'note',style:{textAlign:'center',width:'100%'}},t(UI.found,{n:0,m:need}));
+  for(let i=0;i<n;i++){const b=h('button',{class:'tile','aria-label':'tile '+(i+1)},tileSvg(dmg[i]||null));
+    b.onclick=()=>{if(done||b.classList.contains('found'))return;SFX.tap();
+      if(dmg[i]){b.classList.add('found');found++;info.textContent=t(UI.found,{n:found,m:need});ctx.log('spot_found',{tile:i});
+        if(found===need){done=true;ctx.answer(true,{wrong_taps:wrong,tries_override:wrong===0?1:2});}}
+      else{wrong++;b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');ctx.log('spot_wrong',{tile:i});
+        if(wrong>=q.tries){done=true;ctx.answer(false,{wrong_taps:wrong,found,final:true});els.forEach((x,k)=>{if(dmg[k]&&!x.classList.contains('found'))x.classList.add('missed');});}}};
+    g.append(b);els.push(b);}
+  ctx.el.append(g,info);
+  return {destroy(){}};
+};
+
+/* ================= engine UI ================= */
+let overlay=null;
+function closeOverlay(){if(overlay){overlay.remove();overlay=null;}}
+function openOverlay(center=false){closeOverlay();overlay=h('div',{class:'ov'+(center?' center':'')});const sh=h('div',{class:'sheet',role:'dialog','aria-modal':'true'});overlay.append(sh);document.body.append(overlay);return sh;}
+function toast(msg,ms=2600){const e=h('div',{class:'toast'},esc(msg));document.body.append(e);setTimeout(()=>e.remove(),ms);}
+
+function renderTop(){
+  const tm=$('#timer');const left=S.windowLeft;tm.textContent='⏱ '+fmtTime(Math.max(0,left)*1000);tm.classList.toggle('low',left<=120);
+  $('#score').innerHTML=`★ ${fmt(S.points)}`;
+  const st=$('#streak');if(S.streak>=2){st.hidden=false;st.textContent=`🔥${S.streak}`;}else st.hidden=true;
+  $('#coins').textContent=S.coins;
+  $('#lang').textContent=S.lang==='en'?'हिं':'EN';
+  $('#snd').textContent=S.sound?'♪':'×';$('#snd').style.opacity=S.sound?1:.6;
+}
+function renderFixbar(popId){
+  const fb=$('#fixbar');fb.innerHTML='';
+  S.mission.fixes.forEach(f=>{const r=S.fixes[f.id];const done=r.status==='done';
+    fb.append(h('div',{class:'seg'+(popId===f.id?' pop':''),style:done?{background:SP[f.superpower].c}:{},title:SP[f.superpower].en},done?'★'.repeat(r.stars):ICON[f.superpower]));});
+}
+function layoutScene(){
+  const st=$('#stage'),sc=$('#scene');const W=S.mission.scene.width||360,H=S.mission.scene.height||560;
+  const aw=st.clientWidth,ah=st.clientHeight;let w=aw,hh=aw*H/W;if(hh>ah){hh=ah;w=ah*W/H;}
+  sc.style.width=Math.floor(w)+'px';sc.style.height=Math.floor(hh)+'px';
+}
+function renderScene(){
+  const m=S.mission,sc=$('#scene');sc.innerHTML='';
+  if(m.scene.type==='image')sc.innerHTML=`<svg viewBox="0 0 ${m.scene.width} ${m.scene.height}"><image href="${esc(m.scene.src)}" width="${m.scene.width}" height="${m.scene.height}" preserveAspectRatio="xMidYMid slice"/><g id="rocket"><g id="flame"></g></g><g id="smoke"></g></svg>`;
+  else sc.innerHTML=(SCENES[m.scene.name]||SCENES.launchpad)();
+  if(S.phase==='launch'||S.phase==='results')return;
+  const left=m.fixes.filter(f=>S.fixes[f.id].status!=='done').length;
+  const hl=h('div',{class:'hint-line'+(left?'':' go')},left?`${esc(t(UI.findSpots))} · ${m.fixes.length-left}/${m.fixes.length}`+(S.beat!=null?` · 🎯 ${fmt(S.beat)}`:''):esc(t(UI.goFinal)));
+  if(!left)hl.onclick=()=>openCommander();
+  sc.append(hl);
+  m.fixes.forEach(f=>{const r=S.fixes[f.id];const done=r.status==='done';
+    sc.append(h('button',{class:'hs'+(done?' done':''),style:{left:f.x+'%',top:f.y+'%','--c':SP[f.superpower].c},'aria-label':t(f.label),onclick:()=>openFix(f.id)},ICON[f.superpower]+`<span class="tag">${esc(t(f.label))}</span>`+(done?`<span class="st">${'★'.repeat(r.stars)}</span>`:'')));});
+}
+
+/* ---------- launch window clock ---------- */
+let clockId=null;
+function startClock(){S.windowStart=performance.now();clearInterval(clockId);clockId=setInterval(()=>{
+  if(S.phase==='launch'||S.phase==='results'){clearInterval(clockId);return;}
+  S.windowLeft=S.mission.windowSec-Math.floor((performance.now()-S.windowStart)/1000);
+  if(S.windowLeft<=0&&!S.windowClosedShown){S.windowClosedShown=true;toast(t(UI.windowClosed),4000);log('window_closed');SFX.bad();}
+  renderTop();},500);}
+
+/* ---------- fix sheet: learn -> questions -> done ---------- */
+function openFix(id){
+  const f=S.mission.fixes.find(x=>x.id===id);const r=S.fixes[id];
+  if(r.status==='done'||S.phase!=='play'){SFX.tap();return;}
+  SFX.tap();
+  const sh=openOverlay();sh.style.setProperty('--c',SP[f.superpower].c);
+  r.status='open';r.openedAt=performance.now();S.openFix={id,mod:null};
+  log('fix_open',{fix:id,comp:f.competency},{qi:r.qi,learn_done:r.learnDone});
+  const head=h('div',{class:'sh-head'});
+  head.append(h('div',{class:'badge'},ICON[f.superpower]));
+  const tt=h('div',{class:'sh-title'});
+  head.append(tt,h('button',{class:'x','aria-label':t(UI.close),onclick:()=>closeFix()},'×'));
+  const body=h('div',{class:'sh-body'});
+  sh.append(head,body);
+  const setTitle=()=>{tt.innerHTML=`<small>${esc(t(SP[f.superpower]))} · ${f.competency} ${COMP[f.competency]||''}</small><b>${esc(t(f.label))}</b>`;};
+  setTitle();
+  const ctl={f,r,body,setTitle};S.openFix.ctl=ctl;
+  if(!r.learnDone)showLearn(ctl,0,false);else showQuestion(ctl);
+}
+function stepsTop(ctl,learnOn){const f=ctl.f;const bar=h('div',{class:'steps-top'});bar.append(h('i',{class:learnOn?'on':'ok'}));f.questions.forEach((q,i)=>{const qr=S.qres[q.id];bar.append(h('i',{class:qr.correct===true?(qr.first?'ok':'on'):qr.correct===false?'no':(i===ctl.r.qi&&!learnOn?'on':'')}));});return bar;}
+function showLearn(ctl,si,peek){
+  const {f,body}=ctl;const sl=f.learn[si];body.innerHTML='';
+  if(S.openFix)S.openFix.mod&&S.openFix.mod.destroy&&S.openFix.mod.destroy();
+  body.append(stepsTop(ctl,true));
+  body.append(h('div',{class:'kicker'},`${t(UI.learn)} ${f.learn.length>1?(si+1)+'/'+f.learn.length:''}`));
+  const txt=h('div',{class:'learn-text'},esc(t(sl.text)));
+  if(sl.bullets){const ul=h('ul');sl.bullets.forEach((b,i)=>ul.append(h('li',{},`<b>${i+1}</b>${esc(t(b))}`)));txt.append(ul);}
+  if(sl.tail)txt.append(h('div',{class:'tail',style:{marginTop:'6px'}},esc(t(sl.tail))));
+  body.append(txt);
+  if(sl.art==='steps'){
+    const tl=h('div',{class:'timeline'});sl.steps.forEach((s,i)=>tl.append(h('div',{class:'tl'},`<span class="n">${i+1}</span><span>${esc(t(s))}</span>`)));body.append(tl);
+    [...tl.children].forEach((c,i)=>setTimeout(()=>c.classList.add('on'),250+i*450));
+  } else if(sl.art==='anatomy'&&sl.interactive){
+    const art=h('div',{class:'art'},ART.anatomy({labels:true}));const info=h('div',{class:'infobox'},esc(t(UI.tapParts,{n:0})));const seen=new Set();
+    art.querySelectorAll('.part').forEach(p=>p.addEventListener('click',()=>{art.querySelectorAll('.part').forEach(x=>x.classList.remove('sel'));p.classList.add('sel');const k=p.dataset.part;seen.add(k);SFX.tap();
+      info.innerHTML=`<b>${esc(t(PARTS[k]))}</b>: ${esc(t(PARTS[k].info))}<br><small style="color:var(--muted)">${esc(t(UI.tapParts,{n:seen.size}))}</small>`;}));
+    body.append(art,info);
+  } else if(sl.art&&ART[sl.art]) body.append(h('div',{class:'art'},ART[sl.art]()));
+  const row=h('div',{class:'row'});
+  if(si>0)row.append(h('button',{class:'big alt',onclick:()=>showLearn(ctl,si-1,peek)},'◀'));
+  if(si<f.learn.length-1)row.append(h('button',{class:'big',onclick:()=>showLearn(ctl,si+1,peek)},t(UI.next)+' ▶'));
+  else if(peek)row.append(h('button',{class:'big',onclick:()=>showQuestion(ctl)},t(UI.backToQ)));
+  else row.append(h('button',{class:'big',onclick:()=>{ctl.r.learnDone=true;log('learn_done',{fix:f.id});showQuestion(ctl);}},t(UI.testMe)));
+  body.append(row);
+}
+function showQuestion(ctl){
+  const {f,r,body}=ctl;body.innerHTML='';
+  if(S.openFix&&S.openFix.mod&&S.openFix.mod.destroy)S.openFix.mod.destroy();
+  const q=f.questions[r.qi];const qr=S.qres[q.id];const sc=S.mission.scoring;
+  body.append(stepsTop(ctl,false));
+  body.append(h('div',{class:'kicker'},`${t(UI.test)} · ${t(UI.question)} ${r.qi+1} ${t(UI.of)} ${f.questions.length}`));
+  body.append(h('div',{class:'prompt'},esc(t(q.prompt))));
+  const meta=h('div',{class:'meta'});const dots=h('div',{class:'dots'});const qt=h('span',{class:'qtime'});
+  const peekBtn=h('button',{class:'peek'});
+  meta.append(dots,qt,peekBtn);body.append(meta);
+  const area=h('div',{style:{display:'flex',flexDirection:'column',gap:'12px'}});const fb=h('div',{'aria-live':'polite'});
+  body.append(area,fb);
+  const drawMeta=()=>{const tries=q.type==='spot'?1:q.tries;dots.innerHTML=q.type==='spot'?'':`${esc(t(UI.tries))} `+Array.from({length:tries},(_,i)=>`<i class="${i<qr.tries?'used':''}"></i>`).join('');
+    peekBtn.innerHTML=qr.peeked?`${esc(t(UI.notes))} ✓`:`📒 ${esc(t(UI.notes))} <i class="coin"></i>-${sc.coins.peekCost}`;peekBtn.disabled=!qr.peeked&&S.coins<sc.coins.peekCost;};
+  drawMeta();
+  if(!qr.shownAt)qr.shownAt=performance.now();
+  const qStart=performance.now();
+  log('question_show',{fix:f.id,q:q.id,comp:q.competency},{type:q.type});
+  const tick=setInterval(()=>{if(!document.body.contains(qt)){clearInterval(tick);return;}qt.textContent='⏱ '+Math.floor((qr.timeMs+performance.now()-qStart)/1000)+'s';},250);
+  let finished=false;
+  peekBtn.onclick=()=>{if(finished)return;if(!qr.peeked){if(S.coins<sc.coins.peekCost)return;S.coins-=sc.coins.peekCost;qr.peeked=true;SFX.coin();log('peek',{fix:f.id,q:q.id},{coins_left:S.coins});renderTop();}
+    qr.timeMs+=performance.now()-qStart;clearInterval(tick);mod.destroy();showLearn(ctl,0,true);};
+  const ctx={q,el:area,
+    log:(ev,p)=>log(ev,{fix:f.id,q:q.id,comp:q.competency},p),
+    flash:(msg)=>{fb.className='fb try';fb.textContent=msg;setTimeout(()=>{if(!finished&&fb.textContent===msg)fb.textContent='';},1400);},
+    answer(correct,payload={}){
+      if(finished)return{final:true};
+      if(payload.tries_override){qr.tries=payload.tries_override;}else qr.tries++;
+      log('answer',{fix:f.id,q:q.id,comp:q.competency},{n:qr.tries,correct,...payload});
+      const maxT=q.type==='spot'?1:q.tries;const final=correct||payload.final||qr.tries>=maxT;
+      if(!final){SFX.bad();drawMeta();fb.className='fb try';fb.textContent=t(UI.tryAgain);return{final:false};}
+      finished=true;clearInterval(tick);qr.timeMs+=performance.now()-qStart;
+      scoreQuestion(q,qr,correct);
+      if(correct)SFX.good();else SFX.bad();
+      drawMeta();renderTop();
+      fb.className='fb '+(correct?'good':'bad');
+      fb.innerHTML=`<b>${correct?'✓ '+esc(t(UI.correct)):'✗ '+esc(t(UI.wrongFinal))}${qr.points?` <span class="pts">+${qr.points}</span>`:''}</b>${esc(t(q.explain))}`;
+      const nx=h('button',{class:'big',style:{marginTop:'10px'}},r.qi<f.questions.length-1?t(UI.next)+' ▶':t(UI.done)+' ✓');
+      nx.onclick=()=>{r.qi++;if(r.qi<f.questions.length)showQuestion(ctl);else finishFix(ctl);};
+      fb.append(h('div',{class:'row'}));fb.lastChild.append(nx);
+      setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+      return{final:true};}
+  };
+  const mod=(QT[q.type]||QT.mcq)(ctx);S.openFix.mod=mod;
+}
+function scoreQuestion(q,qr,correct){
+  const sc=S.mission.scoring,qs=sc.question,sk=sc.skillCredit;
+  qr.correct=correct;qr.first=correct&&qr.tries===1&&!qr.peeked;
+  let base=correct?(qr.tries===1?qs.base:qs.secondTry):0;if(correct&&qr.tries>2)base=Math.round(qs.secondTry/2);
+  if(qr.peeked)base*=qs.peekFactor;
+  if(qr.first){S.streak++;}else S.streak=0;S.bestStreak=Math.max(S.bestStreak,S.streak);
+  const mult=qr.first?qs.streak[Math.min(S.streak,qs.streak.length)-1]:1;
+  const speed=correct?Math.round(qs.speedMax*Math.max(0,1-qr.timeMs/1000/q.targetSec)):0;
+  qr.points=Math.round(base*mult)+speed;S.points+=qr.points;
+  qr.credit=correct?Math.max(0,(qr.tries===1?sk.firstTry:qr.tries===2?sk.secondTry:sk.later)-(qr.peeked?sk.peekPenalty:0)):0;
+  if(qr.first){S.coins+=sc.coins.perFirstTry;}
+  log('question_scored',{q:q.id,comp:q.competency},{correct,first_try:qr.first,tries:qr.tries,peeked:qr.peeked,time_ms:Math.round(qr.timeMs),points:qr.points,skill_credit:qr.credit,streak:S.streak});
+}
+function closeFix(){
+  const o=S.openFix;if(!o)return;const r=S.fixes[o.id];
+  if(r.openedAt!=null){r.timeMs+=performance.now()-r.openedAt;r.openedAt=null;}
+  if(r.status==='open')r.status='new';
+  o.mod&&o.mod.destroy&&o.mod.destroy();
+  /* a question left mid-way restarts on reopen; time so far is kept */
+  const f=S.mission.fixes.find(x=>x.id===o.id);const q=f.questions[r.qi];if(q){const qr=S.qres[q.id];if(qr.correct===null&&qr.shownAt){/* time accrues per showing */}}
+  log('fix_close',{fix:o.id},{time_ms:Math.round(r.timeMs)});
+  S.openFix=null;closeOverlay();
+}
+function finishFix(ctl){
+  const {f,r,body}=ctl;
+  if(r.openedAt!=null){r.timeMs+=performance.now()-r.openedAt;r.openedAt=null;}
+  r.status='done';
+  const qs=f.questions.map(q=>S.qres[q.id]);const first=qs.filter(x=>x.first).length;
+  r.stars=first===qs.length?3:(first>=qs.length/2?2:1);
+  r.points=qs.reduce((a,x)=>a+x.points,0);
+  log('fix_done',{fix:f.id,comp:f.competency},{stars:r.stars,first_try:first,questions:qs.length,points:r.points,time_ms:Math.round(r.timeMs)});
+  body.innerHTML='';
+  const dn=h('div',{class:'done'});
+  dn.innerHTML=`<div class="bigbadge">${ICON[f.superpower]}</div><div class="starrow">${[0,1,2].map(i=>`<span class="${i<r.stars?'':'off'}">★</span>`).join('')}</div>
+   <h3>${esc(t(UI.done))}</h3><p>${esc(t(SP[f.superpower]))} ${esc(t(UI.badge))}</p>
+   <div class="gain"><span class="piece">✓ ${first}/${qs.length} ${esc(t(UI.accuracy))}</span><span class="piece" style="color:var(--sun)">+${fmt(r.points)} ${esc(t(UI.points))}</span></div>`;
+  const ln=h('div',{class:'learned'},`<b>${esc(t(UI.youLearned))}:</b> ${esc(t(f.learn[0].text)).split(/(?<=[.!?।])\s/)[0]}`);
+  dn.append(ln);
+  dn.append(h('button',{class:'big',onclick:()=>{S.openFix=null;closeOverlay();if(allDone())openCommander();}},allDone()?t(UI.cmdGo)+' 🚀':t(UI.back)));
+  body.append(dn);
+  SFX.coin();renderTop();renderFixbar(f.id);renderScene();
+}
+function allDone(){return S.mission.fixes.every(f=>S.fixes[f.id].status==='done');}
+
+/* ---------- Commander round ---------- */
+function openCommander(){
+  const m=S.mission;const c=m.commander;const sh=openOverlay(true);
+  const body=h('div',{class:'intro'});
+  body.innerHTML=`<div class="eyebrow">${esc(t(UI.final))}</div><h1>${esc(t(c.title))}</h1><p>${esc(t(c.sub))}</p>`;
+  body.append(h('button',{class:'big',onclick:()=>runCommander(sh)},t(UI.cmdGo)+' ▶'));
+  sh.append(body);log('commander_open');
+}
+async function runCommander(sh){
+  const m=S.mission,c=m.commander,sc=m.scoring.commander;S.commander={res:[]};
+  for(let i=0;i<c.questions.length;i++){
+    const q=c.questions[i];
+    const res=await new Promise(resolve=>{
+      sh.innerHTML='';const body=h('div',{class:'intro',style:{alignItems:'stretch',textAlign:'left'}});
+      body.append(h('div',{class:'eyebrow'},`${esc(t(UI.final))} ${i+1}/${c.questions.length}`));
+      const bar=h('div',{class:'cmd-timer'},'<i></i>');body.append(bar);
+      body.append(h('div',{class:'prompt'},esc(t(q.prompt))));
+      const two=q.options.length===2;const box=h('div',{class:'opts'+(two?' two':'')});const order=two?q.options.map((o,k)=>k):shuffle(q.options.map((o,k)=>k));
+      const t0=performance.now();let over=false;const btns=[];
+      const finish=(correct,choice)=>{if(over)return;over=true;cancelAnimationFrame(raf);const ms=Math.round(performance.now()-t0);
+        btns.forEach(b=>b.disabled=true);const ci=q.options.findIndex(o=>o.correct);btns[order.indexOf(ci)].classList.add('right');
+        if(choice!=null&&!correct)btns[order.indexOf(choice)].classList.add('wrong');
+        const pts=correct?sc.base+Math.round(sc.speedMax*Math.max(0,1-ms/1000/sc.sec)):0;
+        if(correct)SFX.good();else SFX.bad();
+        const fbx=h('div',{class:'fb '+(correct?'good':'bad')},`<b>${correct?'✓ '+esc(t(UI.correct))+` <span class="pts">+${pts}</span>`:(choice==null?'⏱ '+esc(t(UI.timeUp)):'✗')}</b>`);body.append(fbx);
+        setTimeout(()=>resolve({id:q.id,sp:q.superpower,comp:q.competency,correct,choice,ms,points:pts}),1000);};
+      order.forEach((k,j)=>{const o=q.options[k];const b=h('button',{class:'opt'},(two?'':`<span class="k">${'ABCD'[j]}</span>`)+`<span>${esc(t(o.text))}</span>`);b.onclick=()=>{SFX.tap();finish(!!o.correct,k);};btns.push(b);box.append(b);});
+      body.append(box);sh.append(body);
+      let raf;const loop=()=>{const e=(performance.now()-t0)/1000;bar.firstChild.style.width=Math.max(0,100-e/sc.sec*100)+'%';if(e>=sc.sec){finish(false,null);return;}raf=requestAnimationFrame(loop);};raf=requestAnimationFrame(loop);
+    });
+    S.commander.res.push(res);S.points+=res.points;renderTop();
+    log('commander_answer',{q:res.id,comp:res.comp},{correct:res.correct,choice:res.choice,ms:res.ms,points:res.points});
+  }
+  closeOverlay();launch();
+}
+
+/* ---------- launch ---------- */
+async function launch(){
+  S.phase='launch';
+  const bonus=Math.max(0,S.windowLeft)*S.mission.scoring.windowBonusPerSec;S.run.window_bonus=bonus;S.points+=bonus;renderTop();
+  renderScene();
+  const cd=h('div',{class:'countdown'});document.body.append(cd);
+  for(const n of [3,2,1]){cd.innerHTML=`<span>${n}</span>`;SFX.tone(440,.18,'square',.14);await sleep(900);}
+  cd.innerHTML=`<span style="font-size:84px">${esc(t(UI.launch))}!</span>`;SFX.tone(880,.4,'square',.14);
+  const svg=$('#scene svg');svg.classList.add('lit');$('#scene').classList.add('shake');SFX.rumble(3.6);
+  const smoke=$('#smoke');
+  for(let i=0;i<26;i++){setTimeout(()=>{if(!smoke)return;const c=document.createElementNS('http://www.w3.org/2000/svg','circle');const x=215+(Math.random()-.5)*120;c.setAttribute('cx',x);c.setAttribute('cy',498+Math.random()*16);c.setAttribute('r',8+Math.random()*10);c.setAttribute('fill','#E9ECFF');c.setAttribute('opacity','.85');c.style.transition='all 2.2s ease-out';smoke.append(c);requestAnimationFrame(()=>{c.setAttribute('r',26+Math.random()*24);c.setAttribute('opacity','0');c.setAttribute('cx',x+(x-215)*1.2);});},i*70);}
+  await sleep(700);
+  const rk=$('#rocket');if(rk)rk.style.transform='translateY(-760px)';
+  await sleep(600);cd.remove();
+  await sleep(2600);$('#scene').classList.remove('shake');
+  confetti();endRun();
+  await sleep(900);S.phase='results';showResults();
+}
+function rankFor(p){const rs=S.mission.scoring.ranks;let r=rs[0],nx=null;for(let i=0;i<rs.length;i++){if(p>=rs[i].min){r=rs[i];nx=rs[i+1]||null;}}return{r,nx};}
+function endRun(){
+  const m=S.mission;S.run.ended_at=new Date().toISOString();S.run.completed=true;S.run.points=S.points;
+  S.run.stars=m.fixes.reduce((a,f)=>a+S.fixes[f.id].stars,0);S.run.first_try_correct=Object.values(S.qres).filter(x=>x.first).length;
+  S.run.commander_correct=S.commander?S.commander.res.filter(x=>x.correct).length:0;S.run.best_streak=S.bestStreak;S.run.coins_end=S.coins;S.run.rank=rankFor(S.points).r.en;
+  log('launch',{}, {points:S.points,window_bonus:S.run.window_bonus,rank:S.run.rank});
+}
+function confetti(){
+  const cv=$('#confetti');cv.hidden=false;const dpr=Math.min(2,devicePixelRatio||1);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';const g=cv.getContext('2d');g.scale(dpr,dpr);
+  const cols=Object.values(SP).map(s=>s.hex);const ps=Array.from({length:140},()=>({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.5,vx:(Math.random()-.5)*2,vy:2+Math.random()*3,r:Math.random()*6.28,s:5+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();(function f(){const e=performance.now()-t0;g.clearRect(0,0,innerWidth,innerHeight);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;g.save();g.translate(p.x,p.y);g.rotate(p.r);g.fillStyle=p.c;g.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);g.restore();});if(e<4500)requestAnimationFrame(f);else cv.hidden=true;})();
+}
+
+/* ---------- results + crew board ---------- */
+function crewKey(){return 'fsl.crew.'+S.mission.id+'.'+S.mission.band;}
+function showResults(){
+  const m=S.mission;const sh=openOverlay(true);
+  const totalMs=new Date(S.run.ended_at)-new Date(S.run.started_at);
+  const {r,nx}=rankFor(S.points);const nQ=S.run.questions;const acc=Math.round(S.run.first_try_correct/nQ*100);
+  const body=h('div',{class:'intro'});
+  let beat='';if(S.beat!=null)beat=`<div class="beat">${esc(t(S.points>S.beat?UI.beatWin:UI.beatLose,{n:fmt(S.beat)}))}</div>`;
+  body.innerHTML=`<div class="eyebrow">${esc(t(m.title))}</div><h1>${esc(t(UI.launched))}</h1>${beat}
+   <div><div class="res-big">${fmt(S.points)}</div><div class="rank">${esc(t(r))}</div><div class="note">${nx?esc(t(UI.nextRank,{n:fmt(nx.min-S.points),r:t(nx)})):esc(t(UI.topRank))}</div></div>
+   <div class="res-grid"><div><b>${acc}%</b>${esc(t(UI.accuracy))}</div><div><b>${S.run.stars}/18</b>${esc(t(UI.stars))}</div><div><b>${S.run.commander_correct}/${m.commander.questions.length}</b>${esc(t(UI.final))}</div><div><b>${fmtTime(totalMs)}</b>${esc(t(UI.time))}</div></div>
+   ${S.run.window_bonus?`<div class="note">${esc(t(UI.windowBonus))}: <b style="color:var(--sun)">+${fmt(S.run.window_bonus)}</b></div>`:''}`;
+  const list=h('div',{class:'res-list'});
+  m.fixes.forEach(f=>{const fr=S.fixes[f.id];const first=f.questions.filter(q=>S.qres[q.id].first).length;
+    list.append(h('div',{},`<span class="badge" style="--c:${SP[f.superpower].c}">${ICON[f.superpower]}</span><span class="l">${esc(t(f.label))}<br><small style="color:var(--muted);font-weight:600">${esc(t(SP[f.superpower]))} · ✓ ${first}/${f.questions.length}</small></span><em>${'★'.repeat(fr.stars)}${'☆'.repeat(3-fr.stars)}</em>`));});
+  body.append(list);
+  // crew board
+  const board=h('div',{class:'board'});
+  const drawBoard=(meId)=>{const rows=store.get(crewKey(),[]).sort((a,b)=>b.points-a.points).slice(0,10);board.innerHTML=`<h4>🏆 ${esc(t(UI.crew))}</h4>`;
+    if(!rows.length)board.append(h('div',{class:'note'},esc(t({en:'No scores yet. Save yours first!',hi:'अभी कोई स्कोर नहीं। पहले अपना सेव करो!'}))));
+    rows.forEach((x,i)=>board.append(h('div',{class:'r'+(x.id===meId?' me':'')},`<span>${i+1}</span><span>${esc(x.name)}</span><small>${x.acc}%</small><b>${fmt(x.points)}</b>`)));};
+  const nameRow=h('div',{class:'namerow'});const inp=h('input',{id:'crewName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});
+  const saveBtn=h('button',{class:'big',style:{padding:'8px 16px',fontSize:'17px'}},t(UI.save));
+  saveBtn.onclick=()=>{const name=(inp.value||'').trim().slice(0,14)||'Player';store.set('fsl.name',name);const rows=store.get(crewKey(),[]);if(!rows.find(x=>x.id===S.run.run_id))rows.push({id:S.run.run_id,name,points:S.points,acc,date:new Date().toISOString().slice(0,10)});store.set(crewKey(),rows.sort((a,b)=>b.points-a.points).slice(0,50));S.run.player_name=name;saveRun();log('crew_save',{},{name});saveBtn.disabled=true;drawBoard(S.run.run_id);};
+  nameRow.append(inp,saveBtn);
+  drawBoard();
+  body.append(nameRow,board);
+  const row=h('div',{class:'row'});const linkMsg=h('div',{class:'note'});
+  row.append(h('button',{class:'big',onclick:()=>shareCard()},t(UI.share)));
+  row.append(h('button',{class:'big alt',onclick:()=>copyChallenge(linkMsg)},t(UI.copyLink)));
+  row.append(h('button',{class:'big alt',onclick:()=>restart()},t(UI.playAgain)));
+  body.append(row,linkMsg,h('div',{class:'note'},esc(t(UI.starNote))));
+  sh.append(body);
+}
+function challengeUrl(){const u=location.href.split('#')[0];return `${u}#beat-${Math.round(S.points)}`;}
+function copyChallenge(el){const url=challengeUrl();log('share',{},{kind:'link'});
+  const fail=()=>{el.innerHTML=`${esc(t(UI.copyFail))}<br><span style="user-select:text;-webkit-user-select:text;color:var(--ink)">${esc(url)}</span>`;};
+  try{navigator.clipboard.writeText(url).then(()=>{el.textContent=t(UI.copied);},fail);}catch(e){fail();}}
+function roundRect(g,x,y,w,hh,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+hh,r);g.arcTo(x+w,y+hh,x,y+hh,r);g.arcTo(x,y+hh,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+async function shareCard(){
+  log('share',{},{kind:'card'});try{await document.fonts.ready;}catch(e){}
+  const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#060A26');gr.addColorStop(.6,'#1D1A5C');gr.addColorStop(1,'#4B2C7A');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  const r=rnd(5);for(let i=0;i<140;i++){g.fillStyle=`rgba(255,255,255,${.3+r()*.7})`;g.beginPath();g.arc(r()*W,r()*H,r()*3+1,0,6.3);g.fill();}
+  const F="'Baloo 2','Nirmala UI','Noto Sans Devanagari',sans-serif";
+  g.textAlign='center';g.fillStyle='#FFC83D';g.font=`700 40px ${F}`;g.fillText(`FSL · ${t(S.mission.title)}`,W/2,110);
+  g.save();g.translate(W/2,400);g.fillStyle='#FF8A3D';g.beginPath();g.ellipse(0,230,50,110,0,0,6.3);g.fill();g.fillStyle='#FFF0A8';g.beginPath();g.ellipse(0,200,24,60,0,0,6.3);g.fill();
+  g.fillStyle='#FF5D73';g.beginPath();g.moveTo(0,-200);g.bezierCurveTo(-40,-140,-60,-90,-60,-50);g.lineTo(60,-50);g.bezierCurveTo(60,-90,40,-140,0,-200);g.fill();
+  g.fillStyle='#EEF1FF';g.fillRect(-60,-52,120,240);g.fillStyle='#4EA8FF';g.beginPath();g.arc(0,20,30,0,6.3);g.fill();g.fillStyle='#FF5D73';g.beginPath();g.moveTo(-60,110);g.lineTo(-120,200);g.lineTo(-60,190);g.fill();g.beginPath();g.moveTo(60,110);g.lineTo(120,200);g.lineTo(60,190);g.fill();g.restore();
+  const rk=rankFor(S.points).r;
+  g.fillStyle='#F5F6FF';g.font=`700 44px ${F}`;g.fillText(t(UI.cardScored),W/2,780);
+  g.fillStyle='#FFC83D';g.font=`800 170px ${F}`;g.fillText(fmt(S.points),W/2,940);
+  g.fillStyle='#B39BFF';g.font=`800 60px ${F}`;g.fillText(t(rk),W/2,1020);
+  const acc=Math.round(S.run.first_try_correct/S.run.questions*100);
+  g.fillStyle='#AEB5E8';g.font=`700 38px ${F}`;g.fillText(`${acc}% ${t(UI.accuracy)}  ·  ★ ${S.run.stars}/18`,W/2,1085);
+  const fs=S.mission.fixes;const bw=120,gap=26,x0=(W-(fs.length*bw+(fs.length-1)*gap))/2;
+  fs.forEach((f,i)=>{const x=x0+i*(bw+gap),y=1120;g.fillStyle=SP[f.superpower].hex;roundRect(g,x,y,bw,90,24);g.fill();g.fillStyle='#0A0E2E';g.font=`800 36px ${F}`;g.fillText('★'.repeat(S.fixes[f.id].stars),x+bw/2,y+60);});
+  g.fillStyle='#F5F6FF';g.font=`800 56px ${F}`;g.fillText(t(UI.cardBeat),W/2,1300);
+  const url=cv.toDataURL('image/png');
+  try{const blob=await (await fetch(url)).blob();const file=new File([blob],'fsl-rocket-score.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:`${t(UI.cardBeat)} ${challengeUrl()}`});return;}}catch(e){}
+  const sh=openOverlay(true);const b=h('div',{class:'intro'});b.append(h('img',{src:url,class:'cardimg',alt:'Score card'}),h('div',{class:'note'},esc(t(UI.saveCard))));
+  b.append(h('button',{class:'big alt',onclick:()=>showResults()},t(UI.back)));sh.append(b);
+}
+
+/* ---------- intro ---------- */
+function showIntro(){
+  const m=S.mission;const sh=openOverlay(true);const body=h('div',{class:'intro'});
+  const beat=S.beat!=null?`<div class="beat">${esc(t(UI.beatBanner,{n:fmt(S.beat)}))}</div>`:'';
+  body.innerHTML=`<div class="eyebrow">${esc(t(UI.eyebrow))} ${m.band}</div><h1>${esc(t(m.title))}</h1>${beat}<p>${esc(t(m.story))}</p>
+   <div class="howto"><div><b>${Math.round(m.windowSec/60)}</b>${esc(t(UI.window))}</div><div><b>${m.fixes.length}</b>${esc(t(UI.jobs))}</div><div><b>${Object.keys(S.qres).length}+${m.commander.questions.length}</b>${esc(t(UI.qs))}</div></div>`;
+  const row=h('div',{class:'sprow'});m.fixes.forEach(f=>row.append(h('div',{},`<span class="badge" style="--c:${SP[f.superpower].c}">${ICON[f.superpower]}</span>${esc(t(SP[f.superpower]))}`)));
+  body.append(row,h('button',{class:'big',onclick:()=>{SFX.ensure();closeOverlay();newRun();S.phase='play';S.run.lang=S.lang;S.run.started_at=new Date().toISOString();log('run_start',{},{beat_target:S.beat});startClock();renderTop();renderFixbar();renderScene();}},t(UI.start)+' ⏱'));
+  body.append(h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);renderTop();renderScene();showIntro();}},S.lang==='en'?'हिंदी में खेलो':'Play in English'));
+  sh.append(body);
+}
+function restart(){closeOverlay();clearInterval(clockId);const rk=$('#rocket');if(rk){rk.style.transition='none';rk.style.transform='';}newRun();renderTop();renderFixbar();renderScene();showIntro();}
+
+/* ---------- debug / log ---------- */
+let logoTaps=0,logoTimer=null;
+function showLog(){
+  const sh=openOverlay(true);const b=h('div',{class:'intro',style:{alignItems:'stretch',textAlign:'left'}});
+  const runs=store.get('fsl.missionRuns.v2',[]);const cur={run:S.run,question_results:S.run?questionResults():[],events:S.events};
+  b.append(h('h1',{style:{fontSize:'22px'}},esc(t(UI.log))));const pre=h('pre',{class:'dbg'});pre.textContent=JSON.stringify({current:cur,saved_runs:runs.length},null,1);b.append(pre);
+  const row=h('div',{class:'row'});const msg=h('div',{class:'note'});
+  row.append(h('button',{class:'big alt',onclick:()=>{try{navigator.clipboard.writeText(JSON.stringify(runs,null,1)).then(()=>msg.textContent='Copied',()=>msg.textContent='Select the text above to copy');}catch(e){msg.textContent='Select the text above to copy';}}},t(UI.copyLog)));
+  row.append(h('button',{class:'big',onclick:()=>{closeOverlay();if(S.phase==='intro')showIntro();}},t(UI.close)));
+  b.append(row,msg);sh.append(b);
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  let m=null;const qs=new URLSearchParams(location.search);
+  if(qs.get('mission')){try{m=await (await fetch(qs.get('mission'))).json();}catch(e){}}
+  if(!m){try{m=JSON.parse($('#mission-data').textContent);}catch(e){document.body.innerHTML='<p style="padding:20px">Mission file could not be read.</p>';return;}}
+  S.mission=m;
+  S.lang=store.get('fsl.lang',qs.get('lang')||'en');if(!['en','hi'].includes(S.lang))S.lang='en';
+  S.sound=store.get('fsl.sound',true);
+  const hm=/^#beat-(\d{1,6})$/.exec(location.hash);if(hm)S.beat=+hm[1];else if(qs.get('beat'))S.beat=+qs.get('beat')||null;
+  newRun();renderTop();renderFixbar();layoutScene();renderScene();
+  addEventListener('resize',layoutScene);
+  $('#lang').onclick=()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);if(S.run)S.run.lang=S.lang;renderTop();renderFixbar();renderScene();
+    if(S.openFix&&S.openFix.ctl){const ctl=S.openFix.ctl;ctl.setTitle();if(!ctl.r.learnDone)showLearn(ctl,0,false);else showQuestion(ctl);}else if(S.phase==='intro')showIntro();else if(S.phase==='results')showResults();};
+  $('#snd').onclick=()=>{S.sound=!S.sound;store.set('fsl.sound',S.sound);renderTop();};
+  $('#timer').onclick=()=>{logoTaps++;clearTimeout(logoTimer);logoTimer=setTimeout(()=>logoTaps=0,1500);if(logoTaps>=5){logoTaps=0;showLog();}};
+  if(location.hash==='#debug')showLog();else showIntro();
+  window.__fsl={S,openFix,openCommander,launch};
+}
+boot();
+</script>
+
+</body>
+</html>
