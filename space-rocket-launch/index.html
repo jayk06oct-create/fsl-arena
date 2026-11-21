@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="FSL Round 2 mission: walk into a 3D launch site, do 6 real rocket jobs and launch.">
+<meta name="description" content="FSL Round 2 mission: walk into a 3D launch site, do 6 real rocket jobs and launch to the Moon, Mars, Jupiter, Saturn or Pluto.">
 </head>
 <body>
 <title>Space Rocket Launch Day</title>
@@ -178,6 +178,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-of
 .ans-list>div{background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:600;font-size:14px}
 .ans-list b{display:block;color:var(--sun);font-size:15px}
 .cred{background:#05081F;border-radius:12px;padding:10px;font-size:13px;font-weight:700;display:flex;flex-direction:column;gap:3px}
+.brief{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:18px;overflow:auto}
+.pl{width:100%;height:100%;display:block}
+.brief .pl{width:130px;height:130px}
+.brief h1{margin:0;font-size:34px;line-height:1}
+.brief-rows{width:100%;display:flex;flex-direction:column;gap:6px;text-align:left}
+.brief-rows div{background:var(--panel2);border-radius:12px;padding:7px 12px;font-weight:700;font-size:14px;display:flex;gap:10px}
+.brief-rows span{color:var(--muted);min-width:76px;flex:none}
+.dests{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%}
+.dests button{background:var(--panel2);border:2px solid transparent;border-radius:14px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:800;min-width:0}
+.dests button svg{width:34px;height:34px}
+.dests button.on{border-color:var(--sun);background:var(--raise)}
 .nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-weight:700}
 pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text;font-family:ui-monospace,monospace;text-align:left}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
@@ -200,7 +211,7 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="application/json" id="mission-data">{
  "id": "space-rocket-launch",
- "version": 3.1,
+ "version": 3.2,
  "round": "R2",
  "band": "J",
  "title": {
@@ -208,8 +219,8 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
   "hi": "स्पेस रॉकेट लॉन्च डे"
  },
  "story": {
-  "en": "Walk into the launch site! You are the launch engineer. Do 6 real rocket jobs and launch before the 15-minute window closes.",
-  "hi": "लॉन्च साइट में चलो! तुम लॉन्च इंजीनियर हो। 6 असली रॉकेट काम करो और 15 मिनट की विंडो बंद होने से पहले लॉन्च करो।"
+  "en": "Walk into the launch site! You are the launch engineer. Your rocket is going to another world. Do 6 real rocket jobs and launch before the 15-minute window closes.",
+  "hi": "लॉन्च साइट में चलो! तुम लॉन्च इंजीनियर हो। तुम्हारा रॉकेट दूसरी दुनिया जा रहा है। 6 असली रॉकेट काम करो और 15 मिनट की विंडो बंद होने से पहले लॉन्च करो।"
  },
  "windowSec": 900,
  "scoring": {
@@ -335,8 +346,8 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
     }
    ],
    "prompt": {
-    "en": "This test rocket weighs {w} tonnes. Each engine pushes {p} tonnes. Fit the fewest engines that lift it, then test fire.",
-    "hi": "इस टेस्ट रॉकेट का वज़न {w} टन है। हर इंजन {p} टन धक्का देता है। सबसे कम इंजन लगाओ जो इसे उठा दें, फिर टेस्ट फायर करो।"
+    "en": "Your {dest} test rocket weighs {w} tonnes. Each engine pushes {p} tonnes. Fit the fewest engines that lift it, then test fire.",
+    "hi": "तुम्हारे {dest} टेस्ट रॉकेट का वज़न {w} टन है। हर इंजन {p} टन धक्का देता है। सबसे कम इंजन लगाओ जो इसे उठा दें, फिर टेस्ट फायर करो।"
    },
    "explain": {
     "en": "With {m} engines: only {mp} t, too weak. With {n}: {np} t, more than {w} t, so it lifts. The fewest is {n}.",
@@ -420,10 +431,17 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
    },
    "learn": [
     {
+     "art": "distance",
+     "text": {
+      "en": "Your rocket is going to {dest}, {dist} from Earth. Farther worlds need more speed, so the rocket must carry more fuel. For {dest} the tanks must be at least {fuel}% full.",
+      "hi": "तुम्हारा रॉकेट {dest} जा रहा है, जो पृथ्वी से {dist} दूर है। दूर की दुनिया के लिए ज़्यादा रफ़्तार चाहिए, इसलिए रॉकेट को ज़्यादा ईंधन ले जाना होता है। {dest} के लिए टैंक कम से कम {fuel}% भरे होने चाहिए।"
+     }
+    },
+    {
      "art": "rules",
      "text": {
-      "en": "Real rockets launch only when it is safe. Our rocket can launch only when ALL 3 are true:",
-      "hi": "असली रॉकेट तभी उड़ते हैं जब सुरक्षित हो। हमारा रॉकेट तभी उड़ेगा जब तीनों बातें सही हों:"
+      "en": "Real rockets launch only when it is safe. Your rocket can launch only when ALL 3 are true:",
+      "hi": "असली रॉकेट तभी उड़ते हैं जब सुरक्षित हो। तुम्हारा रॉकेट तभी उड़ेगा जब तीनों बातें सही हों:"
      },
      "bullets": [
       {
@@ -435,8 +453,8 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
        "hi": "बिजली वाला तूफ़ान 10 km से ज़्यादा दूर हो"
       },
       {
-       "en": "Fuel tanks are 100% full",
-       "hi": "ईंधन टैंक 100% भरे हों"
+       "en": "Fuel tanks are at least {fuel}% full (your {dest} rule)",
+       "hi": "ईंधन टैंक कम से कम {fuel}% भरे हों ({dest} का नियम)"
       }
      ],
      "tail": {
@@ -446,12 +464,12 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
     }
    ],
    "prompt": {
-    "en": "Here is the forecast for the next 50 minutes. Tap the EARLIEST time when all 3 rules are OK.",
-    "hi": "अगले 50 मिनट का अनुमान यह है। सबसे पहला वह समय टैप करो जब तीनों नियम ठीक हों।"
+    "en": "Here is the forecast for the next 50 minutes. Tap the EARLIEST time when all 3 rules are OK for your {dest} trip.",
+    "hi": "अगले 50 मिनट का अनुमान यह है। सबसे पहला वह समय टैप करो जब तुम्हारी {dest} यात्रा के लिए तीनों नियम ठीक हों।"
    },
    "explain": {
-    "en": "At {t1} min {why}. At {t2} min the wind is {w} km/h, the storm is {s} km away and fuel is 100%, so all 3 rules are OK.{later}",
-    "hi": "{t1} मिनट पर {why}। {t2} मिनट पर हवा {w} km/h, तूफ़ान {s} km दूर और ईंधन 100% है, तो तीनों नियम ठीक हैं।{later}"
+    "en": "At {t1} min {why}. At {t2} min the wind is {w} km/h, the storm is {s} km away and fuel is {fu}%, so all 3 rules are OK.{later}",
+    "hi": "{t1} मिनट पर {why}। {t2} मिनट पर हवा {w} km/h, तूफ़ान {s} km दूर और ईंधन {fu}% है, तो तीनों नियम ठीक हैं।{later}"
    },
    "generate": true
   },
@@ -690,7 +708,181 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
   },
   "slotMin": 30,
   "startGraceMin": 10
- }
+ },
+ "destinations": [
+  {
+   "id": "moon",
+   "name": {
+    "en": "Moon",
+    "hi": "चंद्रमा"
+   },
+   "color": "#C9CCD6",
+   "fuel": 60,
+   "size": 10,
+   "ring": false,
+   "distance": {
+    "en": "384,400 km",
+    "hi": "3.84 लाख km"
+   },
+   "distRank": 1,
+   "travel": {
+    "en": "Astronauts reached the Moon in about 3 days. India's Chandrayaan-3 took about 40 days on a slower path that saved fuel.",
+    "hi": "अंतरिक्ष यात्री लगभग 3 दिन में चंद्रमा पहुँचे थे। भारत का चंद्रयान-3 धीमे रास्ते से लगभग 40 दिन में पहुँचा, जिससे ईंधन बचा।"
+   },
+   "engine": [
+    [
+     45,
+     25
+    ],
+    [
+     60,
+     25
+    ],
+    [
+     55,
+     15
+    ]
+   ]
+  },
+  {
+   "id": "mars",
+   "name": {
+    "en": "Mars",
+    "hi": "मंगल"
+   },
+   "color": "#E0623A",
+   "fuel": 75,
+   "size": 9,
+   "ring": false,
+   "distance": {
+    "en": "about 225 million km (it changes as both planets move)",
+    "hi": "लगभग 22.5 करोड़ km (दोनों ग्रह घूमते हैं, इसलिए बदलती रहती है)"
+   },
+   "distRank": 2,
+   "travel": {
+    "en": "India's Mangalyaan reached Mars in 323 days.",
+    "hi": "भारत का मंगलयान 323 दिन में मंगल पहुँचा था।"
+   },
+   "engine": [
+    [
+     80,
+     45
+    ],
+    [
+     80,
+     30
+    ],
+    [
+     70,
+     20
+    ]
+   ]
+  },
+  {
+   "id": "jupiter",
+   "name": {
+    "en": "Jupiter",
+    "hi": "बृहस्पति"
+   },
+   "color": "#D9A066",
+   "fuel": 85,
+   "size": 16,
+   "ring": false,
+   "stripes": true,
+   "distance": {
+    "en": "about 630 million km",
+    "hi": "लगभग 63 करोड़ km"
+   },
+   "distRank": 3,
+   "travel": {
+    "en": "Real spacecraft took about 5 years to reach Jupiter.",
+    "hi": "असली अंतरिक्ष यान को बृहस्पति पहुँचने में लगभग 5 साल लगे।"
+   },
+   "engine": [
+    [
+     100,
+     55
+    ],
+    [
+     90,
+     35
+    ],
+    [
+     100,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "saturn",
+   "name": {
+    "en": "Saturn",
+    "hi": "शनि"
+   },
+   "color": "#E8C77E",
+   "fuel": 90,
+   "size": 13,
+   "ring": true,
+   "distance": {
+    "en": "about 1.3 billion km",
+    "hi": "लगभग 128 करोड़ km"
+   },
+   "distRank": 4,
+   "travel": {
+    "en": "Real spacecraft took about 7 years to reach Saturn.",
+    "hi": "असली अंतरिक्ष यान को शनि पहुँचने में लगभग 7 साल लगे।"
+   },
+   "engine": [
+    [
+     110,
+     60
+    ],
+    [
+     110,
+     40
+    ],
+    [
+     95,
+     25
+    ]
+   ]
+  },
+  {
+   "id": "pluto",
+   "name": {
+    "en": "Pluto",
+    "hi": "प्लूटो"
+   },
+   "color": "#D8C3A5",
+   "fuel": 100,
+   "size": 7,
+   "ring": false,
+   "heart": true,
+   "distance": {
+    "en": "about 5.9 billion km",
+    "hi": "लगभग 590 करोड़ km"
+   },
+   "distRank": 5,
+   "travel": {
+    "en": "A real spacecraft took about 9.5 years to fly past Pluto.",
+    "hi": "एक असली अंतरिक्ष यान को प्लूटो तक पहुँचने में लगभग 9.5 साल लगे।"
+   },
+   "engine": [
+    [
+     120,
+     65
+    ],
+    [
+     130,
+     45
+    ],
+    [
+     120,
+     35
+    ]
+   ]
+  }
+ ]
 }</script>
 <script>
 "use strict";
@@ -754,7 +946,7 @@ const UI = {
   setTime:{en:'Set launch time',hi:'लॉन्च का समय तय करो'},
   pickCol:{en:'Tap a time column first',hi:'पहले कोई समय वाला कॉलम टैप करो'},
   notEarliest:{en:'Safe, but there is an earlier safe time.',hi:'सुरक्षित, पर इससे पहले भी सुरक्षित समय है।'},
-  rulesLine:{en:'Wind below 30 · Storm farther than 10 km · Fuel 100%',hi:'हवा 30 से कम · तूफ़ान 10 km से दूर · ईंधन 100%'},
+  rulesLine:{en:'Wind below 30 · Storm farther than 10 km · Fuel at least {fuel}%',hi:'हवा 30 से कम · तूफ़ान 10 km से दूर · ईंधन कम से कम {fuel}%'},
   go:{en:'Start',hi:'शुरू'},
   switchRule:{en:'STAGE 2! Rule changed',hi:'स्टेज 2! नियम बदला'},
   caught:{en:'Caught',hi:'पकड़े'},
@@ -794,7 +986,7 @@ const UI = {
   beatLose:{en:'Your friend has {n}. Play again to beat it!',hi:'दोस्त के {n} अंक हैं। फिर खेलो और आगे निकलो!'},
   saveCard:{en:'Press and hold the card to save or share it.',hi:'कार्ड को दबाकर रखो और सेव या शेयर करो।'},
   cardBeat:{en:'Beat my score!',hi:'मेरा स्कोर हराओ!'},
-  cardScored:{en:'I launched the rocket and scored',hi:'मैंने रॉकेट लॉन्च किया और बनाए'},
+  cardScored:{en:'I launched my rocket to {dest} and scored',hi:'मैंने {dest} के लिए रॉकेट लॉन्च किया और बनाए'},
   close:{en:'Close',hi:'बंद करो'},
   log:{en:'Run log (for the team)',hi:'रन लॉग (टीम के लिए)'},
   copyLog:{en:'Copy log JSON',hi:'लॉग JSON कॉपी करो'},
@@ -824,6 +1016,17 @@ const UI = {
   wxStorm:{en:'the storm is only {v} km away',hi:'तूफ़ान सिर्फ़ {v} km दूर है'},
   wxFuel:{en:'fuel is only {v}%',hi:'ईंधन सिर्फ़ {v}% है'},
   wxGust:{en:'a gust makes the wind {v} km/h',hi:'झोंके से हवा {v} km/h है'},
+  yourMission:{en:'Your mission',hi:'तुम्हारा मिशन'},
+  pickDest:{en:'Pick your destination',hi:'अपनी मंज़िल चुनो'},
+  randomDest:{en:'Surprise me',hi:'कोई भी'},
+  distLbl:{en:'Distance',hi:'दूरी'},
+  fuelLbl:{en:'Fuel needed',hi:'ज़रूरी ईंधन'},
+  realLbl:{en:'Real trip',hi:'असली यात्रा'},
+  rocketLbl:{en:'Test rocket',hi:'टेस्ट रॉकेट'},
+  goMission:{en:'Go to the launch site',hi:'लॉन्च साइट चलो'},
+  heavier:{en:'heavier for farther trips',hi:'दूर की यात्रा के लिए भारी'},
+  missionTo:{en:'{dest} mission',hi:'{dest} मिशन'},
+  sameRules:{en:'Every destination has the same 6 jobs at the same difficulty, so stars are fair across planets.',hi:'हर मंज़िल पर वही 6 काम, उतने ही कठिन, इसलिए सब ग्रहों के सितारे बराबर गिने जाते हैं।'},
   wxLater:{en:' From {t} min the wind is too strong.',hi:' {t} मिनट से हवा बहुत तेज़ है।'}
 };
 const PARTS = {
@@ -914,6 +1117,7 @@ function rocketThrust(n){let eng='';const w=Math.max(1,n);const gap=22,start=60-
 
 
 const QT={};
+ART.distance=()=>distanceSvg();
 QT.monitor = ctx=>{
   const q=ctx.q;let alive=true,running=false,timers=[],stats;
   const rule=h('div',{class:'rule'},esc(t(q.phases[0].label)));
@@ -981,6 +1185,23 @@ function hashStr(str){let x=2166136261;for(let i=0;i<str.length;i++){x^=str.char
 function deviceId(){let d=store.get('fsl.deviceId',null);if(!d){d=uuid();store.set('fsl.deviceId',d);}return d;}
 const DECOY={wheel:{en:'Wheel',hi:'पहिया',info:{en:'Wheels are for roads. A rocket does not roll to space.',hi:'पहिये सड़क के लिए होते हैं। रॉकेट लुढ़ककर अंतरिक्ष नहीं जाता।'}},
   prop:{en:'Propeller',hi:'प्रोपेलर',info:{en:'Propellers push air. Space has no air, so rockets do not use them.',hi:'प्रोपेलर हवा को धकेलते हैं। अंतरिक्ष में हवा नहीं होती, इसलिए रॉकेट में ये नहीं लगते।'}}};
+function destById(id){return (S.base.destinations||[]).find(d=>d.id===id)||S.base.destinations[0];}
+function planetSvg(d){const id='pg'+d.id;let extra='';
+  if(d.stripes)extra=`<rect x="8" y="34" width="84" height="7" fill="#A86B3C" opacity=".7"/><rect x="6" y="52" width="88" height="9" fill="#B97A45" opacity=".6"/><ellipse cx="62" cy="62" rx="9" ry="5" fill="#B5452A"/>`;
+  if(d.id==='moon')extra=`<circle cx="36" cy="38" r="9" fill="#9EA2B0"/><circle cx="62" cy="62" r="12" fill="#A9ADBA"/><circle cx="66" cy="30" r="5" fill="#9EA2B0"/>`;
+  if(d.id==='mars')extra=`<ellipse cx="40" cy="45" rx="16" ry="9" fill="#B5452A" opacity=".7"/><ellipse cx="50" cy="12" rx="12" ry="4" fill="#fff" opacity=".85"/>`;
+  if(d.heart)extra=`<path d="M50 70c-14-10-20-16-20-24 0-6 5-10 10-10 4 0 7 2 10 6 3-4 6-6 10-6 5 0 10 4 10 10 0 8-6 14-20 24z" fill="#F3E6D3"/>`;
+  const ring=d.ring?`<ellipse cx="50" cy="50" rx="49" ry="13" fill="none" stroke="#F3DDA5" stroke-width="6" opacity=".9" transform="rotate(-18 50 50)"/>`:'';
+  return `<svg viewBox="0 0 100 100" class="pl"><defs><clipPath id="${id}"><circle cx="50" cy="50" r="${d.ring?30:42}"/></clipPath><radialGradient id="${id}s" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs>
+   <g clip-path="url(#${id})"${d.ring?' transform="translate(0 0)"':''}><circle cx="50" cy="50" r="42" fill="${d.color}"/>${d.ring?`<g transform="translate(50 50) scale(.72) translate(-50 -50)">${extra}</g>`:extra}<circle cx="50" cy="50" r="42" fill="url(#${id}s)"/></g>${ring}</svg>`;}
+function distanceSvg(){const ds=S.base.destinations;const cur=S.ver?S.ver.dest:ds[0].id;const W=320,H=210;
+  let g=`<svg viewBox="0 0 ${W} ${H}"><circle cx="22" cy="70" r="14" fill="#3B82F6"/><path d="M14 64c4-3 8 0 10-3s6-2 8 1" stroke="#3DDC97" stroke-width="4" fill="none"/><text x="22" y="100" fill="#AEB5E8" font-size="11" font-weight="700" text-anchor="middle">${esc(t({en:'Earth',hi:'पृथ्वी'}))}</text>`;
+  g+=`<line x1="40" y1="70" x2="${W-10}" y2="70" stroke="#2C3584" stroke-width="2" stroke-dasharray="4 4"/>`;
+  ds.forEach((d,i)=>{const x=74+i*56;const on=d.id===cur;const r=on?15:11;
+    g+=`<circle cx="${x}" cy="70" r="${r}" fill="${d.color}" ${on?'stroke="#FFC83D" stroke-width="3"':''}/>`;if(d.ring)g+=`<ellipse cx="${x}" cy="70" rx="${r+8}" ry="4" fill="none" stroke="#F3DDA5" stroke-width="2.5"/>`;
+    g+=`<text x="${x}" y="${on?102:98}" fill="${on?'#FFC83D':'#AEB5E8'}" font-size="11" font-weight="800" text-anchor="middle">${esc(t(d.name))}</text>`;
+    const bh=d.fuel*0.8;g+=`<rect x="${x-10}" y="${200-bh}" width="20" height="${bh}" rx="4" fill="${on?'#FFC83D':'#4EA8FF'}" opacity="${on?1:.55}"/><text x="${x}" y="${195-bh}" fill="${on?'#FFC83D':'#AEB5E8'}" font-size="11" font-weight="800" text-anchor="middle">${d.fuel}%</text>`;});
+  g+=`<text x="22" y="150" fill="#AEB5E8" font-size="10" font-weight="700" text-anchor="middle">${esc(t({en:'fuel',hi:'ईंधन'}))}</text><text x="22" y="163" fill="#AEB5E8" font-size="10" font-weight="700" text-anchor="middle">→</text></svg>`;return g;}
 function genWeather(r,R0){
   const n=11;const safe=(w,s,f,i)=>w[i]<R0.windBelow&&s[i]>R0.stormFarther&&f[i]>=R0.fuel;
   for(let tries=0;tries<60;tries++){
@@ -990,7 +1211,7 @@ function genWeather(r,R0){
     const b=a+2+Math.floor(r()*(9-a));
     const fuel=[],storm=[],wind=[];const w0=12+Math.floor(r()*4);const sEnd=r()<.5?10:9;let sv=11+Math.floor(r()*3);
     for(let i=0;i<n;i++){
-      fuel.push(i>=f?100:Math.min(95,Math.round((30+i*65/f)/5)*5));
+      const X=R0.fuel;fuel.push(i>=f?Math.min(100,X+Math.round((i-f)*(100-X)/Math.max(1,10-f)/5)*5):Math.min(X-5,Math.round((25+i*(X-30)/f)/5)*5));
       if(i<c)storm.push(Math.max(2,sEnd-(c-1-i)*2+(i<c-1&&r()<.3?1:0)));else{storm.push(sv);sv+=2+Math.floor(r()*2);}
       wind.push(i<b?Math.min(28,w0+Math.round(i*1.6)):(i===b&&r()<.5?30:31+(i-b)*2+Math.floor(r()*2)));
     }
@@ -1000,15 +1221,17 @@ function genWeather(r,R0){
   }
   return{a:6,blocker:'storm',b:9,wind:[14,15,16,18,19,21,23,25,28,31,34],storm:[4,5,6,7,8,9,12,15,18,22,25],fuel:[40,55,70,85,95,100,100,100,100,100,100]};
 }
-function makeVersion(seedStr,avoid={}){
-  const r=rnd(hashStr(seedStr));const jb=id=>S.base.jobs.find(j=>j.id===id);
+function makeVersion(seedStr,avoid={},destId=null){
+  const r=rnd(hashStr(seedStr));const jb=id=>S.base.jobs.find(j=>j.id===id);const DS=S.base.destinations;
   const pickIdx=(n,used)=>{let i=Math.floor(r()*n);if(used&&used.length<n)for(let k=0;k<n&&used.includes(i);k++)i=(i+1)%n;return i;};
   const v={seed:seedStr};
-  v.engineIdx=pickIdx(jb('engine').versions.length,avoid.engine);
+  if(destId&&DS.find(d=>d.id===destId))v.dest=destId;else{const ids=DS.map(d=>d.id);let i=Math.floor(r()*ids.length);const used=avoid.dest||[];if(used.length<ids.length)for(let k=0;k<ids.length&&used.includes(ids[i]);k++)i=(i+1)%ids.length;v.dest=ids[i];}
+  const destObj=DS.find(d=>d.id===v.dest);
+  v.engineIdx=pickIdx(destObj.engine.length,avoid.engine);
   v.monitorIdx=pickIdx(jb('monitor').versions.length,avoid.monitor);
   v.decoy=r()<.5?'wheel':'prop';
   const xs=[-6,-3.6,-1.2,1.2,3.6,6];for(let i=xs.length-1;i>0;i--){const k=Math.floor(r()*(i+1));[xs[i],xs[k]]=[xs[k],xs[i]];}v.xs=xs;
-  v.weather=genWeather(r,jb('weather').rules);
+  v.weather=genWeather(r,Object.assign({},jb('weather').rules,{fuel:destObj.fuel}));
   const k1=6+Math.floor(r()*5);let k2;do{k2=Math.floor(r()*16);}while(Math.min(Math.abs(k2-k1),16-Math.abs(k2-k1))<4);
   const kinds=r()<.5?['crack','chip']:['chip','crack'];v.damaged=[[Math.floor(r()*3),k1,kinds[0]],[Math.floor(r()*3),k2,kinds[1]]];
   const rv=jb('launch').rampVersions;v.ramp=rv[Math.floor(r()*rv.length)];
@@ -1018,18 +1241,27 @@ function subT(o,vars){const out={};for(const k in o){let x=o[k];if(typeof x==='s
 function applyVersion(v){
   const m=JSON.parse(JSON.stringify(S.base));const J=id=>m.jobs.find(j=>j.id===id);
   const b=J('build');b.decoy=v.decoy;b.explain=subT(b.explain,{});b.explain.en+=' '+DECOY[v.decoy].info.en;b.explain.hi+=' '+DECOY[v.decoy].info.hi;
-  const e=J('engine');const [w,p]=e.versions[v.engineIdx];const n=Math.floor(w/p)+1;e.weight=w;e.perEngine=p;e.answer=n;
-  e.prompt=subT(e.prompt,{w,p});e.explain=subT(e.explain,{w,n,np:n*p,m:n-1,mp:(n-1)*p});
-  const wj=J('weather'),W=v.weather;wj.wind=W.wind;wj.storm=W.storm;wj.fuel=W.fuel;wj.answer=wj.slots[W.a];
+  const dest=destById(v.dest);const dv={dest:dest.name,dist:dest.distance,fuel:dest.fuel};m.dest=dest;
+  const e=J('engine');e.versions=dest.engine;const [w,p]=e.versions[v.engineIdx];const n=Math.floor(w/p)+1;e.weight=w;e.perEngine=p;e.answer=n;
+  e.prompt=subT(e.prompt,Object.assign({w,p},dv));e.explain=subT(e.explain,{w,n,np:n*p,m:n-1,mp:(n-1)*p});
+  const wj=J('weather'),W=v.weather;wj.rules.fuel=dest.fuel;wj.prompt=subT(wj.prompt,dv);wj.learn.forEach(sl=>{sl.text=subT(sl.text,dv);if(sl.bullets)sl.bullets=sl.bullets.map(b=>subT(b,dv));});wj.wind=W.wind;wj.storm=W.storm;wj.fuel=W.fuel;wj.answer=wj.slots[W.a];
   const pi=W.a-1;const why=W.blocker==='storm'?subT(UI.wxStorm,{v:W.storm[pi]}):W.blocker==='fuel'?subT(UI.wxFuel,{v:W.fuel[pi]}):subT(UI.wxGust,{v:W.wind[pi]});
   const later=W.b<=10?subT(UI.wxLater,{t:wj.slots[W.b]}):{en:'',hi:''};
-  wj.explain=subT(wj.explain,{t1:wj.slots[pi],t2:wj.slots[W.a],w:W.wind[W.a],s:W.storm[W.a],why,later});
+  wj.explain=subT(wj.explain,{t1:wj.slots[pi],t2:wj.slots[W.a],w:W.wind[W.a],s:W.storm[W.a],fu:W.fuel[W.a],why,later});
   const mo=J('monitor');const [la,lb]=mo.versions[v.monitorIdx];mo.phases[0].limit=la;mo.phases[1].limit=lb;mo.phases[0].label=subT(mo.phases[0].label,{lim:la});mo.phases[1].label=subT(mo.phases[1].label,{lim:lb});
   J('shield').damaged=v.damaged;J('launch').rampSec=v.ramp;
   S.ver=v;S.mission=m;
 }
+function planetTex(d){const c=document.createElement('canvas');c.width=256;c.height=128;const g=c.getContext('2d');g.fillStyle=d.color;g.fillRect(0,0,256,128);
+  if(d.stripes){['#A86B3C','#C98A55','#B97A45','#E8C49A'].forEach((col,i)=>{g.fillStyle=col;g.globalAlpha=.6;g.fillRect(0,20+i*24,256,9);});g.globalAlpha=1;g.fillStyle='#B5452A';g.beginPath();g.ellipse(170,80,16,8,0,0,6.3);g.fill();}
+  if(d.id==='moon'){g.fillStyle='#9EA2B0';[[40,40,12],[120,70,18],[200,30,9],[80,100,8],[220,95,14]].forEach(([x,y,r])=>{g.beginPath();g.arc(x,y,r,0,6.3);g.fill();});}
+  if(d.id==='mars'){g.fillStyle='#B5452A';g.globalAlpha=.6;g.beginPath();g.ellipse(90,64,40,16,0,0,6.3);g.fill();g.globalAlpha=1;g.fillStyle='#fff';g.fillRect(0,0,256,9);}
+  if(d.heart){g.fillStyle='#F3E6D3';g.beginPath();g.arc(118,64,18,0,6.3);g.arc(144,64,18,0,6.3);g.fill();g.beginPath();g.moveTo(101,70);g.lineTo(131,104);g.lineTo(161,70);g.fill();}
+  if(d.id==='saturn'){g.fillStyle='#D4AE62';g.globalAlpha=.5;g.fillRect(0,50,256,12);g.globalAlpha=1;}
+  return new THREE.CanvasTexture(c);}
+function applySky(){const d=S.mission.dest;if(!d||!R.planet)return;if(R.planet.material.map)R.planet.material.map.dispose();R.planet.material=new THREE.MeshBasicMaterial({map:planetTex(d),fog:false});R.planet.scale.setScalar(d.size/14);R.pring.visible=!!d.ring;R.pring.scale.setScalar(d.size/14);}
 function applyVersionVisuals(){
-  const v=S.ver;resetParts();
+  const v=S.ver;resetParts();applySky();
   if(R.testWeightLabel){R.testRocket.remove(R.testWeightLabel);}const wl=label(jobById('engine').weight+' t');wl.position.set(0,8,0);R.testRocket.add(wl);R.testWeightLabel=wl;setTestEngines(1);R.testRocket.position.y=.5;
   const dm={};v.damaged.forEach(([ring,k,kind])=>dm[ring+'-'+k]=kind);
   R.tiles.forEach(m=>{const tl=m.userData.tile;const kind=dm[tl.ring+'-'+tl.k]||null;if(kind!==tl.kind||!m.userData.matSet){m.material=kind?new THREE.MeshLambertMaterial({map:crackTex(kind)}):lam(0x23263D);tl.kind=kind;m.userData.matSet=true;}});
@@ -1107,8 +1339,8 @@ function init3D(){
   // stars + planet
   const r=rnd(3),pos=[];for(let i=0;i<900;i++){const th=r()*Math.PI*2,ph=Math.acos(r()*0.95);const rr=180;pos.push(rr*Math.sin(ph)*Math.cos(th),rr*Math.cos(ph)+5,rr*Math.sin(ph)*Math.sin(th));}
   const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));sc.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:1.1,sizeAttenuation:true,fog:false})));
-  const planet=new THREE.Mesh(new THREE.SphereGeometry(14,32,20),basic(0xFF9F6B,{fog:false}));planet.position.set(70,60,-140);sc.add(planet);
-  const ring=new THREE.Mesh(new THREE.RingGeometry(18,24,48),basic(0xFFD7B0,{side:THREE.DoubleSide,transparent:true,opacity:.7,fog:false}));ring.position.copy(planet.position);ring.rotation.set(1.2,0.3,0);sc.add(ring);
+  const planet=new THREE.Mesh(new THREE.SphereGeometry(14,32,20),basic(0xFF9F6B,{fog:false}));planet.position.set(22,46,-120);sc.add(planet);R.planet=planet;
+  const ring=new THREE.Mesh(new THREE.RingGeometry(18,24,48),basic(0xFFD7B0,{side:THREE.DoubleSide,transparent:true,opacity:.7,fog:false}));ring.position.copy(planet.position);ring.rotation.set(1.2,0.3,0);R.pring=ring;sc.add(ring);
   // hills
   for(let i=0;i<16;i++){const a=i/16*Math.PI*2;const m=new THREE.Mesh(new THREE.ConeGeometry(8+r()*8,6+r()*8,6),lam(0x2B2366));m.position.set(Math.cos(a)*70,3,Math.sin(a)*70);sc.add(m);}
   // gate
@@ -1322,7 +1554,7 @@ function renderJobbar(){
     b.onclick=()=>goToStation(j.id);jb.append(b);});
 }
 function renderBubble(){const b=$('#bubble');if(S.phase!=='play'||S.active){b.classList.add('hidden');return;}b.classList.remove('hidden');
-  const nx=nextJob();b.textContent=(S.mode==='ranked'?'🏆 ':'')+(S.jobs.build.status!=='done'?t(UI.goBuild):(nx&&nx.id==='launch'?t(UI.goLaunch):t(UI.tapStation)+(S.beat!=null?' · 🎯 '+fmt(S.beat):'')));}
+  const nx=nextJob();b.textContent=(S.mode==='ranked'?'🏆 ':'')+(S.mission.dest?t(S.mission.dest.name)+' · ':'')+(S.jobs.build.status!=='done'?t(UI.goBuild):(nx&&nx.id==='launch'?t(UI.goLaunch):t(UI.tapStation)+(S.beat!=null?' · 🎯 '+fmt(S.beat):'')));}
 function refreshAll(){if(!S.active&&S.phase==='play')showMarkers(true);renderHUD();renderJobbar();renderBubble();refreshMarkerLabels();}
 function toast(msg,ms=2600){const e=h('div',{class:'toast'},esc(msg));document.body.append(e);setTimeout(()=>e.remove(),ms);}
 
@@ -1509,7 +1741,7 @@ TASKS.planner=api=>{
   rowOf(MINI.wind,t(UI.wind),j.wind);rowOf(MINI.storm,t(UI.storm),j.storm);rowOf(MINI.fuel,t(UI.fuel),j.fuel);
   wrap.append(g);
   const legend=h('div',{class:'note',style:{display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap',maxWidth:'none'}},`<span>${esc(t(UI.wind))}</span><span>${esc(t(UI.storm))}</span><span>${esc(t(UI.fuel))}</span>`);
-  const rules=h('div',{class:'rulesline'},esc(t(UI.rulesLine)));
+  const rules=h('div',{class:'rulesline'},esc(t(UI.rulesLine,{fuel:j.rules.fuel})));
   const btn=h('button',{class:'big'},t(UI.setTime));
   function choose(i){if(done)return;SFX.tap();cols.forEach(cs=>cs.forEach(c=>c.classList.remove('col-sel')));cols[i].forEach(c=>c.classList.add('col-sel'));sel=i;}
   btn.onclick=()=>{if(done)return;if(sel==null){api.say(t(UI.pickCol),'info');return;}
@@ -1591,7 +1823,7 @@ async function launch(){
 function rankFor(p){const rs=S.mission.scoring.ranks;let r=rs[0],nx=null;for(let i=0;i<rs.length;i++){if(p>=rs[i].min){r=rs[i];nx=rs[i+1]||null;}}return{r,nx};}
 function endRun(){const m=S.mission;S.run.ended_at=new Date().toISOString();S.run.completed=true;S.run.points=S.points;S.run.stars=m.jobs.reduce((a,j)=>a+S.jobs[j.id].stars,0);S.run.first_try=m.jobs.filter(j=>S.jobs[j.id].level==='first').length;S.run.best_streak=S.bestStreak;S.run.coins_end=S.coins;S.run.rank=rankFor(S.points).r.en;
   S.run.credibility=computeCred();
-  if(S.mode==='ranked'){const now=Date.now();const dev=store.get('fsl.devRanked',[]).filter(x=>now-x.at<7*864e5);dev.push({child:S.childId,slot:S.slot.key,at:now,points:S.points,engineIdx:S.ver.engineIdx,monitorIdx:S.ver.monitorIdx});store.set('fsl.devRanked',dev);
+  if(S.mode==='ranked'){const now=Date.now();const dev=store.get('fsl.devRanked',[]).filter(x=>now-x.at<7*864e5);dev.push({child:S.childId,slot:S.slot.key,at:now,points:S.points,engineIdx:S.ver.engineIdx,monitorIdx:S.ver.monitorIdx,dest:S.ver.dest});store.set('fsl.devRanked',dev);
     store.set('fsl.ranked.'+S.slot.key+'.'+S.childId,{at:now,points:S.points,end:S.slot.end,answers:m.jobs.map(j=>({label:j.label,explain:j.explain}))});}
   log('launch',null,{points:S.points,window_bonus:S.run.window_bonus,timing_bonus:S.run.timing_bonus,rank:S.run.rank});}
 function confetti(){const cv=$('#confetti');cv.hidden=false;const dpr=Math.min(2,devicePixelRatio||1);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';const g=cv.getContext('2d');g.scale(dpr,dpr);
@@ -1603,7 +1835,7 @@ function crewKey(){return 'fsl.crew3.'+S.mission.id+'.'+S.mission.band;}
 function showResults(){
   const m=S.mission;const c=openOv();const totalMs=new Date(S.run.ended_at)-new Date(S.run.started_at);const {r,nx}=rankFor(S.points);
   const body=h('div',{class:'intro'});let beat='';if(S.beat!=null)beat=`<div class="beat">${esc(t(S.points>S.beat?UI.beatWin:UI.beatLose,{n:fmt(S.beat)}))}</div>`;
-  body.innerHTML=`<div class="eyebrow">${esc(t(m.title))}</div><h1>${esc(t(UI.launched))}</h1>${beat}
+  body.innerHTML=`<div class="eyebrow">${esc(t(m.title))}</div><h1>${esc(t(UI.launched))}</h1>${m.dest?`<div class="note" style="display:flex;align-items:center;gap:8px;justify-content:center"><span style="width:34px;height:34px;display:inline-block">${planetSvg(m.dest)}</span><b style="color:var(--ink)">${esc(t(UI.missionTo,{dest:t(m.dest.name)}))}</b></div><div class="note">${esc(t(m.dest.travel))}</div>`:''}${beat}
    <div><div class="res-big">${fmt(S.points)}</div><div class="rank">${esc(t(r))}</div><div class="note">${nx?esc(t(UI.nextRank,{n:fmt(nx.min-S.points),r:t(nx)})):esc(t(UI.topRank))}</div></div>
    <div class="res-grid"><div><b>${S.run.first_try}/${m.jobs.length}</b>${esc(t(UI.firstTry))}</div><div><b>${S.run.stars}/${m.jobs.length*3}</b>${esc(t(UI.stars))}</div><div><b>+${S.run.timing_bonus}</b>${esc(t(UI.timing))}</div><div><b>${fmtTime(totalMs)}</b>${esc(t(UI.time))}</div></div>
    ${S.run.window_bonus?`<div class="note">${esc(t(UI.windowBonus))}: <b style="color:var(--sun)">+${fmt(S.run.window_bonus)}</b></div>`:''}`;
@@ -1612,7 +1844,7 @@ function showResults(){
   const board=h('div',{class:'board'});const acc=Math.round(S.run.first_try/m.jobs.length*100);
   const drawBoard=me=>{const rows=store.get(crewKey(),[]).sort((a,b)=>b.points-a.points).slice(0,10);board.innerHTML=`<h4>🏆 ${esc(t(UI.crew))}</h4>`;if(!rows.length)board.append(h('div',{class:'note'},esc(t(UI.noScores))));rows.forEach((x,i)=>board.append(h('div',{class:'r'+(x.id===me?' me':'')},`<span>${i+1}</span><span>${esc(x.name)}</span><small>${x.acc}%</small><b>${fmt(x.points)}</b>`)));};
   const nameRow=h('div',{class:'namerow'});const inp=h('input',{id:'crewName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});const sv=h('button',{class:'big',style:{padding:'8px 16px',fontSize:'17px'}},t(UI.save));
-  sv.onclick=()=>{const name=(inp.value||'').trim().slice(0,14)||'Player';store.set('fsl.name',name);const rows=store.get(crewKey(),[]);if(!rows.find(x=>x.id===S.run.run_id))rows.push({id:S.run.run_id,name,points:S.points,acc,date:new Date().toISOString().slice(0,10)});store.set(crewKey(),rows.sort((a,b)=>b.points-a.points).slice(0,50));S.run.player_name=name;saveRun();log('crew_save',null,{name});sv.disabled=true;drawBoard(S.run.run_id);};
+  sv.onclick=()=>{const name=(inp.value||'').trim().slice(0,14)||'Player';store.set('fsl.name',name);const rows=store.get(crewKey(),[]);if(!rows.find(x=>x.id===S.run.run_id))rows.push({id:S.run.run_id,name:name+(m.dest?' · '+t(m.dest.name):''),points:S.points,acc,date:new Date().toISOString().slice(0,10)});store.set(crewKey(),rows.sort((a,b)=>b.points-a.points).slice(0,50));S.run.player_name=name;saveRun();log('crew_save',null,{name});sv.disabled=true;drawBoard(S.run.run_id);};
   nameRow.append(inp,sv);drawBoard();body.append(nameRow,board);
   const row=h('div',{class:'row'});const msg=h('div',{class:'note'});
   if(S.mode==='ranked'){const open=answersOpen();body.append(h('div',{class:'ranked-rules'},open?'':esc(t(UI.answersLater,{t:hhmm(S.slot.end)}))),h('button',{class:'big alt',disabled:!open,onclick:()=>showAnswers(m.jobs.map(j=>({label:j.label,explain:j.explain})),showResults)},'🔓 '+t(UI.seeAnswers)));}
@@ -1632,7 +1864,7 @@ async function shareCard(){
   const F="'Baloo 2','Nirmala UI','Noto Sans Devanagari',sans-serif";g.textAlign='center';
   g.fillStyle='#FFC83D';g.font=`700 40px ${F}`;g.fillText(`FSL · ${t(S.mission.title)}`,W/2,110);
   g.save();g.translate(W/2,400);g.fillStyle='#FF8A3D';g.beginPath();g.ellipse(0,230,50,110,0,0,6.3);g.fill();g.fillStyle='#FFF0A8';g.beginPath();g.ellipse(0,200,24,60,0,0,6.3);g.fill();g.fillStyle='#FF5D73';g.beginPath();g.moveTo(0,-200);g.bezierCurveTo(-40,-140,-60,-90,-60,-50);g.lineTo(60,-50);g.bezierCurveTo(60,-90,40,-140,0,-200);g.fill();g.fillStyle='#EEF1FF';g.fillRect(-60,-52,120,240);g.fillStyle='#4EA8FF';g.beginPath();g.arc(0,20,30,0,6.3);g.fill();g.fillStyle='#FF5D73';g.beginPath();g.moveTo(-60,110);g.lineTo(-120,200);g.lineTo(-60,190);g.fill();g.beginPath();g.moveTo(60,110);g.lineTo(120,200);g.lineTo(60,190);g.fill();g.restore();
-  g.fillStyle='#F5F6FF';g.font=`700 44px ${F}`;g.fillText(t(UI.cardScored),W/2,780);g.fillStyle='#FFC83D';g.font=`800 170px ${F}`;g.fillText(fmt(S.points),W/2,940);
+  g.fillStyle='#F5F6FF';g.font=`700 44px ${F}`;g.fillText(t(UI.cardScored,{dest:S.mission.dest?t(S.mission.dest.name):''}),W/2,780);g.fillStyle='#FFC83D';g.font=`800 170px ${F}`;g.fillText(fmt(S.points),W/2,940);
   g.fillStyle='#B39BFF';g.font=`800 60px ${F}`;g.fillText(t(rankFor(S.points).r),W/2,1020);
   g.fillStyle='#AEB5E8';g.font=`700 38px ${F}`;g.fillText(`${S.run.first_try}/6 ${t(UI.firstTry)}  ·  ★ ${S.run.stars}/18`,W/2,1085);
   const js=S.mission.jobs;const bw=120,gap=26,x0=(W-(js.length*bw+(js.length-1)*gap))/2;js.forEach((j,i)=>{const x=x0+i*(bw+gap),y=1120;g.fillStyle=SP[j.superpower].hex;rr(g,x,y,bw,90,24);g.fill();g.fillStyle='#0A0E2E';g.font=`800 36px ${F}`;g.fillText('★'.repeat(S.jobs[j.id].stars),x+bw/2,y+60);});
@@ -1667,14 +1899,22 @@ function showIntro(){
     body.append(suits,h('div',{class:'namerow'},''),h('div',{class:'ranked-rules'},esc(t(UI.rulesR,{t:hhmm(sl.end)}))),pl,startB,info,h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro();}},S.lang==='en'?'हिंदी में खेलो':'Play in English'));
     body.querySelector('.namerow').append(idIn,nmIn);c.append(body);return;
   }
-  body.append(suits,h('button',{class:'big',onclick:()=>enter()},t(UI.enter)+' 🚶'),h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro();}},S.lang==='en'?'हिंदी में खेलो':'Play in English'));
+  const dp=h('div',{class:'dests'});const curD=store.get('fsl.dest','random');
+  S.base.destinations.forEach(d=>{const bt=h('button',{class:curD===d.id?'on':'','aria-label':t(d.name)},planetSvg(d)+`<span>${esc(t(d.name))}</span>`);bt.onclick=()=>{store.set('fsl.dest',curD===d.id?'random':d.id);SFX.tap();showIntro();};dp.append(bt);});
+  body.append(suits,h('div',{class:'note'},esc(t(UI.pickDest))+(curD==='random'?' · '+esc(t(UI.randomDest)):'')),dp,h('button',{class:'big',onclick:()=>enter()},t(UI.enter)+' 🚶'),h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro();}},S.lang==='en'?'हिंदी में खेलो':'Play in English'));
   c.append(body);
 }
 function enter(){SFX.ensure();closeOv();
-  if(S.mode==='ranked'){const used=store.get('fsl.devRanked',[]).filter(x=>x.slot===S.slot.key&&x.child!==S.childId);applyVersion(makeVersion(S.childId+'|'+S.base.id+'|'+S.slot.key,{engine:used.map(x=>x.engineIdx),monitor:used.map(x=>x.monitorIdx)}));setWatermark(true);}
-  else{S.childId=store.get('fsl.childId',null);applyVersion(makeVersion('practice|'+uuid()));}
-  newRun();S.run.player_id=S.childId;S.run.player_name=S.childName||store.get('fsl.name',null);applyVersionVisuals();S.phase='play';S.run.lang=S.lang;S.run.started_at=new Date().toISOString();log('run_start',null,{beat_target:S.beat,suit:S.suit,mode:S.mode,version:S.ver});startClock();
-  R.avatar.position.set(0,0,30);S.camMode='follow';walkTo(0,18);$('#jobbar').classList.remove('hidden');refreshAll();}
+  if(S.mode==='ranked'){const used=store.get('fsl.devRanked',[]).filter(x=>x.slot===S.slot.key&&x.child!==S.childId);applyVersion(makeVersion(S.childId+'|'+S.base.id+'|'+S.slot.key,{dest:used.map(x=>x.dest),engine:[],monitor:used.map(x=>x.monitorIdx)}));setWatermark(true);}
+  else{S.childId=store.get('fsl.childId',null);const pd=store.get('fsl.dest','random');applyVersion(makeVersion('practice|'+uuid(),{},pd==='random'?null:pd));}
+  newRun();S.run.player_id=S.childId;S.run.player_name=S.childName||store.get('fsl.name',null);applyVersionVisuals();showBriefing(()=>{closeOv();S.phase='play';S.run.lang=S.lang;S.run.started_at=new Date().toISOString();log('run_start',null,{beat_target:S.beat,suit:S.suit,mode:S.mode,version:S.ver});startClock();
+  R.avatar.position.set(0,0,30);S.camMode='follow';walkTo(0,18);$('#jobbar').classList.remove('hidden');refreshAll();});}
+function showBriefing(go){const d=S.mission.dest;const e=jobById('engine');const c=openOv();const b=h('div',{class:'brief'});
+  b.innerHTML=`<div class="eyebrow">${esc(t(UI.yourMission))}${S.mode==='ranked'?' · 🏆 '+esc(t(UI.rankedTitle)):''}</div>${planetSvg(d)}<h1>${esc(t(d.name))}</h1>
+   <div class="brief-rows"><div><span>${esc(t(UI.distLbl))}</span>${esc(t(d.distance))}</div><div><span>${esc(t(UI.fuelLbl))}</span><b style="color:var(--sun)">${d.fuel}%</b></div><div><span>${esc(t(UI.rocketLbl))}</span>${e.weight} t · ${esc(t(UI.heavier))}</div><div><span>${esc(t(UI.realLbl))}</span>${esc(t(d.travel))}</div></div>
+   <div class="note">${esc(t(UI.sameRules))}</div>`;
+  b.append(h('button',{class:'big',onclick:()=>{log('briefing_go',null,{dest:d.id});go();}},t(UI.goMission)+' 🚀'));c.append(b);}
+
 function restart(){closeOv();closePanel();clearInterval(clockId);resetParts();R.arm.rotation.y=0;R.win.material.emissive.setHex(0);R.parts.fuel.children[0].material.emissive.setHex(0);R.clamps.forEach(c=>c.rotation.z=0);R.capsule.rotation.y=0;R.tiles.forEach(m=>m.material.emissive&&m.material.emissive.setHex(0));
   newRun();S.camMode='follow';R.avatar.position.set(0,0,30);refreshAll();$('#jobbar').classList.add('hidden');showIntro();}
 
