@@ -189,6 +189,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-of
 .dests button{background:var(--panel2);border:2px solid transparent;border-radius:14px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:800;min-width:0}
 .dests button svg{width:34px;height:34px}
 .dests button.on{border-color:var(--sun);background:var(--raise)}
+.wiz{min-height:440px;justify-content:space-between}
+.wiz-body{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:up .3s ease-out}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--raise)}
+.dots i.on{width:22px;border-radius:999px;background:var(--sun)}
+.dots i.done{background:var(--good)}
+.hero{font-size:64px;line-height:1;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.howlist{display:flex;flex-direction:column;gap:8px;width:100%;text-align:left}
+.howlist div{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:700;font-size:15px}
+.howlist .n{font-size:24px;width:32px;text-align:center;flex:none}
+.suitprev{width:150px;height:180px}
+.suitprev svg{width:100%;height:100%}
+.suits button{width:54px;height:54px}
+.dests.big5{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dests.big5 button{padding:8px 4px;font-size:13px}
+.dests.big5 button svg{width:52px;height:52px}
+.dests small{font-size:11px;color:var(--muted);font-weight:700}
+.fields{display:flex;flex-direction:column;gap:8px;width:100%}
+.fields input{background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 17px var(--font);padding:10px 12px;user-select:text;-webkit-user-select:text}
 .nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-weight:700}
 pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text;font-family:ui-monospace,monospace;text-align:left}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
@@ -211,7 +231,7 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="application/json" id="mission-data">{
  "id": "space-rocket-launch",
- "version": 3.2,
+ "version": 3.3,
  "round": "R2",
  "band": "J",
  "title": {
@@ -595,20 +615,25 @@ pre.dbg{background:#05081F;border-radius:12px;padding:10px;font-size:11px;max-he
     {
      "art": "tiles",
      "text": {
-      "en": "Heat shield tiles keep the crew cool. One cracked tile can let the heat in, so engineers check every tile.",
-      "hi": "हीट शील्ड की टाइलें अंदर ठंडक रखती हैं। एक टूटी टाइल से गर्मी अंदर आ सकती है, इसलिए इंजीनियर हर टाइल जाँचते हैं।"
+      "en": "Heat shield tiles keep the crew cool. A crack, a broken corner, a burn mark or a missing tile can let the heat in, so engineers check every tile.",
+      "hi": "हीट शील्ड की टाइलें अंदर ठंडक रखती हैं। दरार, टूटा कोना, जलने का निशान या गायब टाइल से गर्मी अंदर आ सकती है, इसलिए इंजीनियर हर टाइल जाँचते हैं।"
      }
     }
    ],
    "prompt": {
-    "en": "Drag to turn the capsule. Find and tap the 2 damaged tiles.",
-    "hi": "कैप्सूल घुमाने के लिए खींचो। 2 खराब टाइलें ढूँढकर टैप करो।"
+    "en": "Drag to turn the capsule. Find and tap the {n} damaged tiles.",
+    "hi": "कैप्सूल घुमाने के लिए खींचो। {n} खराब टाइलें ढूँढकर टैप करो।"
    },
    "explain": {
-    "en": "One tile was cracked and one had a broken corner. Both would let heat in.",
-    "hi": "एक टाइल में दरार थी और एक का कोना टूटा था। दोनों से गर्मी अंदर आ जाती।"
+    "en": "There were {n} damaged tiles: {list}. Any one of them would let heat in.",
+    "hi": "{n} टाइलें खराब थीं: {list}। इनमें से कोई भी गर्मी अंदर आने देती।"
    },
-   "generate": true
+   "generate": true,
+   "damageCount": [
+    2,
+    3,
+    4
+   ]
   },
   {
    "id": "launch",
@@ -1016,6 +1041,16 @@ const UI = {
   wxStorm:{en:'the storm is only {v} km away',hi:'तूफ़ान सिर्फ़ {v} km दूर है'},
   wxFuel:{en:'fuel is only {v}%',hi:'ईंधन सिर्फ़ {v}% है'},
   wxGust:{en:'a gust makes the wind {v} km/h',hi:'झोंके से हवा {v} km/h है'},
+  letsGo:{en:"Let's go",hi:'चलो शुरू करें'},
+  howTitle:{en:'How to play',hi:'कैसे खेलें'},
+  howHead:{en:'Your launch day in 4 steps',hi:'तुम्हारा लॉन्च डे, 4 कदमों में'},
+  how1:{en:'Walk to a glowing station. Tap it, or tap the ground to walk.',hi:'चमकते स्टेशन तक चलो। उस पर टैप करो, या चलने के लिए ज़मीन पर टैप करो।'},
+  how2:{en:'Read the Learn card. It teaches the real rocket science.',hi:'सीखो वाला कार्ड पढ़ो। यह असली रॉकेट साइंस सिखाता है।'},
+  how3:{en:'Do the job with your hands. Right the first time = 3 stars.',hi:'काम खुद हाथ से करो। पहली बार में सही = 3 सितारे।'},
+  how4:{en:'Finish all {jobs} jobs and launch within {min} minutes.',hi:'सभी {jobs} काम पूरे करो और {min} मिनट में लॉन्च करो।'},
+  stepOf:{en:'Step {n} of {m}',hi:'कदम {n} / {m}'},
+  whoPlays:{en:'Who is playing?',hi:'कौन खेल रहा है?'},
+  planetAssigned:{en:'Your planet is chosen for you when you start.',hi:'शुरू करने पर तुम्हारा ग्रह तुम्हारे लिए चुना जाएगा।'},
   yourMission:{en:'Your mission',hi:'तुम्हारा मिशन'},
   pickDest:{en:'Pick your destination',hi:'अपनी मंज़िल चुनो'},
   randomDest:{en:'Surprise me',hi:'कोई भी'},
@@ -1232,8 +1267,12 @@ function makeVersion(seedStr,avoid={},destId=null){
   v.decoy=r()<.5?'wheel':'prop';
   const xs=[-6,-3.6,-1.2,1.2,3.6,6];for(let i=xs.length-1;i>0;i--){const k=Math.floor(r()*(i+1));[xs[i],xs[k]]=[xs[k],xs[i]];}v.xs=xs;
   v.weather=genWeather(r,Object.assign({},jb('weather').rules,{fuel:destObj.fuel}));
-  const k1=6+Math.floor(r()*5);let k2;do{k2=Math.floor(r()*16);}while(Math.min(Math.abs(k2-k1),16-Math.abs(k2-k1))<4);
-  const kinds=r()<.5?['crack','chip']:['chip','crack'];v.damaged=[[Math.floor(r()*3),k1,kinds[0]],[Math.floor(r()*3),k2,kinds[1]]];
+  const dc=jb('shield').damageCount||[2];const nD=dc[Math.floor(r()*dc.length)];const KINDS=['crack','chip','burn','gap'];
+  const kinds=[];const kp=KINDS.slice();for(let i=kp.length-1;i>0;i--){const q=Math.floor(r()*(i+1));[kp[i],kp[q]]=[kp[q],kp[i]];}for(let i=0;i<nD;i++)kinds.push(kp[i%kp.length]);
+  const spots=[];const far=(a,b)=>{const dk=Math.min(Math.abs(a[1]-b[1]),16-Math.abs(a[1]-b[1]));return dk>=3||(dk>=2&&a[0]!==b[0]);};
+  spots.push([Math.floor(r()*3),6+Math.floor(r()*5)]);
+  for(let tries=0;spots.length<nD&&tries<200;tries++){const c=[Math.floor(r()*3),Math.floor(r()*16)];if(spots.every(x=>far(x,c)))spots.push(c);}
+  v.damaged=spots.map((x,i)=>[x[0],x[1],kinds[i]]);
   const rv=jb('launch').rampVersions;v.ramp=rv[Math.floor(r()*rv.length)];
   return v;
 }
@@ -1249,7 +1288,8 @@ function applyVersion(v){
   const later=W.b<=10?subT(UI.wxLater,{t:wj.slots[W.b]}):{en:'',hi:''};
   wj.explain=subT(wj.explain,{t1:wj.slots[pi],t2:wj.slots[W.a],w:W.wind[W.a],s:W.storm[W.a],fu:W.fuel[W.a],why,later});
   const mo=J('monitor');const [la,lb]=mo.versions[v.monitorIdx];mo.phases[0].limit=la;mo.phases[1].limit=lb;mo.phases[0].label=subT(mo.phases[0].label,{lim:la});mo.phases[1].label=subT(mo.phases[1].label,{lim:lb});
-  J('shield').damaged=v.damaged;J('launch').rampSec=v.ramp;
+  const shj=J('shield');shj.damaged=v.damaged;const KN={crack:{en:'a crack',hi:'दरार'},chip:{en:'a broken corner',hi:'टूटा कोना'},burn:{en:'a burn mark',hi:'जलने का निशान'},gap:{en:'a missing tile',hi:'गायब टाइल'}};
+  const nd=v.damaged.length;shj.prompt=subT(shj.prompt,{n:nd});shj.explain=subT(shj.explain,{n:nd,list:{en:v.damaged.map(x=>KN[x[2]].en).join(', '),hi:v.damaged.map(x=>KN[x[2]].hi).join(', ')}});J('launch').rampSec=v.ramp;
   S.ver=v;S.mission=m;
 }
 function planetTex(d){const c=document.createElement('canvas');c.width=256;c.height=128;const g=c.getContext('2d');g.fillStyle=d.color;g.fillRect(0,0,256,128);
@@ -1322,6 +1362,8 @@ function label(text,{bg='rgba(10,14,46,.9)',fg='#F5F6FF',size=44,w=512,hgt=96}={
 function crackTex(kind){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#23263D';g.fillRect(0,0,64,64);
   if(kind==='crack'){g.strokeStyle='#FF8A3D';g.lineWidth=3;g.beginPath();g.moveTo(8,6);g.lineTo(26,26);g.lineTo(20,36);g.lineTo(42,48);g.lineTo(58,60);g.stroke();}
   if(kind==='chip'){g.fillStyle='#8C93C4';g.beginPath();g.moveTo(40,0);g.lineTo(64,0);g.lineTo(64,24);g.fill();}
+  if(kind==='burn'){const gr=g.createRadialGradient(30,34,2,30,34,24);gr.addColorStop(0,'#FFB347');gr.addColorStop(.35,'#B5452A');gr.addColorStop(1,'rgba(35,38,61,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);}
+  if(kind==='gap'){g.fillStyle='#B8BFD9';g.fillRect(6,6,52,52);g.strokeStyle='#6B7299';g.lineWidth=2;for(let i=12;i<58;i+=10){g.beginPath();g.moveTo(6,i);g.lineTo(58,i);g.stroke();}}
   return new THREE.CanvasTexture(c);}
 
 function init3D(){
@@ -1875,35 +1917,57 @@ async function shareCard(){
 }
 
 /* ---------- intro / restart ---------- */
-function showIntro(){
-  S.phase='intro';const m=S.mission;const c=openOv();const body=h('div',{class:'intro'});
-  const beat=S.beat!=null?`<div class="beat">${esc(t(UI.beatBanner,{n:fmt(S.beat)}))}</div>`:'';
-  body.innerHTML=`<div class="eyebrow">${esc(t(UI.eyebrow))} ${m.band}</div><h1>${esc(t(m.title))}</h1>${beat}<p>${esc(t(m.story))}</p>
-   <div class="howto"><div><b>${Math.round(m.windowSec/60)}</b>${esc(t(UI.window))}</div><div><b>${m.jobs.length}</b>${esc(t(UI.jobs))}</div><div><b>📖→🔧</b>${esc(t(UI.learnDo))}</div></div>
-   <div class="note">${esc(t(UI.pickSuit))}</div>`;
-  const suits=h('div',{class:'suits'});SUITS.forEach((col,i)=>{const b=h('button',{class:i===S.suit?'on':'',style:{'--c':'#'+col.toString(16).padStart(6,'0')},'aria-label':'suit '+(i+1)});b.onclick=()=>{S.suit=i;store.set('fsl.suit',i);R.suitMat.color.setHex(col);suits.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');SFX.tap();};suits.append(b);});
-  if(S.mode==='ranked'){
-    const sl=S.slot;body.insertBefore(h('div',{class:'beat'},`🏆 ${esc(t(UI.rankedTitle))} · ${hhmm(sl.start)}–${hhmm(sl.end)}${sl.test?' · '+esc(t(UI.testSlot)):''}`),body.children[2]);
+function showIntro(step){
+  S.phase='intro';if(step==null)step=S.introStep||0;S.introStep=step;const m=S.mission;const ranked=S.mode==='ranked';const N=4;
+  const c=openOv();const body=h('div',{class:'intro wiz'});
+  const dots=h('div',{class:'dots'});for(let i=0;i<N;i++)dots.append(h('i',{class:i===step?'on':(i<step?'done':'')}));
+  const langB=h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro(step);}},S.lang==='en'?'हिंदी में खेलो':'Play in English');
+  const nav=(nextLabel,onNext)=>{const row=h('div',{class:'row'});if(step>0)row.append(h('button',{class:'big alt',onclick:()=>{SFX.tap();showIntro(step-1);}},'◀'));row.append(h('button',{class:'big',onclick:onNext},nextLabel));return row;};
+  const next=()=>{SFX.ensure();SFX.tap();showIntro(step+1);};
+  body.append(dots);
+  if(step===0){
+    const beat=S.beat!=null?`<div class="beat">${esc(t(UI.beatBanner,{n:fmt(S.beat)}))}</div>`:'';
+    const rk=ranked?`<div class="beat">🏆 ${esc(t(UI.rankedTitle))} · ${hhmm(S.slot.start)}–${hhmm(S.slot.end)}${S.slot.test?' · '+esc(t(UI.testSlot)):''}</div>`:'';
+    body.append(h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.eyebrow))} ${m.band}</div><div class="hero">🚀</div><h1>${esc(t(m.title))}</h1>${rk}${beat}<p>${esc(t(m.story))}</p>`),nav(t(UI.letsGo)+' ▶',next),langB);
+  } else if(step===1){
+    const steps=[[UI.how1,'🚶'],[UI.how2,'📖'],[UI.how3,'🔧'],[UI.how4,'🚀']];
+    const ul=h('div',{class:'howlist'});steps.forEach(([x,ic],i)=>ul.append(h('div',{},`<span class="n">${ic}</span><span>${esc(t(x,{min:Math.round(m.windowSec/60),jobs:m.jobs.length}))}</span>`)));
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.howTitle))}</div><h1>${esc(t(UI.howHead))}</h1>`);wb.append(ul);
+    if(ranked)wb.append(h('div',{class:'ranked-rules'},esc(t(UI.rulesR,{t:hhmm(S.slot.end)}))));else wb.append(h('div',{class:'note'},esc(t(UI.starNote))));
+    body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(step===2){
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:3,m:N}))}</div><h1>${esc(t(UI.pickSuit))}</h1>`);
+    const prev=h('div',{class:'suitprev'});const draw=()=>{prev.innerHTML=astroSvg('#'+SUITS[S.suit].toString(16).padStart(6,'0'));};draw();
+    const suits=h('div',{class:'suits'});SUITS.forEach((col,i)=>{const b=h('button',{class:i===S.suit?'on':'',style:{'--c':'#'+col.toString(16).padStart(6,'0')},'aria-label':'suit '+(i+1)});b.onclick=()=>{S.suit=i;store.set('fsl.suit',i);R.suitMat.color.setHex(col);suits.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');draw();SFX.tap();};suits.append(b);});
+    wb.append(prev,suits);body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(!ranked){
+    const curD=store.get('fsl.dest','random');
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:4,m:N}))}</div><h1>${esc(t(UI.pickDest))}</h1>`);
+    const dp=h('div',{class:'dests big5'});
+    S.base.destinations.forEach(d=>{const bt=h('button',{class:curD===d.id?'on':'','aria-label':t(d.name)},planetSvg(d)+`<span>${esc(t(d.name))}</span><small>${d.fuel}% ${esc(t({en:'fuel',hi:'ईंधन'}))}</small>`);bt.onclick=()=>{store.set('fsl.dest',d.id);SFX.tap();showIntro(step);};dp.append(bt);});
+    const rb=h('button',{class:curD==='random'?'on':'','aria-label':t(UI.randomDest)},`<span style="font-size:30px;line-height:34px">🎲</span><span>${esc(t(UI.randomDest))}</span><small>?</small>`);rb.onclick=()=>{store.set('fsl.dest','random');SFX.tap();showIntro(step);};dp.append(rb);
+    wb.append(dp);body.append(wb,nav(t(UI.enter)+' 🚶',()=>{S.introStep=0;enter();}));
+  } else {
+    const sl=S.slot;const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:4,m:N}))} · 🏆 ${esc(t(UI.rankedTitle))}</div><h1>${esc(t(UI.whoPlays))}</h1>`);
     const idIn=h('input',{id:'childId',maxlength:'16',placeholder:t(UI.fslId),value:store.get('fsl.childId','')});const nmIn=h('input',{id:'childName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});
-    const pl=h('label',{class:'pledge'});const cb=h('input',{type:'checkbox',id:'pledge'});pl.append(cb,h('span',{},esc(t(UI.pledge))));
-    const startB=h('button',{class:'big'},t(UI.startRanked)+' 🏆');const info=h('div',{class:'note'});
-    startB.onclick=()=>{const id=(idIn.value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');const nm=(nmIn.value||'').trim().slice(0,14);
+    const pl=h('label',{class:'pledge'});const cb=h('input',{type:'checkbox',id:'pledge'});pl.append(cb,h('span',{},esc(t(UI.pledge))));const info=h('div',{class:'note'});
+    const col=h('div',{class:'fields'});col.append(idIn,nmIn);wb.append(col,pl,info,h('div',{class:'note'},esc(t(UI.planetAssigned))));
+    body.append(wb,nav(t(UI.startRanked)+' 🏆',()=>{const id=(idIn.value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');const nm=(nmIn.value||'').trim().slice(0,14);
       if(!id||!cb.checked){info.textContent=t(UI.needId);SFX.bad();return;}
       const prev=store.get('fsl.ranked.'+sl.key+'.'+id,null);
-      if(prev){if(Date.now()>prev.end){showAnswers(prev.answers,showIntro);}else{info.textContent=t(UI.already,{t:hhmm(prev.end)});SFX.bad();}return;}
+      if(prev){if(Date.now()>prev.end){showAnswers(prev.answers,()=>showIntro(step));}else{info.textContent=t(UI.already,{t:hhmm(prev.end)});SFX.bad();}return;}
       const st=slotState();if(st==='before'){info.textContent=t(UI.opensAt,{t:hhmm(sl.start)});SFX.bad();return;}
-      if(st!=='open'){info.innerHTML='';info.append(esc(t(UI.startClosed,{m:Math.round(sl.grace/60000)})),h('br'));info.append(h('button',{class:'big alt',style:{marginTop:'8px'},onclick:()=>{S.mode='practice';showIntro();}},t(UI.playPractice)));return;}
+      if(st!=='open'){info.innerHTML='';info.append(esc(t(UI.startClosed,{m:Math.round(sl.grace/60000)})),h('br'));info.append(h('button',{class:'big alt',style:{marginTop:'8px'},onclick:()=>{S.mode='practice';showIntro(3);}},t(UI.playPractice)));return;}
       S.childId=id;S.childName=nm||id;store.set('fsl.childId',id);if(nm)store.set('fsl.name',nm);
       try{const el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen().then(()=>{S.fsOn=true;},()=>{});}catch(e){}
-      enter();};
-    body.append(suits,h('div',{class:'namerow'},''),h('div',{class:'ranked-rules'},esc(t(UI.rulesR,{t:hhmm(sl.end)}))),pl,startB,info,h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro();}},S.lang==='en'?'हिंदी में खेलो':'Play in English'));
-    body.querySelector('.namerow').append(idIn,nmIn);c.append(body);return;
+      S.introStep=0;enter();}));
   }
-  const dp=h('div',{class:'dests'});const curD=store.get('fsl.dest','random');
-  S.base.destinations.forEach(d=>{const bt=h('button',{class:curD===d.id?'on':'','aria-label':t(d.name)},planetSvg(d)+`<span>${esc(t(d.name))}</span>`);bt.onclick=()=>{store.set('fsl.dest',curD===d.id?'random':d.id);SFX.tap();showIntro();};dp.append(bt);});
-  body.append(suits,h('div',{class:'note'},esc(t(UI.pickDest))+(curD==='random'?' · '+esc(t(UI.randomDest)):'')),dp,h('button',{class:'big',onclick:()=>enter()},t(UI.enter)+' 🚶'),h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro();}},S.lang==='en'?'हिंदी में खेलो':'Play in English'));
   c.append(body);
 }
+function astroSvg(col){return `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="142" rx="34" ry="6" fill="#000" opacity=".3"/><rect x="40" y="96" width="16" height="42" rx="6" fill="#1B2264"/><rect x="64" y="96" width="16" height="42" rx="6" fill="#1B2264"/>
+  <rect x="34" y="56" width="52" height="50" rx="12" fill="${col}"/><rect x="18" y="60" width="14" height="40" rx="7" fill="${col}"/><rect x="88" y="60" width="14" height="40" rx="7" fill="${col}"/><circle cx="72" cy="70" r="5" fill="#FFC83D"/>
+  <circle cx="60" cy="34" r="26" fill="#F5F6FF"/><circle cx="60" cy="36" r="17" fill="#C68B59"/><rect x="44" y="24" width="32" height="11" rx="5" fill="#1F6FD1"/><circle cx="53" cy="40" r="2.5" fill="#0A0E2E"/><circle cx="67" cy="40" r="2.5" fill="#0A0E2E"/><path d="M54 47q6 4 12 0" stroke="#0A0E2E" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;}
+
 function enter(){SFX.ensure();closeOv();
   if(S.mode==='ranked'){const used=store.get('fsl.devRanked',[]).filter(x=>x.slot===S.slot.key&&x.child!==S.childId);applyVersion(makeVersion(S.childId+'|'+S.base.id+'|'+S.slot.key,{dest:used.map(x=>x.dest),engine:[],monitor:used.map(x=>x.monitorIdx)}));setWatermark(true);}
   else{S.childId=store.get('fsl.childId',null);const pd=store.get('fsl.dest','random');applyVersion(makeVersion('practice|'+uuid(),{},pd==='random'?null:pd));}
@@ -1916,7 +1980,7 @@ function showBriefing(go){const d=S.mission.dest;const e=jobById('engine');const
   b.append(h('button',{class:'big',onclick:()=>{log('briefing_go',null,{dest:d.id});go();}},t(UI.goMission)+' 🚀'));c.append(b);}
 
 function restart(){closeOv();closePanel();clearInterval(clockId);resetParts();R.arm.rotation.y=0;R.win.material.emissive.setHex(0);R.parts.fuel.children[0].material.emissive.setHex(0);R.clamps.forEach(c=>c.rotation.z=0);R.capsule.rotation.y=0;R.tiles.forEach(m=>m.material.emissive&&m.material.emissive.setHex(0));
-  newRun();S.camMode='follow';R.avatar.position.set(0,0,30);refreshAll();$('#jobbar').classList.add('hidden');showIntro();}
+  newRun();S.camMode='follow';R.avatar.position.set(0,0,30);refreshAll();$('#jobbar').classList.add('hidden');showIntro(0);}
 
 /* ---------- debug ---------- */
 let tTaps=0,tTimer=null;
