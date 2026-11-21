@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="FSL Round 2 mission (Band Y, 18+): Cyber Defence Arena, Hacker vs Defender. Defend a neon city at 6 hands-on cyber-safety stations and race a rival's ghost.">
+</head>
+<body>
+<title>Cyber Defence Arena</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: full-screen 3D neon city. Arena HUD on top (timer, score, LIVE, City Shield + live rival duel strip), station bar at the bottom,
+   a job panel slides up while the 3D stays visible; demos and results use a centred card. One "neon night" look by design (dark only). */
+:root{
+  color-scheme:dark;
+  --space:#07091A; --panel:#121A3A; --panel2:#1C2550; --raise:#2A3570; --deep:#0B1230;
+  --ink:#E6F1FF; --muted:#9AA6D6; --line:rgba(150,180,255,.18);
+  --sun:#FFC83D; --good:#3DDC97; --bad:#FF5D73; --neon:#22D3EE; --pink:#F472B6;
+  --sp1:#FFC83D; --sp2:#B39BFF; --sp3:#2ED3C0; --sp4:#FF8A5C; --sp5:#4EA8FF; --sp6:#FF7EC8;
+  --font:'Baloo 2','Nirmala UI','Noto Sans Devanagari','Mangal',system-ui,sans-serif;
+}
+html,body{height:100%}
+body{margin:0;background:var(--space);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-size:16px;line-height:1.3;touch-action:none}
+button{font-family:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud{position:fixed;left:0;right:0;top:0;z-index:5;padding-top:calc(env(safe-area-inset-top,0px) + 8px);padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:5px;pointer-events:none;max-width:600px;margin:0 auto}
+.hrow{display:flex;align-items:center;gap:4px}
+.hud .hrow>*{pointer-events:auto}
+.chip{display:inline-flex;align-items:center;gap:4px;background:rgba(11,16,40,.88);border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-weight:800;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.low{background:var(--bad);border-color:var(--bad)}
+.chip.streak{background:linear-gradient(90deg,#FF3D7F,#7C3AED);border:0}
+.live{background:#E0243A;border:0;letter-spacing:.06em;font-size:12px}
+.live::before{content:'';width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.2}}
+.sp{flex:1;min-width:0}
+.iconbtn{background:rgba(11,16,40,.88);border:1px solid var(--line);border-radius:999px;height:32px;min-width:32px;padding:0 8px;font-weight:700;font-size:14px;flex:none}
+.coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE89A,#FFB800 60%,#C98A00);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);display:inline-block;flex:none}
+.meters{display:flex;flex-direction:column;gap:3px;background:rgba(11,16,40,.82);border:1px solid var(--line);border-radius:14px;padding:4px 8px;pointer-events:none}
+.meter{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;min-width:0;font-variant-numeric:tabular-nums}
+.meter .bar{flex:1;height:7px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;min-width:16px}
+.meter .bar i{display:block;height:100%;width:50%;background:var(--c);transition:width .6s}
+.meter.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.12)}}
+.phase{font-size:12px;font-weight:800;color:var(--sun);text-align:center;grid-column:1/-1;line-height:1}
+.bubble{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);z-index:5;background:rgba(11,16,40,.85);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:14px;font-weight:700;max-width:92%;text-align:center;pointer-events:none}
+.lower3{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);z-index:15;width:min(560px,94%);display:flex;gap:10px;align-items:center;background:linear-gradient(90deg,#7C3AED,#E0245A);border-radius:16px;padding:8px 12px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:up .3s ease-out;cursor:pointer}
+.lower3 .mic{font-size:28px;flex:none}
+.lower3 b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.lower3 span{font-size:15px;font-weight:700;line-height:1.2}
+.jobbar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;max-width:600px;margin:0 auto}
+.jb{background:rgba(11,16,40,.9);border:1px solid var(--line);border-radius:14px;padding:5px 2px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;font-weight:700;line-height:1.05;color:var(--muted);min-width:0}
+.jb .ic{width:30px;height:30px;border-radius:10px;background:var(--c);display:flex;align-items:center;justify-content:center}
+.jb .ic svg{width:19px;height:19px}
+.jb span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.jb.lock{opacity:.45}
+.jb.lock .ic{background:var(--panel2)}
+.jb.done{border-color:var(--good);color:var(--sun)}
+.jb.next{border-color:var(--sun);animation:glow 1.4s infinite}
+@keyframes glow{50%{box-shadow:0 0 0 3px rgba(255,182,39,.5)}}
+.hidden{display:none!important}
+
+.ov{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(4,6,18,.66);padding:14px}
+.card{width:100%;max-width:520px;max-height:100%;background:var(--panel);border-radius:26px;border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;animation:up .28s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.lower3{animation-name:up3}
+@keyframes up3{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.panel{position:fixed;left:0;right:0;bottom:0;z-index:10;margin:0 auto;max-width:560px;max-height:62%;background:rgba(18,26,58,.97);border-radius:24px 24px 0 0;border:1px solid var(--line);border-bottom:0;display:flex;flex-direction:column;overflow:hidden;animation:up .25s ease-out;padding-bottom:env(safe-area-inset-bottom,0px)}
+.panel.tall{max-height:84%}
+.ph{display:flex;align-items:center;gap:10px;padding:10px 14px 6px}
+.badge{width:40px;height:40px;border-radius:13px;background:var(--c);display:flex;align-items:center;justify-content:center;flex:none}
+.badge svg{width:25px;height:25px}
+.pt{flex:1;min-width:0}
+.pt small{display:block;font-size:11px;color:var(--c);font-weight:700}
+.pt b{font-size:18px;font-weight:800;display:block;line-height:1.1}
+.x{width:36px;height:36px;border-radius:50%;background:var(--panel2);font-size:20px;font-weight:700;flex:none}
+.pb{padding:0 14px 14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+.prompt{font-size:15px;font-weight:700;text-wrap:pretty}
+.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:700}
+.meta .notes{margin-left:auto;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
+.meta .notes[disabled]{opacity:.5}
+.fb{border-radius:14px;padding:8px 12px;font-weight:700;font-size:15px;min-height:20px}
+.fb.good{background:rgba(61,220,151,.14);border:1px solid var(--good)}
+.fb.bad{background:rgba(255,93,115,.12);border:1px solid var(--bad)}
+.fb.info{color:var(--sun);padding:0 2px}
+.big{background:linear-gradient(180deg,#5EEAD4,#22D3EE);color:#04121F;font-weight:800;font-size:18px;border-radius:16px;padding:10px 20px;box-shadow:0 4px 0 #0E7490}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 #0E7490}
+.big.alt{background:var(--raise);color:var(--ink);box-shadow:0 4px 0 #0A0F2A}
+.big[disabled]{opacity:.45}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.shake-x{animation:sx .35s}
+@keyframes sx{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.learn-text{font-size:16px;font-weight:600;color:#D8E4FF}
+.learn-text ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.learn-text li{background:var(--panel2);border-radius:12px;padding:6px 10px;display:flex;gap:8px;align-items:center}
+.learn-text li b{color:var(--sun)}
+.tail{color:var(--sun);font-weight:800}
+.art.demo{padding:0;overflow:hidden}.art.demo svg{max-width:420px;border-radius:16px}
+.dcap{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:14px;padding:10px 12px;font-size:18px;font-weight:800;color:#E6F1FF;min-height:56px;line-height:1.25}
+.dcap b{flex:0 0 28px;height:28px;border-radius:50%;background:var(--c);color:#0B1020;display:grid;place-items:center;font-size:14px}
+.ddots{display:flex;gap:6px;justify-content:center}.ddots i{width:8px;height:8px;border-radius:50%;background:#2A3570}.ddots i.on{background:var(--c);width:20px;border-radius:4px}.ddots i.done{background:#5E6BB0}
+.rules.chips{flex-direction:row;flex-wrap:wrap;gap:6px;color:#E6F1FF}.rules.chips span{font-size:13.5px;font-weight:800;background:var(--panel2);border-radius:999px;padding:5px 10px}.rules.chips span::before{content:none}
+.tiles button .ti{display:block;width:44px;height:34px;margin:0 auto 2px}
+.cards button .ci,.slot .what .ci{font-size:18px;margin-right:4px}
+.art{background:var(--deep);border-radius:18px;padding:8px;display:flex;justify-content:center}
+.art svg{width:100%;max-width:320px;height:auto;display:block}
+
+/* grid tasks (dunes, memory) */
+.gwrap{position:relative;display:flex;justify-content:center;align-items:center;padding:26px 0}
+.grid{display:grid;gap:3px;width:min(300px,78vw);aspect-ratio:1;background:#7A5536;border-radius:12px;padding:3px;position:relative}
+.cell{border-radius:7px;background:#E8C48C;position:relative;display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden}
+.cell svg{width:100%;height:100%;display:block}
+.cell.me{box-shadow:inset 0 0 0 3px #1B6FD1}
+.cell.path{background:#F3D9A8}
+.cell.ok{box-shadow:inset 0 0 0 3px var(--good)}
+.cell.no{animation:sx .35s;background:#F2A0A0}
+.cell.hint{box-shadow:inset 0 0 0 3px var(--sun)}
+.cell.fog{background:#B59572}
+.cell .av{position:absolute;inset:18%;border-radius:50%;background:#1B6FD1;border:3px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.edge{position:absolute;background:var(--raise);border-radius:10px;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 3px 0 #0A0F2A}
+.edge.t{top:0;left:50%;transform:translateX(-50%);width:min(300px,78vw);height:22px}
+.edge.b{bottom:0;left:50%;transform:translateX(-50%);width:min(300px,78vw);height:22px}
+.edge.l{left:calc(50% - min(150px,39vw) - 26px);top:50%;transform:translateY(-50%);width:22px;height:min(300px,78vw)}
+.edge.r{left:calc(50% + min(150px,39vw) + 4px);top:50%;transform:translateY(-50%);width:22px;height:min(300px,78vw)}
+.edge.sel{background:var(--sun);color:#2A1500}
+.edge.right{background:var(--good);color:#06301F}
+.edge.wrong{background:var(--bad)}
+.edge[disabled]{opacity:.35}
+.stick{display:flex;align-items:center;gap:10px;background:var(--deep);border-radius:14px;padding:6px 10px}
+.stick svg{width:96px;height:96px;flex:none}
+.stick div{font-size:13px;font-weight:700;color:var(--muted)}
+.stick b{color:var(--ink)}
+.studybar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.studybar i{display:block;height:100%;background:var(--sp2);width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border-radius:999px;padding:2px 8px 2px 3px;font-size:12px;font-weight:700}
+.legend svg{width:22px;height:22px}
+
+/* day plan */
+.ptable{width:100%;border-collapse:separate;border-spacing:2px;font-size:12px;font-weight:800;text-align:center}
+.ptable th{color:var(--muted);font-weight:800;padding:2px}
+.ptable td{background:var(--deep);border-radius:6px;padding:3px 2px;font-variant-numeric:tabular-nums}
+.ptable td:first-child{text-align:left;padding-left:6px;background:var(--panel2)}
+.ptable .neg{color:#FF9AA8}.ptable .pos{color:var(--good)}
+.rules{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:700;color:var(--sun)}
+.rules span::before{content:'• '}
+.slots{display:flex;flex-direction:column;gap:5px}
+.slot{display:flex;align-items:center;gap:8px;background:var(--deep);border:2px dashed rgba(255,236,210,.25);border-radius:12px;padding:4px 8px;min-height:40px;font-weight:800;font-size:14px;text-align:left}
+.slot .when{width:92px;flex:none;font-size:12px;color:var(--muted);line-height:1.1}
+.slot .when b{display:block;color:var(--ink);font-size:13px}
+.slot .what{flex:1}
+.slot.filled{border-style:solid;border-color:var(--sp3)}
+.slot.plane .when::after{content:' ✈️'}
+.slot .en{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.slot.bad{border-color:var(--bad)}
+.cards{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.cards button{background:var(--raise);border-radius:12px;padding:6px 10px;font-weight:800;font-size:14px;box-shadow:0 3px 0 #0A0F2A}
+.cards button.on{background:var(--sun);color:#2A1500}
+.cards button.used{opacity:.3}
+.ebar{height:12px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.ebar i{display:block;height:100%;background:var(--energy);width:0;transition:width .35s}
+
+/* spot (mirage) */
+.pano{border-radius:14px;overflow:hidden;background:#BFE3F5}
+.pano svg{width:100%;height:auto;display:block}
+.pano .cand{cursor:pointer}
+.sgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.sgrid.b3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sitem{background:#F1DDB8;border-radius:12px;aspect-ratio:1;padding:4px;position:relative;border:3px solid transparent}
+.sitem svg{width:100%;height:100%;display:block}
+.sitem.found{border-color:var(--good);background:#CFF3E2}
+.sitem.no{animation:sx .35s;border-color:var(--bad)}
+.sitem.hint{border-color:var(--sun)}
+.sitem small{position:absolute;left:0;right:0;bottom:2px;font-size:10px;font-weight:800;color:#2A3570;line-height:1}
+
+/* still */
+.still svg{width:100%;max-width:330px;height:auto;display:block;margin:0 auto}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.tiles button{background:var(--raise);border-radius:12px;padding:8px 6px;font-weight:800;font-size:14px;box-shadow:0 3px 0 #0A0F2A;min-height:44px}
+.tiles button.done{background:#1D5F48;box-shadow:none;opacity:.6}
+.tiles button.hint{outline:3px solid var(--sun)}
+
+/* reflex */
+.rx{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.rxrule{text-align:center;font-weight:800;font-size:15px;border-radius:12px;padding:5px;background:var(--panel2)}
+.rxrule.night{background:#1D2A5C;color:#CFE0FF}
+.rxrule.flash{animation:fl .6s 3}
+@keyframes fl{50%{background:var(--sun);color:#2A1500}}
+.rxcard{height:120px;border-radius:18px;background:var(--deep);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:800;font-size:17px;text-align:center}
+.rxcard.night{background:#0F1638}
+.rxcard .e{font-size:52px;line-height:1;animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
+.rxcard.hit{background:rgba(61,220,151,.3)}.rxcard.miss{background:rgba(255,93,115,.3)}
+.rxbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rxbtns button{border-radius:16px;padding:12px 4px;font-weight:800;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.rxbtns .go{background:#2FA86F}.rxbtns .stay{background:#D9822B}.rxbtns .cover{background:#4E7BD9}
+.timebar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.timebar i{display:block;height:100%;background:var(--sp5);width:100%}
+.score3{display:flex;justify-content:center;gap:16px;font-weight:700;font-size:15px;color:var(--muted)}
+
+.done{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.starrow{font-size:34px;letter-spacing:4px;line-height:1;color:var(--sun)}
+.starrow .off{opacity:.2;color:var(--ink)}
+.gain{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.piece{font-size:14px;font-weight:700;background:var(--panel2);border-radius:999px;padding:3px 12px;display:inline-flex;gap:6px;align-items:center}
+
+.intro{padding:18px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;overflow:auto}
+.intro h1{margin:0;font-size:30px;line-height:1.02;font-weight:800;text-wrap:balance}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--sun);font-weight:700}
+.intro p{margin:0;font-size:16px;font-weight:600;color:#C8D4F5;max-width:38ch}
+.beat{background:linear-gradient(90deg,#FF3D7F,#7C3AED);border-radius:14px;padding:8px 14px;font-weight:800}
+.res-big{font-size:54px;font-weight:800;line-height:1;color:var(--sun);font-variant-numeric:tabular-nums}
+.rank{font-size:22px;font-weight:800;background:linear-gradient(90deg,#FFB627,#FF7EC8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.res-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+.res-grid div{background:var(--panel2);border-radius:14px;padding:8px 2px;font-weight:700;font-size:12px;color:var(--muted)}
+.res-grid b{display:block;color:var(--ink);font-size:19px;font-variant-numeric:tabular-nums}
+.res-list{width:100%;display:flex;flex-direction:column;gap:6px}
+.res-list>div{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:6px 10px;font-weight:700;font-size:14px;text-align:left}
+.res-list .badge{width:32px;height:32px;border-radius:10px}
+.res-list .badge svg{width:20px;height:20px}
+.res-list span.l{flex:1;min-width:0}
+.res-list em{font-style:normal;color:var(--sun);white-space:nowrap}
+.endbadges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.endbadges div{background:linear-gradient(180deg,#26306A,#121A3A);border:2px solid var(--sun);border-radius:16px;padding:6px 12px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px}
+.endbadges div span{font-size:24px}
+.endbadges div.off{border-color:var(--line);opacity:.45}
+.board{width:100%;background:var(--deep);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:4px;text-align:left}
+.board h4{margin:0 0 4px;font-size:16px}
+.board .r{display:grid;grid-template-columns:28px 1fr auto auto;gap:8px;align-items:center;padding:4px 8px;border-radius:10px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.board .r.me{background:rgba(34,211,238,.15);color:var(--sun)}
+.board .r small{color:var(--muted);font-weight:600}
+.namerow{display:flex;gap:8px;width:100%}
+.namerow input{flex:1;min-width:0;background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 17px var(--font);padding:8px 12px;user-select:text;-webkit-user-select:text}
+.note{font-size:13px;color:var(--muted);font-weight:600;max-width:42ch}
+.cardimg{width:100%;max-width:340px;border-radius:18px}
+.toast{position:fixed;left:50%;top:96px;transform:translateX(-50%);z-index:40;background:var(--bad);color:#fff;font-weight:800;padding:8px 16px;border-radius:999px;max-width:92%;text-align:center;animation:up .3s}
+#confetti{position:fixed;inset:0;z-index:25;pointer-events:none}
+#wm{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.07;background-repeat:repeat}
+.pledge{display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:14px;font-weight:700;color:#C8D4F5;cursor:pointer;max-width:40ch}
+.pledge input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:#FFB627}
+.ranked-rules{font-size:13px;font-weight:700;color:var(--sun);max-width:42ch}
+.ans-list{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left}
+.ans-list>div{background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:600;font-size:14px}
+.ans-list b{display:block;color:var(--sun);font-size:15px}
+.cred{background:#050816;border-radius:12px;padding:10px;font-size:13px;font-weight:700;display:flex;flex-direction:column;gap:3px}
+.brief{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:18px;overflow:auto}
+.brief h1{margin:0;font-size:32px;line-height:1}
+.brief-rows{width:100%;display:flex;flex-direction:column;gap:6px;text-align:left}
+.brief-rows div{background:var(--panel2);border-radius:12px;padding:7px 12px;font-weight:700;font-size:14px;display:flex;gap:10px}
+.brief-rows span{color:var(--muted);min-width:84px;flex:none}
+.zone-ic{width:120px;height:84px}
+.zone-ic svg{width:100%;height:100%}
+.wiz{min-height:440px;justify-content:space-between}
+.wiz-body{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;animation:up .3s ease-out}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--raise)}
+.dots i.on{width:22px;border-radius:999px;background:var(--sun)}
+.dots i.done{background:var(--good)}
+.hero{font-size:64px;line-height:1;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.howlist{display:flex;flex-direction:column;gap:8px;width:100%;text-align:left}
+.howlist div{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:14px;padding:8px 12px;font-weight:700;font-size:15px}
+.howlist .n{font-size:24px;width:32px;text-align:center;flex:none}
+.suitprev{width:150px;height:180px}
+.suitprev svg{width:100%;height:100%}
+.suits{display:flex;gap:10px;justify-content:center}
+.suits button{width:54px;height:54px;border-radius:50%;background:var(--c);border:3px solid transparent}
+.suits button.on{border-color:#fff;box-shadow:0 0 0 3px var(--sun)}
+.dests{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.dests button{background:var(--panel2);border:2px solid transparent;border-radius:14px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;font-weight:800;min-width:0}
+.dests button svg{width:64px;height:44px}
+.dests button.on{border-color:var(--sun);background:var(--raise)}
+.dests small{font-size:11px;color:var(--muted);font-weight:700;line-height:1.1}
+.fields{display:flex;flex-direction:column;gap:8px;width:100%}
+.fields input{background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 17px var(--font);padding:10px 12px;user-select:text;-webkit-user-select:text}
+.nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-weight:700}
+pre.dbg{background:#050816;border-radius:12px;padding:10px;font-size:11px;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text;font-family:ui-monospace,monospace;text-align:left}
+.endtitle{position:fixed;left:0;right:0;top:38%;z-index:30;text-align:center;font-size:44px;font-weight:800;color:var(--sun);text-shadow:0 0 30px rgba(255,182,39,.6),0 3px 0 #000;pointer-events:none;animation:up .5s}
+
+/* ---- cyber arena additions ---- */
+.meter>span:first-child{flex:none;font-size:12px}.meter b{min-width:34px;text-align:right}
+.duel{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:800;color:var(--muted);border-top:1px solid var(--line);padding-top:3px}
+.duel.up{color:var(--good)}.duel.down{color:#FF9AAE}
+.gdots{display:flex;gap:3px}.gdots i{width:9px;height:9px;border-radius:3px;background:#2A3570;position:relative}.gdots i.g{background:#FF7EC8}.gdots i.m::after{content:'';position:absolute;inset:2px;border-radius:2px;background:var(--neon)}
+.toast.ghost{background:linear-gradient(90deg,#7C3AED,#E0245A)}.toast.pup{background:linear-gradient(90deg,#0E7490,#7C3AED);top:140px}
+.tagline{font-size:18px;font-weight:800;color:var(--neon);letter-spacing:.04em}
+.tgrid{display:flex;justify-content:center}.tgrid svg{width:min(300px,82vw);height:auto;display:block}.tgrid .tc{cursor:pointer}
+.racks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:min(270px,80vw);margin:0 auto}
+.rack{background:var(--deep);border:2px solid var(--line);border-radius:14px;padding:6px 4px 2px;display:flex;flex-direction:column;align-items:center;font-weight:800;font-size:13px;color:var(--muted)}
+.rack svg{width:38px;height:42px}.rack.flash{background:var(--sp2);border-color:#fff;color:#0B1020;transform:scale(1.06)}.rack.ok{border-color:var(--good)}.rack.no{border-color:var(--bad);animation:sx .35s}.rack[disabled]{opacity:.85}
+.entered{display:flex;gap:6px;justify-content:center}.entered i{width:22px;height:8px;border-radius:4px;background:var(--raise)}.entered i.on{background:var(--good)}
+.pipe{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.pipe div{background:var(--deep);border:2px dashed rgba(150,180,255,.25);border-radius:10px;padding:4px 8px;min-height:34px;font-size:12.5px;font-weight:700;display:flex;gap:6px;align-items:center;line-height:1.15}
+.pipe div b{color:var(--sp3);flex:none}.pipe div.on{border-style:solid;border-color:var(--sp3)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.tiles button{background:var(--raise);border-radius:12px;padding:7px 8px;font-weight:700;font-size:13px;box-shadow:0 3px 0 #0A0F2A;min-height:46px;text-align:left;display:flex;gap:6px;align-items:center;line-height:1.15}
+.tiles button .ti{font-size:20px;flex:none}.tiles button.done{background:#12483F;box-shadow:none;opacity:.55}.tiles button.hint{outline:3px solid var(--sun)}.tiles button.trap{opacity:.4}
+.pwcards{display:flex;flex-direction:column;gap:5px}
+.pwc{background:var(--raise);border-radius:12px;padding:6px 10px;box-shadow:0 3px 0 #0A0F2A;display:grid;grid-template-columns:1fr auto;gap:0 8px;text-align:left;align-items:center}
+.pwc.used{opacity:.3;box-shadow:none}.pwc small{grid-column:1/-1;font-size:12px;color:var(--muted);font-weight:700}
+.pw{font-family:ui-monospace,Menlo,monospace;font-weight:800;font-size:14px;color:#FFE2C4;word-break:break-all}
+.pl{display:flex;gap:3px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.cs{font-style:normal;font-size:11px;font-weight:900;background:#0B1230;border-radius:5px;padding:0 5px;color:var(--neon)}
+.len{display:flex;gap:1px}.len u{width:4px;height:10px;border-radius:1px;background:#FF8A5C;text-decoration:none;display:block}
+.rslots{display:flex;flex-direction:column;gap:4px}
+.rslot{display:flex;gap:8px;align-items:center;background:var(--deep);border:2px dashed rgba(150,180,255,.25);border-radius:10px;padding:4px 10px;min-height:32px;font-weight:800;font-size:13px;text-align:left}
+.rslot b{color:var(--sp4);width:16px}.rslot span{font-family:ui-monospace,Menlo,monospace;color:#FFE2C4}.rslot em{font-style:normal;color:var(--muted);font-size:12px}.rslot.on{border-style:solid;border-color:var(--sp4)}
+.sim{display:flex;flex-direction:column;gap:5px;background:var(--deep);border-radius:12px;padding:8px}
+.sb{display:grid;grid-template-columns:1fr;gap:1px;font-size:12px;font-weight:800}.sb span{font-family:ui-monospace,monospace;color:#FFE2C4}
+.sb i{display:block;height:9px;border-radius:5px;background:linear-gradient(90deg,#FF5D73,#FFC83D,#3DDC97);width:0;transition:width 1.6s ease-out}.sim.go .sb i{width:var(--w)}.sb b{color:var(--sun)}
+.rxrule.lock{background:#4A1730;color:#FFD0DC}.rxrule.clear{background:#12483F;color:#CFF7E6}
+.rxcard.lock{background:#2A0E24}.rxbtns .allow{background:#2FA86F}.rxbtns .block{background:#D9534F}.rxbtns .report{background:#D99A2B}
+.plist{display:flex;flex-direction:column;gap:6px}
+.pitem{background:var(--deep);border:2px solid var(--line);border-radius:12px;padding:7px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;font-size:13.5px;font-weight:600;line-height:1.25}
+.pitem b{font-size:12px;color:var(--neon)}.pitem em{font-style:normal;font-size:12px;color:#FFB3C2;font-weight:700}
+.pitem.url{font-family:ui-monospace,Menlo,monospace;font-size:13px;flex-direction:row;flex-wrap:wrap;gap:0;word-break:break-all;background:#E9EEF8;color:#0B1020;font-weight:700}
+.pitem.url .sch{color:#3D7A4F}.pitem.url .path{color:#5A6380}.pitem.url em{flex-basis:100%;color:#B0123A;font-family:var(--font)}
+.pitem.found{border-color:var(--bad);background:#3A1024}.pitem.url.found{background:#FFD6DE}.pitem.no{animation:sx .35s;border-color:var(--good)}.pitem.hint{border-color:var(--sun)}
+.duelbox{width:100%;background:var(--deep);border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:3px;text-align:left}
+.duelbox h4{margin:0 0 4px;font-size:16px;color:var(--pink)}
+.dr{display:grid;grid-template-columns:1fr 64px 64px;gap:6px;align-items:center;font-size:13px;font-weight:700;padding:2px 4px}
+.dr span{display:flex;gap:6px;align-items:center;min-width:0}.dr span svg{width:16px;height:16px;flex:none;background:var(--raise);border-radius:5px;padding:2px}
+.dr b{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}.dr b.w{color:var(--good)}.dr.head b{color:var(--ink)}.dr.tot{border-top:1px solid var(--line);padding-top:5px;font-size:15px}
+.rivals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%}
+.rivals button{background:var(--panel2);border:2px solid transparent;border-radius:14px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:13px;font-weight:800;min-width:0}
+.rivals button svg{width:40px;height:40px}.rivals button.on{border-color:var(--neon);background:var(--raise)}.rivals small{font-size:10.5px;color:var(--muted);font-weight:700}
+.sel{background:var(--deep);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:700 16px var(--font);padding:9px 10px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+
+<canvas id="gl"></canvas>
+<div class="hud">
+  <div class="hrow">
+    <span class="chip live" id="live">LIVE</span>
+    <span class="chip" id="timer" role="button" title="Show time">⏱ 15:00</span>
+    <span class="chip" id="score">★ 0</span>
+    <span class="chip streak hidden" id="streak"></span>
+    <span class="sp"></span>
+    <span class="chip"><i class="coin"></i><span id="coins">0</span></span>
+    <button class="iconbtn" id="lang" aria-label="Change language">हिं</button>
+    <button class="iconbtn" id="snd" aria-label="Sound and host voice on or off">🔊</button>
+  </div>
+  <div class="meters hidden" id="meters"></div>
+</div>
+<div class="bubble hidden" id="bubble"></div>
+<div class="jobbar hidden" id="jobbar"></div>
+<canvas id="confetti" hidden></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="application/json" id="mission-data">{"id": "cyber-defence", "version": 1.0, "round": "R2", "band": "Y", "title": {"en": "Cyber Defence Arena", "hi": "साइबर डिफ़ेंस एरीना"}, "tag": {"en": "Hacker vs Defender", "hi": "हैकर बनाम डिफ़ेंडर"}, "story": {"en": "The GLITCH crew is attacking Neon Nagar's network. You are the Defender. Clear 6 stations in 15 minutes, keep the City Shield up and beat your rival.", "hi": "GLITCH गैंग नियॉन नगर के नेटवर्क पर हमला कर रहा है। तुम डिफ़ेंडर हो। 15 मिनट में 6 स्टेशन पार करो, सिटी शील्ड बचाए रखो और अपने राइवल को हराओ।"}, "windowSec": 900, "scoring": {"coins": {"start": 3, "perFirstTry": 1, "notesCost": 1}, "job": {"first": 300, "second": 150, "helped": 50, "notesFactor": 0.5, "speedMax": 100, "streak": [1, 1.25, 1.5, 2]}, "skillCredit": {"first": 1, "second": 0.5, "later": 0, "notesPenalty": 0.25}, "windowBonusPerSec": 2, "ranks": [{"min": 0, "en": "Rookie Defender", "hi": "रूकी डिफ़ेंडर"}, {"min": 1000, "en": "Firewall", "hi": "फ़ायरवॉल"}, {"min": 1800, "en": "Threat Hunter", "hi": "थ्रेट हंटर"}, {"min": 2600, "en": "Cyber Guardian", "hi": "साइबर गार्डियन"}, {"min": 3400, "en": "City Legend", "hi": "सिटी लेजेंड"}]}, "shield": {"start": [62, 66, 70], "perJob": 8, "mistake": 3, "saved": 75}, "host": {"intro": {"en": "Live from the Cyber Defence Arena! The GLITCH crew has hit Neon Nagar. Our Defender has 15 minutes and six stations. Go!", "hi": "साइबर डिफ़ेंस एरीना से लाइव! GLITCH गैंग ने नियॉन नगर पर हमला किया है। हमारे डिफ़ेंडर के पास 15 मिनट और छह स्टेशन हैं। चलो!"}, "after": {"trace": {"en": "Attack path blocked! But the hacker wiped the patrol log...", "hi": "हमले का रास्ता बंद! पर हैकर ने पेट्रोल लॉग मिटा दिया..."}, "patrol": {"en": "Log rebuilt. Now an office PC is locked by ransomware. Patch it!", "hi": "लॉग वापस बना। अब एक ऑफ़िस PC रैनसमवेयर से लॉक है। पैच करो!"}, "patch": {"en": "Systems patched. Next, the crew tries to guess passwords. Who breaks first?", "hi": "सिस्टम पैच हो गए। अब गैंग पासवर्ड का अंदाज़ा लगा रहा है। पहले कौन टूटेगा?"}, "crack": {"en": "Weak passwords found. Alerts are flooding in. To the alert room!", "hi": "कमज़ोर पासवर्ड मिल गए। अलर्ट की बाढ़ आ रही है। अलर्ट रूम चलो!"}, "alerts": {"en": "Last wave: a flood of fake messages and links. Hunt the phish!", "hi": "आखिरी लहर: नकली मैसेज और लिंक की बाढ़। फ़िश का शिकार करो!"}}, "saved": {"en": "All six stations clear. The City Core is back online!", "hi": "छहों स्टेशन साफ़। सिटी कोर फिर से ऑनलाइन!"}, "reboot": {"en": "The stations are clear, but the shield is low. The City Core reboots to stay safe.", "hi": "स्टेशन साफ़ हैं, पर शील्ड कमज़ोर है। सुरक्षा के लिए सिटी कोर रीबूट हो रहा है।"}}, "districts": [{"id": "metro", "name": {"en": "Metro Line", "hi": "मेट्रो लाइन"}, "place": {"en": "Ticket gates, trains and 40 lakh daily riders", "hi": "टिकट गेट, ट्रेनें और रोज़ 40 लाख यात्री"}, "fact": {"en": "Cyber fraud in India? Call 1930 or report at cybercrime.gov.in, fast.", "hi": "भारत में साइबर फ़्रॉड? तुरंत 1930 पर कॉल करो या cybercrime.gov.in पर शिकायत करो।"}, "neon": "#22D3EE"}, {"id": "campus", "name": {"en": "Campus Net", "hi": "कैंपस नेट"}, "place": {"en": "Student portal, exam results and Wi-Fi for 30,000", "hi": "स्टूडेंट पोर्टल, रिज़ल्ट और 30,000 लोगों का वाई-फ़ाई"}, "fact": {"en": "Most account break-ins reuse a password leaked from another site.", "hi": "ज़्यादातर अकाउंट किसी दूसरी साइट से लीक हुए पुराने पासवर्ड से तोड़े जाते हैं।"}, "neon": "#A78BFA"}, {"id": "bazaar", "name": {"en": "Digital Bazaar", "hi": "डिजिटल बाज़ार"}, "place": {"en": "Shops, UPI payments and delivery apps", "hi": "दुकानें, UPI पेमेंट और डिलीवरी ऐप"}, "fact": {"en": "A bank never asks for your OTP, UPI PIN or CVV on a call or chat.", "hi": "बैंक कभी कॉल या चैट पर तुम्हारा OTP, UPI PIN या CVV नहीं माँगता।"}, "neon": "#FBBF24"}, {"id": "grid", "name": {"en": "Power Grid", "hi": "पावर ग्रिड"}, "place": {"en": "Control room that keeps the city lights on", "hi": "कंट्रोल रूम जो शहर की बत्तियाँ जलाए रखता है"}, "fact": {"en": "Updates fix holes attackers already know about. Update fast.", "hi": "अपडेट वे छेद बंद करते हैं जो हमलावर पहले से जानते हैं। जल्दी अपडेट करो।"}, "neon": "#34D399"}, {"id": "port", "name": {"en": "Smart Port", "hi": "स्मार्ट पोर्ट"}, "place": {"en": "Cranes, ships and cargo tracking", "hi": "क्रेन, जहाज़ और कार्गो ट्रैकिंग"}, "fact": {"en": "Two-step verification blocks most password-only break-ins.", "hi": "टू-स्टेप वेरिफ़िकेशन ज़्यादातर सिर्फ़-पासवर्ड वाली सेंधमारी रोक देता है।"}, "neon": "#F472B6"}], "core": {"x": 0, "z": -42}, "jobs": [{"id": "trace", "task": "trace", "superpower": "SP1", "competency": "C1.1", "unlock": "start", "step": 1, "targetSec": 75, "station": {"x": -9, "z": 22}, "label": {"en": "Trace the Attack", "hi": "हमले का पैटर्न"}, "size": 6, "shown": 7, "predict": 3, "prompt": {"en": "🎯 Find the hop cycle. Shield hops 8 → 9 → 10.", "hi": "🎯 छलांग का चक्र पहचानो। 8 → 9 → 10 पर ढाल लगाओ।"}, "explain": {"en": "The attack repeats 3 moves: {moves}. Hop 8 = hop 7 + {m1}, then {m2}, then {m3}.", "hi": "हमला 3 चालें दोहराता है: {moves}। छलांग 8 = छलांग 7 + {m1}, फिर {m2}, फिर {m3}।"}, "demo": [{"en": "A botnet hops across city blocks.", "hi": "एक बॉटनेट शहर के ब्लॉकों पर छलांग लगाता है।"}, {"en": "Hop 1 to 2: move A. Then move B. Then move C.", "hi": "1 से 2: चाल A। फिर चाल B। फिर चाल C।"}, {"en": "Then the same three moves repeat.", "hi": "फिर वही तीन चालें दोहराई जाती हैं।"}, {"en": "Find the cycle, then shield the next hops first.", "hi": "चक्र पहचानो, फिर अगली छलांगों पर पहले ढाल लगाओ।"}]}, {"id": "patrol", "task": "patrol", "superpower": "SP2", "competency": "C2.2", "unlock": "trace", "step": 2, "targetSec": 60, "station": {"x": 9, "z": 12}, "label": {"en": "Rewind the Patrol", "hi": "पेट्रोल रिवाइंड"}, "len": 6, "flashMs": 750, "prompt": {"en": "👀 Watch 6 rack checks. ⏪ Tap them LAST → FIRST.", "hi": "👀 6 रैक जाँच देखो। ⏪ उन्हें आखिरी → पहली टैप करो।"}, "explain": {"en": "The patrol went {fwd}. Rewound: {rev}.", "hi": "पेट्रोल का रास्ता: {fwd}। उल्टा: {rev}।"}, "demo": [{"en": "The security drone checks the racks, one by one.", "hi": "सिक्योरिटी ड्रोन रैक एक-एक करके जाँचता है।"}, {"en": "Keep the order in your head.", "hi": "क्रम दिमाग में रखो।"}, {"en": "The hacker wiped the log. Rewind it: last check first.", "hi": "हैकर ने लॉग मिटा दिया। उल्टा चलाओ: आखिरी जाँच पहले।"}, {"en": "One wrong rack ends the try.", "hi": "एक गलत रैक पर कोशिश खत्म।"}]}, {"id": "patch", "task": "order", "superpower": "SP3", "competency": "C3.1", "unlock": "patrol", "step": 3, "targetSec": 80, "station": {"x": -9, "z": 2}, "label": {"en": "Patch Sequence", "hi": "पैच का क्रम"}, "decoyCount": 2, "bank": [{"id": "ransom", "title": {"en": "Ransomware on the office PC", "hi": "ऑफ़िस PC पर रैनसमवेयर"}, "steps": {"unplug": {"i": "🔌", "needs": [], "en": "Disconnect the PC from Wi-Fi and cable", "hi": "PC को वाई-फ़ाई और केबल से हटाओ"}, "scan": {"i": "🧹", "needs": ["unplug"], "en": "Remove the malware with trusted security software", "hi": "भरोसेमंद सिक्योरिटी सॉफ़्टवेयर से मैलवेयर हटाओ"}, "update": {"i": "⬆️", "needs": ["scan"], "en": "Install all pending updates", "hi": "सारे बाकी अपडेट इंस्टॉल करो"}, "pass": {"i": "🔑", "needs": ["unplug"], "en": "Change passwords from a different, clean device", "hi": "दूसरे, साफ़ डिवाइस से पासवर्ड बदलो"}, "restore": {"i": "💾", "needs": ["scan", "update"], "en": "Restore files from the offline backup", "hi": "ऑफ़लाइन बैकअप से फ़ाइलें वापस लाओ"}, "reconnect": {"i": "🌐", "needs": ["restore", "pass"], "en": "Reconnect to the network", "hi": "नेटवर्क से दोबारा जोड़ो"}}, "decoys": {"payr": {"i": "💸", "en": "Pay the ransom to get files back", "hi": "फ़ाइलें वापस पाने के लिए फिरौती दो", "why": {"en": "Paying funds the criminals and does not guarantee your files come back.", "hi": "फिरौती देने से अपराधियों को पैसा मिलता है, और फ़ाइलें वापस मिलने की कोई गारंटी नहीं।"}}, "avoff": {"i": "🚫", "en": "Turn off the antivirus to scan faster", "hi": "तेज़ स्कैन के लिए एंटीवायरस बंद करो", "why": {"en": "Switching off protection helps the malware, not you.", "hi": "सुरक्षा बंद करने से मैलवेयर की मदद होती है, तुम्हारी नहीं।"}}, "early": {"i": "🔗", "en": "Plug in the backup drive before cleaning", "hi": "सफ़ाई से पहले बैकअप ड्राइव लगाओ", "why": {"en": "The ransomware would lock the backup too. Clean first, then restore.", "hi": "रैनसमवेयर बैकअप को भी लॉक कर देगा। पहले सफ़ाई, फिर रिस्टोर।"}}}}, {"id": "social", "title": {"en": "A hacked social media account", "hi": "हैक हुआ सोशल मीडिया अकाउंट"}, "steps": {"recover": {"i": "🆘", "needs": [], "en": "Use \"Forgot password\" in the official app", "hi": "ऑफ़िशियल ऐप में \"Forgot password\" इस्तेमाल करो"}, "newpass": {"i": "🔑", "needs": ["recover"], "en": "Set a new, long, unique password", "hi": "नया, लंबा, अलग पासवर्ड रखो"}, "logout": {"i": "📴", "needs": ["recover"], "en": "Log out every other device", "hi": "बाकी सारे डिवाइस से लॉग आउट करो"}, "twofa": {"i": "📲", "needs": ["newpass"], "en": "Turn on two-step verification", "hi": "टू-स्टेप वेरिफ़िकेशन चालू करो"}, "clean": {"i": "🧹", "needs": ["logout", "twofa"], "en": "Remove the email, phone and apps the hacker added", "hi": "हैकर का जोड़ा ईमेल, फ़ोन और ऐप हटाओ"}, "warn": {"i": "📣", "needs": ["clean"], "en": "Warn friends about messages sent from your account", "hi": "दोस्तों को अपने अकाउंट से गए मैसेज के बारे में बताओ"}}, "decoys": {"reply": {"i": "💬", "en": "Message the hacker and ask them to stop", "hi": "हैकर को मैसेज करके रुकने को कहो", "why": {"en": "Talking to the attacker gives them a new chance to trick you.", "hi": "हमलावर से बात करने से उसे तुम्हें फँसाने का नया मौका मिलता है।"}}, "old": {"i": "♻️", "en": "Go back to your old password so it is easy", "hi": "आसानी के लिए पुराना पासवर्ड वापस रखो", "why": {"en": "The old password is exactly what the hacker already knows.", "hi": "पुराना पासवर्ड ही तो हैकर पहले से जानता है।"}}, "otp": {"i": "🔢", "en": "Share the OTP with \"support\" who DMs you", "hi": "DM करने वाले \"सपोर्ट\" को OTP दो", "why": {"en": "Real support never asks for your OTP. That DM is the hacker.", "hi": "असली सपोर्ट कभी OTP नहीं माँगता। वह DM हैकर का है।"}}}}, {"id": "bank", "title": {"en": "Typed a bank password on a fake page", "hi": "नकली पेज पर बैंक पासवर्ड डाल दिया"}, "steps": {"close": {"i": "✋", "needs": [], "en": "Close the page. Type nothing more.", "hi": "पेज बंद करो। और कुछ मत डालो।"}, "call": {"i": "☎️", "needs": ["close"], "en": "Call the bank on the number on your card", "hi": "कार्ड पर लिखे नंबर पर बैंक को कॉल करो"}, "report": {"i": "🚩", "needs": ["close"], "en": "Report it at 1930 or cybercrime.gov.in", "hi": "1930 या cybercrime.gov.in पर शिकायत करो"}, "change": {"i": "🔑", "needs": ["call"], "en": "Change the password in the official app", "hi": "ऑफ़िशियल ऐप में पासवर्ड बदलो"}, "alerts": {"i": "🔔", "needs": ["change", "report"], "en": "Turn on alerts for every transaction", "hi": "हर लेन-देन के अलर्ट चालू करो"}, "check": {"i": "🧾", "needs": ["alerts"], "en": "Check statements for unknown payments", "hi": "स्टेटमेंट में अनजान पेमेंट जाँचो"}}, "decoys": {"fakecall": {"i": "📞", "en": "Call the helpline shown on the fake page", "hi": "नकली पेज पर दिखी हेल्पलाइन पर कॉल करो", "why": {"en": "That number belongs to the scammers.", "hi": "वह नंबर ठगों का है।"}}, "otpcall": {"i": "🔢", "en": "Read the OTP to the \"bank officer\" who calls", "hi": "कॉल करने वाले \"बैंक अफ़सर\" को OTP बताओ", "why": {"en": "A bank never asks for your OTP. Sharing it lets them take money.", "hi": "बैंक कभी OTP नहीं माँगता। बताने से वे पैसे निकाल लेते हैं।"}}, "wait": {"i": "⏳", "en": "Wait a week to see if money goes", "hi": "हफ़्ता रुककर देखो कि पैसे जाते हैं या नहीं", "why": {"en": "Speed matters: the first hours decide if money can be stopped.", "hi": "जल्दी ज़रूरी है: पहले कुछ घंटे तय करते हैं कि पैसा रोका जा सकता है या नहीं।"}}}}], "prompt": {"en": "🛠️ {title}: tap the fix steps in a working order. Skip traps.", "hi": "🛠️ {title}: सुधार के कदम सही क्रम में टैप करो। जाल छोड़ो।"}, "explain": {"en": "One working order: {order}. Traps left out: {decoys}", "hi": "एक सही क्रम: {order}। छोड़े गए जाल: {decoys}"}, "demo": [{"en": "Every fix is a step. Some steps need others first.", "hi": "हर सुधार एक कदम है। कुछ कदमों से पहले दूसरे कदम ज़रूरी हैं।"}, {"en": "First, stop the spread: cut it off the network.", "hi": "पहले फैलाव रोको: नेटवर्क से अलग करो।"}, {"en": "Clean before you restore, or the backup gets hit too.", "hi": "रिस्टोर से पहले सफ़ाई, वरना बैकअप भी चपेट में।"}, {"en": "Some tiles are traps. Leave them out.", "hi": "कुछ टाइल जाल हैं। उन्हें छोड़ दो।"}]}, {"id": "crack", "task": "rank", "superpower": "SP4", "competency": "C4.3", "unlock": "patch", "step": 4, "targetSec": 70, "sets": [["common", "digits12", "all8", "lower12", "words5"], ["common", "lower10", "all8", "lower12", "all12"], ["common", "digits12", "words4", "mixed10", "lower16"], ["common", "lower10", "words4", "words5", "all12"]], "station": {"x": 9, "z": -8}, "label": {"en": "Crack-Time Lab", "hi": "क्रैक-टाइम लैब"}, "speed": 10000000000.0, "prompt": {"en": "⚡ 10 billion guesses/s. Order: cracked FIRST → LAST.", "hi": "⚡ 10 अरब अनुमान/सेकंड। क्रम: सबसे पहले टूटे → सबसे आखिर।"}, "explain": {"en": "Average time to crack: {list}. Each extra character multiplies the work; common passwords are tried first.", "hi": "तोड़ने का औसत समय: {list}। हर अतिरिक्त कैरेक्टर काम कई गुना बढ़ाता है; आम पासवर्ड सबसे पहले आज़माए जाते हैं।"}, "demo": [{"en": "A guess machine tries billions of passwords per second.", "hi": "एक मशीन हर सेकंड अरबों पासवर्ड आज़माती है।"}, {"en": "Popular passwords sit on leaked lists. Cracked first.", "hi": "मशहूर पासवर्ड लीक हुई लिस्ट में हैं। सबसे पहले टूटते हैं।"}, {"en": "Each extra character multiplies the guesses.", "hi": "हर अतिरिक्त कैरेक्टर अनुमानों को कई गुना करता है।"}, {"en": "So length often beats symbols.", "hi": "इसलिए लंबाई अक्सर सिंबल से ज़्यादा ताकतवर है।"}]}, {"id": "alerts", "task": "alerts", "superpower": "SP5", "competency": "C5.2", "unlock": "crack", "step": 5, "targetSec": 80, "events": [{"id": "ownphone", "i": "📱", "a": "allow", "en": "Login from your own phone, usual city", "hi": "अपने फ़ोन से लॉगिन, रोज़ वाला शहर"}, {"id": "store", "i": "🛍️", "a": "allow", "en": "App update from the official store", "hi": "ऑफ़िशियल स्टोर से ऐप अपडेट"}, {"id": "drive", "i": "📁", "a": "allow", "en": "Teammate shares a file in your work drive", "hi": "साथी ने वर्क ड्राइव में फ़ाइल शेयर की"}, {"id": "pm", "i": "🔐", "a": "allow", "en": "Password manager fills the real site", "hi": "पासवर्ड मैनेजर ने असली साइट भरी"}, {"id": "abroad", "i": "🌍", "a": "block", "en": "Login try from a new country, 3 AM", "hi": "नए देश से लॉगिन की कोशिश, रात 3 बजे"}, {"id": "perm", "i": "📇", "a": "block", "en": "Unknown app wants your SMS and contacts", "hi": "अनजान ऐप को तुम्हारे SMS और कॉन्टैक्ट चाहिए"}, {"id": "brute", "i": "🔁", "a": "block", "en": "100 wrong passwords in 1 minute", "hi": "1 मिनट में 100 गलत पासवर्ड"}, {"id": "popup", "i": "🦠", "a": "block", "en": "Pop-up: \"Virus found! Install this cleaner\"", "hi": "पॉप-अप: \"वायरस मिला! यह क्लीनर डालो\""}, {"id": "otpcall", "i": "☎️", "a": "report", "en": "Caller from \"the bank\" asks for your OTP", "hi": "\"बैंक\" से कॉलर तुम्हारा OTP माँग रहा है"}, {"id": "fine", "i": "💰", "a": "report", "en": "SMS: \"Pay ₹49 fine now or SIM blocked\"", "hi": "SMS: \"₹49 जुर्माना अभी भरो वरना SIM बंद\""}, {"id": "usb", "i": "💽", "a": "report", "en": "USB stick \"Salaries\" found in the parking", "hi": "पार्किंग में मिली USB \"Salaries\""}, {"id": "friend", "i": "🙏", "a": "report", "en": "Friend's account: \"Urgent! Send ₹5,000\"", "hi": "दोस्त का अकाउंट: \"अर्जेंट! ₹5,000 भेजो\""}], "station": {"x": -9, "z": -18}, "label": {"en": "Live Alert Room", "hi": "लाइव अलर्ट रूम"}, "stages": [7, 7, 6], "windowMs": [2100, 1900, 1800], "gapMs": 380, "pass": 16, "prompt": {"en": "🚨 ALLOW, BLOCK or REPORT, fast. 🔒 Lockdown flips ALLOW → BLOCK. Need {pass}/{n}.", "hi": "🚨 ALLOW, BLOCK या REPORT, जल्दी। 🔒 लॉकडाउन में ALLOW → BLOCK। {n} में से {pass} चाहिए।"}, "explain": {"en": "Normal: ALLOW what you expect from your own trusted side, BLOCK machine attacks, REPORT people trying to trick you. Lockdown: every ALLOW becomes BLOCK; REPORT stays REPORT.", "hi": "सामान्य: अपनी भरोसेमंद, उम्मीद वाली चीज़ें ALLOW, मशीनी हमले BLOCK, धोखा देने वाले लोग REPORT। लॉकडाउन: हर ALLOW, BLOCK बन जाता है; REPORT, REPORT ही रहता है।"}, "demo": [{"en": "An alert pops up. Answer before the bar runs out.", "hi": "अलर्ट आता है। पट्टी खत्म होने से पहले जवाब दो।"}, {"en": "Expected and yours? ALLOW.", "hi": "उम्मीद के मुताबिक और तुम्हारा? ALLOW।"}, {"en": "A machine attack? BLOCK.", "hi": "मशीनी हमला? BLOCK।"}, {"en": "A person trying to trick you? REPORT.", "hi": "कोई इंसान धोखा दे रहा है? REPORT।"}, {"en": "LOCKDOWN: every ALLOW becomes BLOCK.", "hi": "लॉकडाउन: हर ALLOW, BLOCK बन जाता है।"}, {"en": "ALL CLEAR: back to normal rules.", "hi": "ऑल क्लियर: वापस सामान्य नियम।"}]}, {"id": "phish", "task": "phish", "superpower": "SP6", "competency": "C6.3", "unlock": "alerts", "step": 6, "targetSec": 90, "station": {"x": 9, "z": -28}, "label": {"en": "Phish Hunter", "hi": "फ़िश हंटर"}, "msgsPhish": [{"id": "prize", "tier": 0, "frm": "BazaarBox Lucky Draw", "en": "You won ₹50,000! Pay ₹199 processing fee to claim today.", "hi": "तुमने ₹50,000 जीते! आज ही ₹199 प्रोसेसिंग फ़ीस देकर लो।", "why": {"en": "Prize + pay first to receive = scam.", "hi": "इनाम + पहले पैसे दो = ठगी।"}}, {"id": "pin", "tier": 0, "frm": "PaySetu Refund", "en": "Refund of ₹2,000 waiting. Enter your UPI PIN to receive it.", "hi": "₹2,000 का रिफ़ंड तैयार है। पाने के लिए UPI PIN डालो।", "why": {"en": "A PIN is only for paying, never for receiving.", "hi": "PIN सिर्फ़ पैसे भेजने के लिए है, लेने के लिए कभी नहीं।"}}, {"id": "kyc", "tier": 1, "frm": "Nagar Bank", "en": "KYC expires TODAY. Update now or account blocked: nagarbank-kyc.co", "hi": "KYC आज खत्म। अभी अपडेट करो वरना अकाउंट बंद: nagarbank-kyc.co", "why": {"en": "Panic deadline + a domain that is not nagarbank.in.", "hi": "डराने वाली डेडलाइन + ऐसा डोमेन जो nagarbank.in नहीं है।"}}, {"id": "power", "tier": 1, "frm": "CityPower", "en": "Power cut tonight 9:30 PM. Call officer 98xxxx0071 now to stop it.", "hi": "आज रात 9:30 बजे बिजली कटेगी। रोकने के लिए अभी अफ़सर 98xxxx0071 को कॉल करो।", "why": {"en": "Threat + urgency + a personal mobile number.", "hi": "धमकी + जल्दी + एक निजी मोबाइल नंबर।"}}, {"id": "macro", "tier": 2, "frm": "HR Team", "en": "Salary revision letter attached. Click \"Enable content\" to view. (Salary_2026.xlsm)", "hi": "सैलरी बदलाव का पत्र संलग्न है। देखने के लिए \"Enable content\" दबाओ। (Salary_2026.xlsm)", "why": {"en": "Asking you to enable macros is how malware gets in.", "hi": "मैक्रो चालू करवाना मैलवेयर घुसाने का तरीका है।"}}, {"id": "replypw", "tier": 2, "frm": "SkyMail Security", "en": "Unusual sign-in found. Reply with your password to keep your account safe.", "hi": "अनोखा साइन-इन मिला। अकाउंट बचाने के लिए अपना पासवर्ड रिप्लाई करो।", "why": {"en": "No real service asks for your password by message.", "hi": "कोई असली सर्विस मैसेज पर पासवर्ड नहीं माँगती।"}}], "msgsLegit": [{"id": "paid", "frm": "PaySetu", "en": "₹250 paid to Chai Point Cafe. Not you? Open the PaySetu app > Help.", "hi": "₹250 चाय पॉइंट कैफ़े को दिए गए। तुमने नहीं किया? PaySetu ऐप > Help खोलो।"}, {"id": "exam", "frm": "CampusNet", "en": "Exam timetable is on the student portal. Log in as usual.", "hi": "परीक्षा का टाइमटेबल स्टूडेंट पोर्टल पर है। हमेशा की तरह लॉग इन करो।"}, {"id": "otp", "frm": "Nagar Bank", "en": "OTP 482913 for the login you just started. Never share it, even with bank staff.", "hi": "अभी शुरू किए लॉगिन का OTP 482913। किसी को मत बताना, बैंक स्टाफ़ को भी नहीं।"}, {"id": "order", "frm": "BazaarBox", "en": "Your order #4471 is out for delivery today.", "hi": "तुम्हारा ऑर्डर #4471 आज डिलीवरी के लिए निकला है।"}, {"id": "newlap", "frm": "SkyMail", "en": "You signed in on a new laptop. If this was you, no action needed.", "hi": "तुमने नए लैपटॉप पर साइन इन किया। अगर यह तुम थे, तो कुछ नहीं करना।"}, {"id": "bill", "frm": "CityPower", "en": "Your bill of ₹1,240 is due on 28 Nov. Pay in the CityPower app.", "hi": "तुम्हारा ₹1,240 का बिल 28 नवंबर तक भरना है। CityPower ऐप में भरो।"}], "linksFake": [{"id": "skyrnail", "tier": 0, "url": "https://skyrnail.com/login", "real": "skyrnail.com", "why": {"en": "\"rn\" pretending to be \"m\".", "hi": "\"rn\" बनकर \"m\" दिखाता है।"}}, {"id": "bazaarbax", "tier": 0, "url": "https://bazaarbax.in/offer", "real": "bazaarbax.in", "why": {"en": "One letter changed: bax, not box.", "hi": "एक अक्षर बदला: bax, box नहीं।"}}, {"id": "campushy", "tier": 1, "url": "https://campusnet-edu.in/results", "real": "campusnet-edu.in", "why": {"en": "Hyphen trick: the real one is campusnet.edu.in.", "hi": "हाइफ़न की चाल: असली campusnet.edu.in है।"}}, {"id": "powerbill", "tier": 1, "url": "https://citypower-bill.in/pay", "real": "citypower-bill.in", "why": {"en": "Extra word added: not citypower.in.", "hi": "एक शब्द जोड़ा गया: citypower.in नहीं।"}}, {"id": "nagarsub", "tier": 2, "url": "https://nagarbank.in.secure-login.co/kyc", "real": "secure-login.co", "why": {"en": "The owner is secure-login.co. \"nagarbank.in\" is only a label in front.", "hi": "मालिक secure-login.co है। \"nagarbank.in\" बस आगे लगा लेबल है।"}}, {"id": "paysub", "tier": 2, "url": "https://paysetu.in.refund-help.net/claim", "real": "refund-help.net", "why": {"en": "The owner is refund-help.net, not paysetu.in.", "hi": "मालिक refund-help.net है, paysetu.in नहीं।"}}], "linksLegit": [{"id": "nagar", "url": "https://nagarbank.in/login", "real": "nagarbank.in"}, {"id": "pay", "url": "https://www.paysetu.in/help", "real": "paysetu.in"}, {"id": "sky", "url": "https://mail.skymail.com/inbox", "real": "skymail.com"}, {"id": "bazaar", "url": "https://bazaarbox.in/orders/4471", "real": "bazaarbox.in"}, {"id": "campus", "url": "https://campusnet.edu.in/exams", "real": "campusnet.edu.in"}, {"id": "power", "url": "https://citypower.in/bill", "real": "citypower.in"}], "prompts": [{"en": "📨 Tap the 3 phishing messages.", "hi": "📨 3 फ़िशिंग मैसेज टैप करो।"}, {"en": "🔗 Tap the 3 fake links.", "hi": "🔗 3 नकली लिंक टैप करो।"}], "explain": {"en": "Phishing: {msgs}. Fake links: {links}. Rule: the real owner is the name just before the first single \"/\".", "hi": "फ़िशिंग: {msgs}। नकली लिंक: {links}। नियम: असली मालिक वह नाम है जो पहले अकेले \"/\" से ठीक पहले है।"}, "demo": [{"en": "Phishing pushes panic: today, now, or else.", "hi": "फ़िशिंग घबराहट फैलाती है: आज, अभी, वरना..."}, {"en": "It asks for a PIN, OTP or password. Real services never do.", "hi": "यह PIN, OTP या पासवर्ड माँगती है। असली सर्विस कभी नहीं माँगती।"}, {"en": "To read a link, find the first single \"/\".", "hi": "लिंक पढ़ने के लिए पहला अकेला \"/\" ढूँढो।"}, {"en": "The name just before it is the real owner.", "hi": "उसके ठीक पहले वाला नाम ही असली मालिक है।"}]}], "recipes": {"common": {"N": null, "guesses": 1000000.0, "show": "Welcome@123", "icons": ["📋"], "en": "A popular password with a twist", "hi": "मशहूर पासवर्ड में थोड़ा बदलाव", "sec": 5e-05}, "digits12": {"N": 10, "L": 12, "show": "482913057164", "icons": ["1"], "en": "12 digits", "hi": "12 अंक", "sec": 50.0}, "lower10": {"N": 26, "L": 10, "show": "qzmtrkwpla", "icons": ["a"], "en": "10 small letters", "hi": "10 छोटे अक्षर", "sec": 7058.3547826688}, "all8": {"N": 95, "L": 8, "show": "k#9Lm!2q", "icons": ["a", "A", "1", "#"], "en": "8 characters, all types", "hi": "8 कैरेक्टर, सब तरह के", "sec": 331710.21564453124}, "lower12": {"N": 26, "L": 12, "show": "vbqnxlrtzoek", "icons": ["a"], "en": "12 small letters", "hi": "12 छोटे अक्षर", "sec": 4771447.833084109}, "words4": {"N": 7776, "L": 4, "show": "mango-river-tiger-lamp", "icons": ["📖"], "en": "4 random words", "hi": "4 बेतरतीब शब्द", "sec": 182807.9220031488}, "words5": {"N": 7776, "L": 5, "show": "cloud-brick-onion-sitar-fox", "icons": ["📖"], "en": "5 random words", "hi": "5 बेतरतीब शब्द", "sec": 1421514401.496485}, "mixed10": {"N": 62, "L": 10, "show": "T7kq2ZpR9m", "icons": ["a", "A", "1"], "en": "10 letters and digits, mixed case", "hi": "10 अक्षर और अंक, छोटे-बड़े", "sec": 41964968.293417014}, "all12": {"N": 95, "L": 12, "show": "r$8Kp!vQ2#zM", "icons": ["a", "A", "1", "#"], "en": "12 characters, all types", "hi": "12 कैरेक्टर, सब तरह के", "sec": 27018004383131.848}, "lower16": {"N": 26, "L": 16, "show": "tqmzrvbkxlenpwoa", "icons": ["a"], "en": "16 small letters", "hi": "16 छोटे अक्षर", "sec": 2180437144971.4438}}, "rivals": [{"id": "riya", "name": "Riya", "tier": 1, "c": "#F472B6"}, {"id": "arjun", "name": "Arjun", "tier": 0, "c": "#22D3EE"}, {"id": "kabir", "name": "Kabir", "tier": 2, "c": "#FBBF24"}, {"id": "meera", "name": "Meera", "tier": 1, "c": "#A78BFA"}, {"id": "zoya", "name": "Zoya", "tier": 2, "c": "#34D399"}, {"id": "dev", "name": "Dev", "tier": 0, "c": "#FB923C"}], "tiers": [{"en": "Rookie", "hi": "रूकी", "first": 0.45, "speed": [1.05, 1.35]}, {"en": "Pro", "hi": "प्रो", "first": 0.7, "speed": [0.75, 1.05]}, {"en": "Legend", "hi": "लेजेंड", "first": 0.88, "speed": [0.55, 0.8]}], "cities": ["Indore", "Jaipur", "Lucknow", "Delhi NCR", "Mumbai", "Bengaluru", "Pune", "Hyderabad", "Kolkata", "Chennai", "Bhopal", "Patna", "Other"], "fairPlay": {"floors": {"trace": 10, "patrol": 6, "patch": 12, "crack": 12, "alerts": 30, "phish": 15}, "minTotalSec": 300, "readMinSec": 3, "readPromptSec": 2.5, "rankMinSec": 8, "reactFloorMs": 200, "reactFlagCount": 4, "idleSec": 60, "leaveMax": 2, "leaveTotalSec": 20, "bands": {"green": 80, "amber": 60}, "caps": {"A": -25, "B": -20, "C": -25, "D": -15, "E": -30, "F": -25}, "slotMin": 30, "startGraceMin": 10}}</script>
+<script>
+"use strict";
+/* ================= FSL Mission engine: Cyber Defence Arena (Hacker vs Defender), Band Y, 3D =================
+   The player walks a neon 3D city and does one hands-on defence job per station. No MCQs.
+   Task types: trace, patrol, order, rank, alerts, phish.
+   Skill credit (feeds the Star level): 1 first try / 0.5 second / 0 after, minus 0.25 if Notes were used.
+   Points, speed, streaks, coins, ranks, City Shield, power-ups, rival duel and team boards are for fun and ranking only.
+   Every job is independent. Run data -> localStorage fsl.missionRuns.cyber (mission_runs, mission_job_results, mission_events). */
+
+const SP = {
+  SP1:{en:'Smart Logic',hi:'स्मार्ट लॉजिक',c:'var(--sp1)',hex:'#FFC83D',n:0xFFC83D},
+  SP2:{en:'Super Memrix',hi:'सुपर मेमरिक्स',c:'var(--sp2)',hex:'#B39BFF',n:0xB39BFF},
+  SP3:{en:'Master Algo',hi:'मास्टर एल्गो',c:'var(--sp3)',hex:'#2ED3C0',n:0x2ED3C0},
+  SP4:{en:'Sci Idea',hi:'साइ आइडिया',c:'var(--sp4)',hex:'#FF8A5C',n:0xFF8A5C},
+  SP5:{en:'Speed Flex',hi:'स्पीड फ्लेक्स',c:'var(--sp5)',hex:'#4EA8FF',n:0x4EA8FF},
+  SP6:{en:'Pro Focus',hi:'प्रो फोकस',c:'var(--sp6)',hex:'#FF7EC8',n:0xFF7EC8}
+};
+const COMP = {'C1.1':'Pattern Recognition','C1.2':'Logical Deduction','C1.3':'Quantitative Reasoning','C2.1':'Mental Rotation','C2.2':'Working Memory','C2.3':'Diagram & Mechanism Reading','C3.1':'Algorithmic Thinking','C3.2':'Decomposition & Planning','C3.3':'Optimisation & Trade-offs','C4.1':'Observation & Inference','C4.2':'Experimental Design','C4.3':'Cause, Effect & Systems','C5.1':'Processing Speed','C5.2':'Cognitive Flexibility','C5.3':'Learn & Transfer','C6.1':'Sustained Attention','C6.2':'Detail & Error Detection','C6.3':'Critical Evaluation of Information'};
+const IC='#0B1020';
+const ICON = {
+  SP1:`<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="${IC}"/><rect x="8.5" y="18" width="7" height="2" rx="1" fill="${IC}"/><rect x="9.5" y="21" width="5" height="1.6" rx=".8" fill="${IC}"/><path d="M10 9l2 3 2-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`,
+  SP2:`<svg viewBox="0 0 24 24"><path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 1 5 3 3 0 0 0 4 4 2 2 0 0 0 2-1V4a2 2 0 0 0-2-1zm6 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-1 5 3 3 0 0 1-4 4 2 2 0 0 1-2-1V4a2 2 0 0 1 2-1z" fill="${IC}"/></svg>`,
+  SP3:`<svg viewBox="0 0 24 24"><rect x="2" y="3" width="8" height="5" rx="1.5" fill="${IC}"/><rect x="8" y="10" width="8" height="5" rx="1.5" fill="${IC}"/><rect x="14" y="17" width="8" height="5" rx="1.5" fill="${IC}"/><path d="M6 8v4h2M12 15v4h2" stroke="${IC}" stroke-width="1.8" fill="none"/></svg>`,
+  SP4:`<svg viewBox="0 0 24 24"><path d="M9 2h6v2h-1v5l5.5 9.5A2.3 2.3 0 0 1 17.5 22h-11a2.3 2.3 0 0 1-2-3.5L10 9V4H9z" fill="${IC}"/><path d="M7 16h10l1.5 2.6c.3.6-.1 1.4-.8 1.4H6.3c-.7 0-1.1-.8-.8-1.4z" fill="#fff" opacity=".85"/></svg>`,
+  SP5:`<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="${IC}"/></svg>`,
+  SP6:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="${IC}"/><circle cx="12" cy="12" r="6.5" fill="#fff"/><circle cx="12" cy="12" r="3.5" fill="${IC}"/></svg>`
+};
+const UI = {
+  eyebrow:{en:'FSL Round 2 · Band',hi:'FSL राउंड 2 · बैंड'},
+  enter:{en:'Enter the arena',hi:'एरीना में उतरो'},
+  pickSuit:{en:'Pick your Defender suit',hi:'अपना डिफ़ेंडर सूट चुनो'},
+  tapStation:{en:'Tap a glowing station',hi:'चमकते स्टेशन पर टैप करो'},
+  goFirst:{en:'Start at station 1: trace the attack!',hi:'स्टेशन 1 से शुरू करो: हमले का पैटर्न पकड़ो!'},
+  goCore:{en:'All stations clear! To the City Core...',hi:'सारे स्टेशन साफ़! सिटी कोर की ओर...'},
+  locked:{en:'Clear the earlier stations first',hi:'पहले पिछले स्टेशन पार करो'},
+  learn:{en:'Learn',hi:'सीखो'}, next:{en:'Next',hi:'आगे'},
+  startJob:{en:'Start the challenge',hi:'चुनौती शुरू करो'}, watch:{en:'Watch and learn',hi:'देखो और सीखो'}, watchFirst:{en:'Watch the demo',hi:'पहले डेमो देखो'}, backToJob:{en:'Back to the challenge',hi:'चुनौती पर वापस'},
+  notes:{en:'Notes',hi:'नोट्स'}, tries:{en:'Try',hi:'कोशिश'}, mistakes:{en:'Mistakes',hi:'गलतियाँ'},
+  great:{en:'Station cleared!',hi:'स्टेशन साफ़!'}, helped:{en:'Cleared with help. Why:',hi:'मदद से साफ़। क्यों:'},
+  back:{en:'Back to the city',hi:'शहर में वापस'}, close:{en:'Close',hi:'बंद करो'},
+  hop:{en:'Hop',hi:'छलांग'}, traceWrong:{en:'The attack lands elsewhere. Look at the 3-move cycle.',hi:'हमला कहीं और गिरता है। 3 चालों वाला चक्र देखो।'},
+  traceGood:{en:'Shield up on hop {n}!',hi:'छलांग {n} पर ढाल लगी!'}, traceDone:{en:'All 3 hops blocked!',hi:'तीनों छलांगें रुक गईं!'},
+  showPatrol:{en:'Show the patrol',hi:'पेट्रोल दिखाओ'}, watchIt:{en:'Watch...',hi:'देखो...'}, rewindNow:{en:'⏪ Rewind: last check first',hi:'⏪ उल्टा: आखिरी जाँच पहले'},
+  patrolWrong:{en:'Wrong rack. The log breaks.',hi:'गलत रैक। लॉग टूट गया।'}, patrolGood:{en:'Log rebuilt!',hi:'लॉग वापस बना!'},
+  patrolAgain:{en:'Try again (new patrol)',hi:'फिर कोशिश (नया पेट्रोल)'},
+  orderNeed:{en:'Not yet. Another step must come first.',hi:'अभी नहीं। पहले कोई और कदम ज़रूरी है।'}, orderDone:{en:'System patched and back online!',hi:'सिस्टम पैच होकर वापस ऑनलाइन!'},
+  weakest:{en:'Cracked first',hi:'सबसे पहले टूटा'}, strongest:{en:'Cracked last',hi:'सबसे आखिर में'}, runCracker:{en:'Run the guess machine',hi:'अनुमान मशीन चलाओ'},
+  fillRank:{en:'Place all 5 first',hi:'पहले सभी 5 रखो'}, rankRight:{en:'{n} of 5 in the right place.',hi:'5 में से {n} सही जगह पर।'}, rankAgain:{en:'Not quite. Swap and run again.',hi:'अभी नहीं। बदलकर फिर चलाओ।'},
+  tapToPlace:{en:'Tap a password to place it. Tap a slot to take it back.',hi:'पासवर्ड टैप करके रखो। वापस लेने के लिए खाना टैप करो।'},
+  instant:{en:'instantly',hi:'तुरंत'},
+  allow:{en:'ALLOW',hi:'ALLOW'}, block:{en:'BLOCK',hi:'BLOCK'}, report:{en:'REPORT',hi:'REPORT'},
+  normalRule:{en:'🟢 NORMAL rules',hi:'🟢 सामान्य नियम'}, lockRule:{en:'🔒 LOCKDOWN! ALLOW → BLOCK',hi:'🔒 लॉकडाउन! ALLOW → BLOCK'}, clearRule:{en:'✅ ALL CLEAR: normal rules',hi:'✅ ऑल क्लियर: सामान्य नियम'},
+  rxStart:{en:'Start',hi:'शुरू'},
+  rxPass:{en:'{n} right. The alert flood is handled!',hi:'{n} सही। अलर्ट की बाढ़ संभल गई!'},
+  rxFail:{en:'{n} right. You need {p}.',hi:'{n} सही। {p} चाहिए।'}, rxAgain:{en:'Try again (new alerts)',hi:'फिर कोशिश (नए अलर्ट)'},
+  notPhish:{en:'That one is genuine. Look for pressure and odd asks.',hi:'यह असली है। दबाव और अजीब माँग ढूँढो।'}, notFake:{en:'That link is genuine. Check the name before the first "/".',hi:'यह लिंक असली है। पहले "/" से पहले का नाम जाँचो।'},
+  found:{en:'Found {n} of {m}',hi:'{m} में से {n} मिले'},
+  points:{en:'points',hi:'अंक'}, firstTry:{en:'First try',hi:'पहली बार में'}, stars:{en:'Stars',hi:'सितारे'}, time:{en:'Time',hi:'समय'}, shieldLbl:{en:'Shield',hi:'शील्ड'},
+  nextRank:{en:'{n} more points to become {r}',hi:'{r} बनने के लिए {n} अंक और'}, topRank:{en:'Top rank reached!',hi:'सबसे ऊँची रैंक!'},
+  crew:{en:'Defender board on this device',hi:'इस डिवाइस का डिफ़ेंडर बोर्ड'}, noScores:{en:'No scores yet. Save yours first!',hi:'अभी कोई स्कोर नहीं। पहले अपना सेव करो!'},
+  yourName:{en:'Your name',hi:'तुम्हारा नाम'}, save:{en:'Save',hi:'सेव'},
+  share:{en:'Make my score card',hi:'मेरा स्कोर कार्ड बनाओ'}, copyLink:{en:'Duel a friend',hi:'दोस्त से ड्यूल'},
+  copied:{en:'Duel link copied. Your friend races your ghost!',hi:'ड्यूल लिंक कॉपी हुआ। दोस्त तुम्हारे घोस्ट से रेस करेगा!'}, copyFail:{en:'Copy this link:',hi:'यह लिंक कॉपी करो:'},
+  playAgain:{en:'Play again',hi:'फिर से खेलो'}, rematch:{en:'Rematch',hi:'दोबारा मुकाबला'},
+  starNote:{en:'Your Star level counts only solo challenges done right on the first try. Points, speed, streaks, coins, the shield, power-ups, duels and ranks are for fun and the leaderboard.',hi:'तुम्हारा स्टार लेवल सिर्फ़ अकेले, पहली बार में सही की गई चुनौतियों से बनता है। अंक, स्पीड, स्ट्रीक, सिक्के, शील्ड, पावर-अप, ड्यूल और रैंक मज़े और लीडरबोर्ड के लिए हैं।'},
+  shieldNote:{en:'The City Shield is for fun. It never changes your stars.',hi:'सिटी शील्ड मज़े के लिए है। इससे तुम्हारे सितारे कभी नहीं बदलते।'},
+  saveCard:{en:'Press and hold the card to save or share it.',hi:'कार्ड को दबाकर रखो और सेव या शेयर करो।'},
+  cardBeat:{en:'Beat my score!',hi:'मेरा स्कोर हराओ!'}, cardScored:{en:'I defended {zone} and scored',hi:'मैंने {zone} को बचाया और बनाए'},
+  log:{en:'Run log (for the team)',hi:'रन लॉग (टीम के लिए)'}, copyLog:{en:'Copy log JSON',hi:'लॉग JSON कॉपी करो'},
+  noGL:{en:'This device cannot show 3D. Please try a newer browser or phone.',hi:'यह डिवाइस 3D नहीं दिखा सकता। नया ब्राउज़र या फ़ोन आज़माओ।'},
+  windowBonus:{en:'Time bonus',hi:'टाइम बोनस'}, windowClosed:{en:'Arena time is over! Finish fast. No time bonus now.',hi:'एरीना का समय खत्म! जल्दी पूरा करो। अब टाइम बोनस नहीं।'},
+  saved:{en:'City Saved!',hi:'शहर बच गया!'}, reboot:{en:'City Rebooted',hi:'शहर रीबूट हुआ'},
+  endWhy:{en:'City Shield {s}% at the end ({c}% or more lights the whole city).',hi:'आखिर में सिटी शील्ड {s}% ({c}% या ज़्यादा पर पूरा शहर रोशन होता है)।'},
+  rankedTitle:{en:'Ranked round',hi:'रैंक्ड राउंड'}, testSlot:{en:'test slot',hi:'टेस्ट स्लॉट'}, fslId:{en:'Your FSL ID',hi:'तुम्हारी FSL ID'},
+  pledge:{en:'I promise to play alone, without help, and to stay in the game.',hi:'मैं वादा करता/करती हूँ कि अकेले, बिना मदद के खेलूँगा/खेलूँगी और गेम से बाहर नहीं जाऊँगा/जाऊँगी।'},
+  rulesR:{en:'One attempt only. Leaving the game, screenshots and very fast answers are recorded. Answers open at {t}.',hi:'सिर्फ़ एक मौका। गेम छोड़ना, स्क्रीनशॉट और बहुत तेज़ जवाब रिकॉर्ड होते हैं। जवाब {t} बजे खुलेंगे।'},
+  startRanked:{en:'Start ranked round',hi:'रैंक्ड राउंड शुरू करो'}, needId:{en:'Type your FSL ID and tick the promise',hi:'अपनी FSL ID लिखो और वादे पर टिक करो'},
+  opensAt:{en:'The slot opens at {t}',hi:'स्लॉट {t} बजे खुलेगा'},
+  startClosed:{en:'Start time is over (only the first {m} minutes of the slot). You can play Practice.',hi:'शुरू करने का समय खत्म (स्लॉट के सिर्फ़ पहले {m} मिनट)। तुम प्रैक्टिस खेल सकते हो।'},
+  playPractice:{en:'Play Practice',hi:'प्रैक्टिस खेलो'},
+  already:{en:'You already played this slot. Answers open at {t}.',hi:'तुम यह स्लॉट खेल चुके हो। जवाब {t} बजे खुलेंगे।'},
+  answersLater:{en:'🔒 The answer opens when the slot closes at {t}.',hi:'🔒 जवाब स्लॉट बंद होने पर {t} बजे खुलेगा।'},
+  seeAnswers:{en:'See answers',hi:'जवाब देखो'}, answersTitle:{en:'Your answers',hi:'तुम्हारे जवाब'},
+  leftWarn:{en:'You left the game. This is recorded for fair play.',hi:'तुमने गेम छोड़ा। फ़ेयर प्ले के लिए यह रिकॉर्ड हुआ।'},
+  capWarn:{en:'Screenshots are recorded in the ranked round.',hi:'रैंक्ड राउंड में स्क्रीनशॉट रिकॉर्ड होते हैं।'},
+  nowPractice:{en:'Ranked round done. This game is Practice.',hi:'रैंक्ड राउंड हो गया। यह गेम प्रैक्टिस है।'},
+  letsGo:{en:"Let's go",hi:'चलो शुरू करें'}, howTitle:{en:'How to play',hi:'कैसे खेलें'}, howHead:{en:'Defend the city in 4 moves',hi:'4 कदमों में शहर बचाओ'},
+  how1:{en:'Walk to a glowing station. Tap it, or tap the street to walk.',hi:'चमकते स्टेशन तक चलो। उस पर टैप करो, या चलने के लिए सड़क पर टैप करो।'},
+  how2:{en:'Watch the short demo. It shows the real cyber-safety idea.',hi:'छोटा डेमो देखो। यह असली साइबर-सेफ़्टी आइडिया दिखाता है।'},
+  how3:{en:'Do the job with your hands. Right the first time = 3 stars.',hi:'काम खुद हाथ से करो। पहली बार में सही = 3 सितारे।'},
+  how4:{en:'Clear all {jobs} stations in {min} minutes and beat your rival’s ghost.',hi:'{min} मिनट में सभी {jobs} स्टेशन पार करो और राइवल के घोस्ट को हराओ।'},
+  stepOf:{en:'Step {n} of {m}',hi:'कदम {n} / {m}'}, whoPlays:{en:'Who is playing?',hi:'कौन खेल रहा है?'},
+  zoneAssigned:{en:'Your district and rival are assigned when you start.',hi:'शुरू करने पर तुम्हारा ज़िला और राइवल तय होंगे।'},
+  yourDrop:{en:'Your district',hi:'तुम्हारा ज़िला'}, pickZone:{en:'Pick your district',hi:'अपना ज़िला चुनो'}, randomZone:{en:'Surprise me',hi:'कोई भी'},
+  goDrop:{en:'Start defending',hi:'बचाव शुरू करो'}, shieldStart:{en:'City Shield {s}% · GLITCH crew: 6 attack waves',hi:'सिटी शील्ड {s}% · GLITCH गैंग: 6 हमले'},
+  sameRules:{en:'Every district has the same 6 stations at the same difficulty, so stars are fair for everyone.',hi:'हर ज़िले में वही 6 स्टेशन, उतने ही कठिन, इसलिए सबके सितारे बराबर गिने जाते हैं।'},
+  verifyNote:{en:'Security facts are simplified for play.',hi:'खेल के लिए सुरक्षा की बातें आसान रखी गई हैं।'},
+  hostLbl:{en:'Arena host',hi:'एरीना होस्ट'}, tapSkip:{en:'tap to skip',hi:'छोड़ने के लिए टैप करो'},
+  pickRival:{en:'Pick your rival',hi:'अपना राइवल चुनो'}, rivalNote:{en:'You race their ghost run live. Duels are for fun and ranking only.',hi:'तुम उनके घोस्ट रन से लाइव रेस करोगे। ड्यूल सिर्फ़ मज़े और रैंकिंग के लिए है।'},
+  myBest:{en:'My best run',hi:'मेरा सबसे अच्छा रन'}, friendGhost:{en:'Friend’s ghost',hi:'दोस्त का घोस्ट'}, noRival:{en:'Solo',hi:'अकेले'},
+  playFor:{en:'Play for your city',hi:'अपने शहर के लिए खेलो'}, schoolCode:{en:'School or college code (optional)',hi:'स्कूल या कॉलेज कोड (वैकल्पिक)'},
+  behind:{en:'{n} behind {r}',hi:'{r} से {n} पीछे'}, ahead:{en:'{n} ahead of {r}',hi:'{r} से {n} आगे'}, level:{en:'level with {r}',hi:'{r} के बराबर'},
+  ghostDone:{en:'{r} cleared {s}',hi:'{r} ने {s} पार किया'}, ghostFinished:{en:'{r} finished the arena!',hi:'{r} ने एरीना पूरा किया!'},
+  duelWin:{en:'You beat {r}!',hi:'तुमने {r} को हराया!'}, duelLose:{en:'{r} wins this time',hi:'इस बार {r} जीते'}, duelTie:{en:'Dead heat with {r}!',hi:'{r} के साथ बराबरी!'},
+  duelTitle:{en:'Duel',hi:'ड्यूल'}, you:{en:'You',hi:'तुम'}, duelFrom:{en:'{n} challenged you to a duel. Beat their ghost!',hi:'{n} ने तुम्हें ड्यूल की चुनौती दी है। उनके घोस्ट को हराओ!'},
+  teamBoard:{en:'Team boards (this device)',hi:'टीम बोर्ड (इस डिवाइस पर)'}, cityBoard:{en:'City vs city',hi:'शहर बनाम शहर'}, schoolBoard:{en:'School vs school',hi:'स्कूल बनाम स्कूल'},
+  teamNote:{en:'Live boards across all players switch on with FSL login.',hi:'सभी खिलाड़ियों के लाइव बोर्ड FSL लॉगिन के साथ चालू होंगे।'}, avgPts:{en:'avg',hi:'औसत'}, runsN:{en:'runs',hi:'रन'},
+  powerUp:{en:'Power-up: {p} (looks only, stars unchanged)',hi:'पावर-अप: {p} (सिर्फ़ लुक, सितारे वही)'},
+  pups:{trail:{en:'Neon Trail',hi:'नियॉन ट्रेल',i:'✨'},cape:{en:'Firewall Cape',hi:'फ़ायरवॉल केप',i:'🧥'},gold:{en:'Gold Shield',hi:'गोल्ड शील्ड',i:'🛡️'}}
+};
+const SUITS=[0x22D3EE,0xF472B6,0xA3E635,0xFBBF24];
+
+/* ---------- helpers ---------- */
+const $ = (s,el=document)=>el.querySelector(s);
+const h = (tag,attrs={},html='')=>{const e=document.createElement(tag);for(const k in attrs){const v=attrs[k];if(k==='style'&&typeof v==='object'){for(const sk in v){if(sk.startsWith('--'))e.style.setProperty(sk,v[sk]);else e.style[sk]=v[sk];}}else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?'':v);}if(html)e.innerHTML=html;return e;};
+const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+const uuid = ()=>(crypto.randomUUID?crypto.randomUUID():'r-'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+function t(x,vars){let s=(x&&typeof x==='object')?(x[S.lang]||x.en||''):(x||'');if(vars)for(const k in vars)s=s.split('{'+k+'}').join(vars[k]);return s;}
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const fmt = n=>Math.round(n).toLocaleString('en-IN');
+function fmtTime(ms){const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function rnd(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let q=Math.imul(seed^seed>>>15,1|seed);q=q+Math.imul(q^q>>>7,61|q)^q;return((q^q>>>14)>>>0)/4294967296;};}
+const rshuffle=(a,r)=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const L2=(a,b)=>({en:a,hi:b});
+function subT(o,vars){const out={};for(const k in o){let x=o[k];if(typeof x==='string'){for(const q in vars){const val=vars[q];x=x.split('{'+q+'}').join(typeof val==='object'&&val?(val[k]!=null?val[k]:val.en):val);}}out[k]=x;}return out;}
+const joinL=(arr,sep)=>({en:arr.map(x=>typeof x==='object'?x.en:x).join(sep),hi:arr.map(x=>typeof x==='object'?(x.hi||x.en):x).join(sep)});
+
+/* ---------- sound ---------- */
+const SFX = {ctx:null,
+  ensure(){if(!S.sound)return null;try{if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state==='suspended')this.ctx.resume();}catch(e){return null;}return this.ctx;},
+  tone(f,d=.15,type='sine',v=.18,when=0){const c=this.ensure();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;const t0=c.currentTime+when;g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+d+.02);},
+  good(){[523,659,784].forEach((f,i)=>this.tone(f,.16,'triangle',.18,i*.08));},
+  bad(){this.tone(200,.22,'sawtooth',.1);},
+  tap(){this.tone(880,.05,'square',.06);},
+  coin(){this.tone(988,.08,'square',.08);this.tone(1319,.12,'square',.08,.07);},
+  rumble(sec=3){const c=this.ensure();if(!c)return;const n=c.sampleRate*sec,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();f.type='lowpass';f.frequency.value=260;g.gain.value=.5;s.buffer=b;s.connect(f).connect(g).connect(c.destination);s.start();}
+};
+
+
+SFX.zap=function(){this.tone(1400,.08,'square',.06);this.tone(700,.12,'sawtooth',.05,.05);};
+SFX.sting=function(){[330,440,554,880].forEach((f,i)=>this.tone(f,.2,'sawtooth',.05,i*.1));};
+SFX.alarm=function(){[0,1,2].forEach(i=>{this.tone(880,.12,'square',.06,i*.25);this.tone(660,.12,'square',.06,i*.25+.12);});};
+
+/* ---------- host voice ---------- */
+const HOST={say(text,ms=4200){const el=$('#lower3');if(el)el.remove();const b=h('div',{class:'lower3',id:'lower3',role:'status'},`<span class="mic">🎙️</span><div><b>${esc(t(UI.hostLbl))} · ${esc(t(UI.tapSkip))}</b><span>${esc(text)}</span></div>`);
+    b.onclick=()=>{b.remove();try{speechSynthesis.cancel();}catch(e){}};document.body.append(b);clearTimeout(HOST.tm);HOST.tm=setTimeout(()=>b.remove(),Math.max(ms,text.length*55));
+    if(!S.sound)return;try{const sy=window.speechSynthesis;if(!sy)return;sy.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=S.lang==='hi'?'hi-IN':'en-IN';u.rate=1.06;u.pitch=1;
+      const vs=sy.getVoices();const v=vs.find(x=>x.lang===u.lang)||vs.find(x=>x.lang&&x.lang.startsWith(S.lang));if(v)u.voice=v;sy.speak(u);}catch(e){}},
+  stop(){try{speechSynthesis.cancel();}catch(e){}const el=$('#lower3');if(el)el.remove();}};
+
+/* ---------- state ---------- */
+const S={base:null,ver:null,mode:'practice',slot:null,childId:null,childName:null,fp:null,fsOn:false,mission:null,lang:'en',sound:true,suit:0,coins:0,streak:0,bestStreak:0,points:0,jobs:{},run:null,events:[],beat:null,phase:'intro',windowStart:null,windowLeft:900,windowClosedShown:false,active:null,shield:70,story:0,ghost:null,ghostSeen:0,pups:[],team:null,duelLink:null};
+const RUNKEY='fsl.missionRuns.cyber';
+function newRun(){
+  const m=S.mission;S.coins=m.scoring.coins.start;S.streak=0;S.bestStreak=0;S.points=0;S.events=[];S.windowStart=null;S.windowLeft=m.windowSec;S.windowClosedShown=false;S.active=null;S.ghostSeen=0;S.pups=[];
+  S.fp={hidden:0,hiddenMs:0,hiddenAt:null,blur:0,fsExit:0,capture:0,studyLeave:0,fastReacts:0};
+  S.shield=S.ver?S.ver.shield:70;
+  S.jobs={};m.jobs.forEach(j=>S.jobs[j.id]={status:'new',learnDone:false,learnMs:0,learnOpen:null,firstActMs:null,answerSec:null,tries:0,mistakes:0,notes:false,level:null,timeMs:0,startedAt:null,points:0,credit:0,stars:0,doneAtSec:null});
+  S.run={run_id:uuid(),player_id:null,player_name:null,mission_id:m.id,mission_version:m.version,round:m.round,band:m.band,lang:S.lang,started_at:null,ended_at:null,completed:false,points:0,stars:0,first_try:0,jobs:m.jobs.length,window_bonus:0,best_streak:0,rank:null,coins_end:null,ending:null,shield_end:null,powerups:[],
+    rival:S.ghost?{kind:S.ghost.kind,name:S.ghost.name,tier:S.ghost.tier,points:S.ghost.total}:null,duel:null,team:S.team,beat_target:S.beat,mode:S.mode,slot_key:S.slot?S.slot.key:null,slot_start:S.slot?new Date(S.slot.start).toISOString():null,slot_end:S.slot?new Date(S.slot.end).toISOString():null,device_id:deviceId(),version:S.ver,credibility:null,client:{ua:navigator.userAgent.slice(0,120),w:innerWidth,h:innerHeight}};
+  S.t0=performance.now();
+}
+function log(event,jobId=null,payload={}){const j=jobId?S.mission.jobs.find(x=>x.id===jobId):null;
+  S.events.push({run_id:S.run.run_id,seq:S.events.length+1,ts:new Date().toISOString(),t_ms:Math.round(performance.now()-S.t0),event,job_id:jobId,superpower:j?j.superpower:null,competency:j?j.competency:null,payload});saveRun();}
+function jobResults(){return S.mission.jobs.map(j=>{const r=S.jobs[j.id];return{run_id:S.run.run_id,job_id:j.id,task:j.task,superpower:j.superpower,competency:j.competency,completed:r.status==='done',level:r.level,first_try:r.level==='first',tries:r.tries,mistakes:r.mistakes,notes_used:r.notes,time_ms:Math.round(r.timeMs),done_at_sec:r.doneAtSec,skill_credit:r.credit,points:r.points,stars:r.stars};});}
+function saveRun(){const runs=store.get(RUNKEY,[]);const rec={run:S.run,job_results:jobResults(),events:S.events};const i=runs.findIndex(r=>r.run.run_id===S.run.run_id);if(i>=0)runs[i]=rec;else runs.push(rec);while(runs.length>20)runs.shift();store.set(RUNKEY,runs);}
+
+/* ================= versions: a different puzzle for every player, same difficulty ================= */
+function hashStr(str){let x=2166136261;for(let i=0;i<str.length;i++){x^=str.charCodeAt(i);x=Math.imul(x,16777619);}return x>>>0;}
+function deviceId(){let d=store.get('fsl.deviceId',null);if(!d){d=uuid();store.set('fsl.deviceId',d);}return d;}
+// Trace: 3-move cycle on a 6x6 grid, no wrap. Equal difficulty: 3 distinct moves (each 1-2 squares per axis), >=1 diagonal,
+// no move undoes the previous one, net drift per cycle exactly 1 square, all 10 hops inside the grid on different squares.
+function genTrace(r,N,shown,predict){
+  const V=[];for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)if(a||b)V.push([a,b]);const key=x=>x.join(',');
+  for(let k=0;k<20000;k++){const v=[V[Math.floor(r()*V.length)],V[Math.floor(r()*V.length)],V[Math.floor(r()*V.length)]];
+    if(new Set(v.map(key)).size<3)continue;if(!v.some(x=>x[0]&&x[1]))continue;
+    const s=[v[0][0]+v[1][0]+v[2][0],v[0][1]+v[1][1]+v[2][1]];if(Math.max(Math.abs(s[0]),Math.abs(s[1]))!==1)continue;
+    if(v.some((x,i)=>{const y=v[(i+1)%3];return x[0]===-y[0]&&x[1]===-y[1];}))continue;
+    const p=[[Math.floor(r()*N),Math.floor(r()*N)]];for(let i=1;i<shown+predict;i++){const d=v[(i-1)%3];p.push([p[i-1][0]+d[0],p[i-1][1]+d[1]]);}
+    if(p.some(q=>q[0]<0||q[1]<0||q[0]>=N||q[1]>=N))continue;if(new Set(p.map(key)).size<p.length)continue;
+    return{moves:v,hops:p};}
+  return{fallback:true,moves:[[1,2],[1,-1],[-2,0]],hops:[[1,0],[2,2],[3,1],[1,1],[2,3],[3,2],[1,2],[2,4],[3,3],[1,3]]};
+}
+function genPatrol(r,n){return rshuffle([0,1,2,3,4,5,6,7,8],r).slice(0,n);}
+function genAlerts(r,j){
+  const ev=j.events;const by=a=>ev.filter(e=>e.a===a);const pick=(arr,n)=>rshuffle(arr,r).slice(0,n).map(e=>e.id).concat(n>arr.length?[arr[0].id]:[]);
+  return j.stages.map((n,si)=>{const lock=si===1;const mx=lock?{allow:3,block:2}:{allow:Math.round(n*.34),block:2};mx.report=n-mx.allow-mx.block;
+    let a=[...pick(by('allow'),mx.allow),...pick(by('block'),mx.block),...pick(by('report'),mx.report)];
+    for(let k=0;k<80;k++){a=rshuffle(a,r);const ans=a.map(id=>{const e=ev.find(x=>x.id===id);return lock&&e.a==='allow'?'block':e.a;});let bad=false;for(let i=2;i<ans.length;i++)if(ans[i]===ans[i-1]&&ans[i]===ans[i-2])bad=true;if(!bad)break;}
+    return a;});
+}
+function makeVersion(seedStr,avoid={},zoneId=null){
+  const r=rnd(hashStr(seedStr));const jb=id=>S.base.jobs.find(j=>j.id===id);const Z=S.base.districts;
+  const v={seed:seedStr};
+  if(zoneId&&Z.find(z=>z.id===zoneId))v.zone=zoneId;else{const ids=Z.map(z=>z.id);let i=Math.floor(r()*ids.length);const used=avoid.zone||[];if(used.length<ids.length)for(let k=0;k<ids.length&&used.includes(ids[i]);k++)i=(i+1)%ids.length;v.zone=ids[i];}
+  v.shield=S.base.shield.start[Math.floor(r()*S.base.shield.start.length)];
+  const tj=jb('trace');v.trace=genTrace(r,tj.size,tj.shown,tj.predict);
+  v.patrol=genPatrol(r,jb('patrol').len);
+  const pj=jb('patch');let pi=Math.floor(r()*pj.bank.length);const up=avoid.patch||[];if(up.length<pj.bank.length)for(let k=0;k<pj.bank.length&&up.includes(pi);k++)pi=(pi+1)%pj.bank.length;
+  const sc=pj.bank[pi];const dec=rshuffle(Object.keys(sc.decoys),r).slice(0,pj.decoyCount);v.patch={scenario:pi,decoys:dec,order:rshuffle(Object.keys(sc.steps).concat(dec),r)};
+  const cj=jb('crack');const ci=Math.floor(r()*cj.sets.length);v.crack={set:ci,cards:rshuffle(cj.sets[ci],r)};
+  v.alerts=genAlerts(r,jb('alerts'));
+  const ph=jb('phish');const tierPick=(arr,tier)=>{const c=arr.filter(x=>x.tier===tier);return c[Math.floor(r()*c.length)].id;};
+  v.phish={msgs:rshuffle([0,1,2].map(ti=>tierPick(ph.msgsPhish,ti)).concat(rshuffle(ph.msgsLegit.map(x=>x.id),r).slice(0,3)),r),
+           links:rshuffle([0,1,2].map(ti=>tierPick(ph.linksFake,ti)).concat(rshuffle(ph.linksLegit.map(x=>x.id),r).slice(0,3)),r)};
+  return v;
+}
+const ARW=d=>(d[0]<0?'↑'+(-d[0]):d[0]>0?'↓'+d[0]:'')+(d[1]>0?'→'+d[1]:d[1]<0?'←'+(-d[1]):'');
+function fmtDur(sec){if(sec<1)return UI.instant;const u=[[31536000,'year','वर्ष'],[86400,'day','दिन'],[3600,'hour','घंटे'],[60,'minute','मिनट'],[1,'second','सेकंड']];
+  for(const [s,en,hi] of u)if(sec>=s){const n=sec/s;const v=n>=1e6?n.toExponential(1).replace('e+',' × 10^'):n>=100?fmt(n):String(Math.round(n));return{en:v+' '+en+(v==='1'?'':'s'),hi:v+' '+hi};}}
+function applyVersion(v){
+  const m=JSON.parse(JSON.stringify(S.base));const J=id=>m.jobs.find(j=>j.id===id);
+  m.zone=m.districts.find(z=>z.id===v.zone)||m.districts[0];
+  const tj=J('trace');tj.v=v.trace;const mv=v.trace.moves.map(ARW);tj.explain=subT(tj.explain,{moves:mv.join(', '),m1:mv[(tj.shown-1)%3],m2:mv[tj.shown%3],m3:mv[(tj.shown+1)%3]});
+  const pa=J('patrol');pa.v=v.patrol;const nm=i=>String(i+1);pa.explain=subT(pa.explain,{fwd:v.patrol.map(nm).join(' → '),rev:v.patrol.slice().reverse().map(nm).join(' → ')});
+  const pj=J('patch');const sc=pj.bank[v.patch.scenario];pj.sc=sc;pj.v=v.patch;delete pj.bank;
+  const topo=[];const ks=Object.keys(sc.steps);while(topo.length<ks.length){const k=ks.find(x=>!topo.includes(x)&&sc.steps[x].needs.every(n=>topo.includes(n)));topo.push(k);}
+  pj.topo=topo;pj.prompt=subT(pj.prompt,{title:sc.title});pj.explain=subT(pj.explain,{order:joinL(topo.map(k=>sc.steps[k]),' → '),decoys:joinL(v.patch.decoys.map(d=>({en:sc.decoys[d].en+': '+sc.decoys[d].why.en,hi:sc.decoys[d].hi+': '+sc.decoys[d].why.hi})),' ')});
+  const cj=J('crack');cj.v=v.crack;cj.set=cj.sets[v.crack.set];delete cj.sets;
+  cj.explain=subT(cj.explain,{list:joinL(cj.set.map(k=>{const rc=m.recipes[k],d=fmtDur(rc.sec);return{en:rc.en+' '+d.en,hi:rc.hi+' '+d.hi};}),' < ')});
+  const aj=J('alerts');aj.v=v.alerts;const n=v.alerts.reduce((a,x)=>a+x.length,0);aj.prompt=subT(aj.prompt,{pass:aj.pass,n});
+  const ph=J('phish');ph.v=v.phish;const pm=ph.msgsPhish.filter(x=>v.phish.msgs.includes(x.id)),pl=ph.linksFake.filter(x=>v.phish.links.includes(x.id));
+  ph.explain=subT(ph.explain,{msgs:joinL(pm.map(x=>({en:x.frm+' ('+x.why.en+')',hi:x.frm+' ('+x.why.hi+')'})),'; '),links:joinL(pl.map(x=>({en:x.url+' → '+x.real+' ('+x.why.en+')',hi:x.url+' → '+x.real+' ('+x.why.hi+')'})),'; ')});
+  S.ver=v;S.mission=m;
+}
+
+/* ================= rival ghosts (bots, your best run, or a friend's duel link) ================= */
+function ghostFromBot(rv,seed){const m=S.base,tier=m.tiers[rv.tier],r=rnd(hashStr(seed+'|'+rv.id)),js=m.scoring.job;let streak=0,cum=0;const p=[],tt=[];
+  m.jobs.forEach(j=>{const first=r()<tier.first;const lvl=first?'first':(r()<.75?'second':'helped');const work=j.targetSec*(tier.speed[0]+r()*(tier.speed[1]-tier.speed[0]));const sec=work+14+r()*10;
+    if(lvl==='first')streak++;else streak=0;const mult=lvl==='first'?js.streak[Math.min(streak,js.streak.length)-1]:1;const base=lvl==='first'?js.first:lvl==='second'?js.second:js.helped;
+    const pts=Math.round(base*mult)+Math.round(js.speedMax*Math.max(0,1-work/j.targetSec));cum+=sec;p.push(pts);tt.push(Math.round(cum));});
+  const bonus=Math.round(Math.max(0,m.windowSec-cum)*m.scoring.windowBonusPerSec);return{kind:'bot',id:rv.id,name:rv.name,c:rv.c,tier:rv.tier,p,t:tt,bonus,total:p.reduce((a,b)=>a+b,0)+bonus};}
+function ghostFromRun(rec,name,kind){const js=rec.job_results;if(!js||js.length!==6||js.some(x=>x.done_at_sec==null))return null;const p=js.map(x=>x.points),tt=js.map(x=>x.done_at_sec);
+  return{kind,id:kind,name,c:'#E5E7EB',tier:null,p,t:tt,bonus:rec.run.window_bonus||0,total:rec.run.points};}
+function myBestGhost(){const runs=store.get(RUNKEY,[]).filter(x=>x.run&&x.run.completed&&x.run.mission_id==='cyber-defence');if(!runs.length)return null;runs.sort((a,b)=>b.run.points-a.run.points);return ghostFromRun(runs[0],t(UI.myBest),'best');}
+function encodeDuel(){const js=jobResults();const o={n:(S.run.player_name||store.get('fsl.name','')||'Friend').slice(0,14),p:js.map(x=>x.points),t:js.map(x=>x.done_at_sec),b:S.run.window_bonus};
+  try{return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/=+$/,'');}catch(e){return '';}}
+function decodeDuel(s){try{const o=JSON.parse(decodeURIComponent(escape(atob(s))));if(!Array.isArray(o.p)||o.p.length!==6||!Array.isArray(o.t)||o.t.length!==6)return null;
+  const p=o.p.map(x=>Math.max(0,Math.min(2000,x|0))),tt=o.t.map(x=>Math.max(1,Math.min(3600,x|0)));const name=String(o.n||'Friend').replace(/[<>&"']/g,'').slice(0,14)||'Friend';const b=Math.max(0,Math.min(2000,o.b|0));
+  return{kind:'friend',id:'friend',name,c:'#E5E7EB',tier:null,p,t:tt,bonus:b,total:p.reduce((a,c)=>a+c,0)+b};}catch(e){return null;}}
+function ghostAt(sec){const g=S.ghost;if(!g)return null;let n=0;while(n<6&&g.t[n]<=sec)n++;let pts=0;for(let i=0;i<n;i++)pts+=g.p[i];if(n===6)pts+=g.bonus;return{n,pts};}
+
+/* ================= fair play: slot, flags, credibility ================= */
+const hhmm=ms=>{const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+function slotState(){if(!S.slot)return 'open';const now=Date.now();if(now<S.slot.start)return 'before';if(now<=S.slot.start+S.slot.grace)return 'open';if(now<=S.slot.end)return 'late';return 'closed';}
+function answersOpen(){return S.mode!=='ranked'||!S.slot||Date.now()>S.slot.end;}
+function fpOn(){return (S.phase==='play'||S.phase==='ending')&&S.fp;}
+function studying(){return S.active&&S.active.task&&S.active.task.studying&&S.active.task.studying();}
+document.addEventListener('visibilitychange',()=>{if(!fpOn())return;
+  if(document.hidden){S.fp.hidden++;if(studying())S.fp.studyLeave++;S.fp.hiddenAt=performance.now();log('fp_leave',S.active?S.active.job.id:null,{kind:'hidden',study:!!studying()});}
+  else if(S.fp.hiddenAt!=null){const d=performance.now()-S.fp.hiddenAt;S.fp.hiddenMs+=d;S.fp.hiddenAt=null;log('fp_return',null,{ms:Math.round(d)});if(S.mode==='ranked')toast(t(UI.leftWarn),3500);}});
+window.addEventListener('blur',()=>{if(!fpOn())return;const st=studying();setTimeout(()=>{if(!fpOn()||document.hidden)return;S.fp.blur++;if(st)S.fp.studyLeave++;log('fp_leave',S.active?S.active.job.id:null,{kind:'focus_lost',study:!!st});},300);});
+window.addEventListener('focus',()=>{if(fpOn()&&S.mode==='ranked'&&S.fp.blur&&!document.hidden)toast(t(UI.leftWarn),2500);});
+document.addEventListener('fullscreenchange',()=>{if(fpOn()&&S.fsOn&&!document.fullscreenElement){S.fp.fsExit++;S.fsOn=false;log('fp_leave',null,{kind:'fullscreen_exit'});}});
+function capKey(e){const k=e.key||'';if(k==='PrintScreen'||((e.metaKey||e.ctrlKey)&&e.shiftKey&&/^[345sS]$/.test(k))){if(fpOn()){S.fp.capture++;if(studying())S.fp.studyLeave++;log('fp_capture',null,{key:k,study:!!studying()});if(S.mode==='ranked')toast(t(UI.capWarn),3500);}}}
+document.addEventListener('keyup',e=>{if(e.key==='PrintScreen')capKey(e);});
+document.addEventListener('keydown',e=>{if(e.key!=='PrintScreen')capKey(e);});
+document.addEventListener('contextmenu',e=>{if(S.mode==='ranked')e.preventDefault();});
+function setWatermark(on){let el=$('#wm');if(!on){if(el)el.remove();return;}if(!el){el=h('div',{id:'wm'});document.body.append(el);}
+  const c=document.createElement('canvas');c.width=360;c.height=200;const g=c.getContext('2d');g.translate(180,100);g.rotate(-.4);g.fillStyle='#fff';g.font="800 22px 'Baloo 2',sans-serif";g.textAlign='center';
+  g.fillText(`FSL · ${S.childId||''}`,0,-6);g.font="700 16px 'Baloo 2',sans-serif";g.fillText(`${S.childName||''} · ${new Date().toLocaleDateString('en-IN')}`,0,18);el.style.backgroundImage=`url(${c.toDataURL()})`;}
+function computeCred(){
+  const F=S.base.fairPlay,fl=[];const add=(group,id,points,detail)=>fl.push({group,id,points,detail});const now=Date.now();
+  const dev=store.get('fsl.devRanked.cyber',[]);
+  if(S.mode==='ranked'){[...new Set(dev.filter(x=>x.child!==S.childId&&now-x.at<864e5).map(x=>x.child))].forEach(c=>add('A','A1',-10,'another player played ranked on this device in 24 h: '+c));}
+  S.mission.jobs.forEach(j=>{const fl0=F.floors[j.id],st=S.jobs[j.id];if(fl0&&st.status==='done'&&st.timeMs/1000<fl0)add('B','B1',-5,`${j.id} done in ${(st.timeMs/1000).toFixed(1)} s (floor ${fl0} s)`);});
+  const tot=(new Date(S.run.ended_at||Date.now())-new Date(S.run.started_at))/1000;if(tot<F.minTotalSec)add('B','B2',-5,`whole arena in ${Math.round(tot)} s (floor ${F.minTotalSec} s)`);
+  if(S.fp.fastReacts>=F.reactFlagCount)add('B','B3',-5,`${S.fp.fastReacts} alert reactions faster than ${F.reactFloorMs} ms`);
+  const pa=S.jobs.patrol;if(pa.level==='first'&&S.fp.studyLeave>0)add('C','C1',-10,`perfect patrol rewind after leaving the game or a screenshot key while the patrol was showing (${S.fp.studyLeave}x)`);
+  const cr=S.jobs.crack;if(cr.level==='first'&&cr.answerSec!=null&&cr.answerSec<F.rankMinSec)add('C','C2',-5,`password order submitted ${cr.answerSec.toFixed(1)} s after the lab opened`);
+  let c3=0;S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];if(st.level==='first'&&st.learnMs<F.readMinSec*1000&&c3<3){c3++;add('C','C3',-3,`${j.id}: demo watched ${(st.learnMs/1000).toFixed(1)} s, then first try`);}});
+  S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];if(j.task!=='alerts'&&j.task!=='patrol'&&st.level==='first'&&st.firstActMs!=null&&st.firstActMs<F.readPromptSec*1000)add('C','C5',-3,`${j.id}: first action ${(st.firstActMs/1000).toFixed(1)} s after the task opened`);});
+  const leaves=S.fp.hidden+S.fp.blur+S.fp.fsExit;if(leaves>F.leaveMax)add('D','D1',-5*Math.min(3,leaves-F.leaveMax),`left the game ${leaves} times (${S.fp.hidden} hidden, ${S.fp.blur} focus lost, ${S.fp.fsExit} full screen exit)`);
+  if(S.fp.hiddenMs>F.leaveTotalSec*1000)add('D','D1b',-5,`away from the game ${Math.round(S.fp.hiddenMs/1000)} s in total`);
+  S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];if(st.level!=='first')return;const ev=S.events.filter(e=>e.job_id===j.id).map(e=>e.t_ms);let gap=0;for(let i=1;i<ev.length;i++)gap=Math.max(gap,ev[i]-ev[i-1]);if(gap>F.idleSec*1000)add('D','D2',-5,`${j.id}: ${Math.round(gap/1000)} s pause, then first try`);});
+  if(S.childId){const runs=store.get(RUNKEY,[]).filter(x=>x.run&&x.run.mode==='practice'&&x.run.player_id===S.childId&&x.run.completed);
+    if(S.mode==='ranked'&&runs.length>=2){const avg=runs.reduce((a,x)=>a+x.job_results.reduce((q,r)=>q+r.skill_credit,0)/6,0)/runs.length;const mine=S.mission.jobs.reduce((q,j)=>q+S.jobs[j.id].credit,0)/6;if(mine>avg+0.4)add('E','E1',-10,`ranked skill ${mine.toFixed(2)} vs practice average ${avg.toFixed(2)}`);}}
+  if(S.mode==='ranked'){const earlier=dev.filter(x=>x.child!==S.childId&&now-x.at<2*3600e3);const beat=earlier.find(x=>S.points>=1.3*x.points);if(beat)add('E','E2',-10,`scored ${S.points} after ${beat.child} scored ${beat.points} on this device within 2 h`);}
+  if(S.fp.capture)add('F','F1',-10*S.fp.capture,`screenshot key pressed ${S.fp.capture} time(s)`);
+  const groups={};fl.forEach(x=>groups[x.group]=(groups[x.group]||0)+x.points);let total=0;for(const g in groups){groups[g]=Math.max(F.caps[g],groups[g]);total+=groups[g];}
+  const score=Math.max(0,100+total);const band=score>=F.bands.green?'Green':score>=F.bands.amber?'Amber':'Red';
+  return{score,band,groups,flags:fl,signals:{leaves,hidden_ms:Math.round(S.fp.hiddenMs),focus_lost:S.fp.blur,fullscreen_exit:S.fp.fsExit,capture:S.fp.capture,study_leave:S.fp.studyLeave,fast_reacts:S.fp.fastReacts},note:'Screen recording and meeting screen-share cannot be seen by a web page; the app version can block them. Focus loss is the proxy here.'};
+}
+
+/* ---------- City Shield + live duel strip (fun layer only) ---------- */
+function shieldChange(d,why){S.shield=Math.max(5,Math.min(100,S.shield+d));renderShield(d);if(why)log('shield',S.active?S.active.job.id:null,{d,why,shield:S.shield});}
+function playSec(){return S.windowStart?(performance.now()-S.windowStart)/1000:0;}
+function renderShield(d){const el=$('#meters');if(!el||!S.mission)return;const s=S.shield;const g=ghostAt(playSec());
+  let duel='';if(S.ghost&&g){const diff=Math.round(S.points-g.pts);const nm=S.ghost.name;duel=`<div class="duel ${diff>0?'up':diff<0?'down':''}"><span>⚔️ ${esc(diff>0?t(UI.ahead,{n:fmt(diff),r:nm}):diff<0?t(UI.behind,{n:fmt(-diff),r:nm}):t(UI.level,{r:nm}))}</span><span class="gdots">${S.mission.jobs.map((j,i)=>`<i class="${i<g.n?'g':''}${S.jobs[j.id].status==='done'?' m':''}"></i>`).join('')}</span></div>`;}
+  el.innerHTML=`<div class="meter${d?' bump':''}" style="--c:${s>=60?'var(--good)':s>=40?'var(--sun)':'var(--bad)'}"><span>🛡️ ${esc(t(UI.shieldLbl))}</span><span class="bar"><i style="width:${s}%"></i></span><b>${Math.round(s)}%</b></div>${duel}`;}
+
+/* ================= 3D neon city ================= */
+const R={tweens:[],clock:null,markers:{},hits:[],props:{},drones:{},winMats:[]};
+const lam=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
+const basic=(c,o={})=>new THREE.MeshBasicMaterial(Object.assign({color:c},o));
+function tween(dur,fn,done){R.tweens.push({t:0,dur,fn,done});}
+function label(text,{bg='rgba(11,16,32,.9)',fg='#E6F1FF',size=44,w=512,hgt=96}={}){
+  const c=document.createElement('canvas');c.width=w;c.height=hgt;const g=c.getContext('2d');
+  g.font=`800 ${size}px 'Baloo 2','Nirmala UI','Noto Sans Devanagari',sans-serif`;const tw=Math.min(w-20,g.measureText(text).width+40);
+  g.fillStyle=bg;const x=(w-tw)/2,r=hgt/2-4;g.beginPath();g.moveTo(x+r,4);g.arcTo(x+tw,4,x+tw,hgt-4,r);g.arcTo(x+tw,hgt-4,x,hgt-4,r);g.arcTo(x,hgt-4,x,4,r);g.arcTo(x,4,x+tw,4,r);g.fill();
+  g.fillStyle=fg;g.textAlign='center';g.textBaseline='middle';g.fillText(text,w/2,hgt/2+3,w-40);
+  const tex=new THREE.CanvasTexture(c);tex.anisotropy=4;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sp.scale.set(w/hgt*0.9,0.9,1);sp.renderOrder=10;return sp;}
+function groundHeight(){return 0;}
+function windowTex(seed,lit){const c=document.createElement('canvas');c.width=64;c.height=128;const g=c.getContext('2d');const r=rnd(seed);g.fillStyle='#0E1430';g.fillRect(0,0,64,128);
+  for(let y=6;y<124;y+=10)for(let x=5;x<60;x+=11){const on=r()<lit;g.fillStyle=on?(r()<.5?'#7DE3FF':'#FFD27A'):'#18204A';g.fillRect(x,y,7,6);}const t2=new THREE.CanvasTexture(c);t2.magFilter=THREE.NearestFilter;return t2;}
+function init3D(){
+  const cv=$('#gl');
+  try{R.renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});}catch(e){document.body.append(h('div',{class:'nogl'},esc(t(UI.noGL))));return false;}
+  R.renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+  const sc=R.scene=new THREE.Scene();sc.background=new THREE.Color(0x07091A);sc.fog=new THREE.Fog(0x1A0A24,40,130);
+  R.camera=new THREE.PerspectiveCamera(52,1,0.1,500);R.camera.position.set(0,12,46);
+  R.hemi=new THREE.HemisphereLight(0x8FB8FF,0x1A1030,.75);sc.add(R.hemi);R.sunL=new THREE.DirectionalLight(0xB8C8FF,.55);R.sunL.position.set(-30,50,20);sc.add(R.sunL);
+  const gg=new THREE.PlaneGeometry(260,260);gg.rotateX(-Math.PI/2);R.groundMat=lam(0x111633);const ground=new THREE.Mesh(gg,R.groundMat);sc.add(ground);R.ground=ground;
+  const grid=new THREE.GridHelper(200,50,0x3B2B7A,0x1E2456);grid.position.y=.02;sc.add(grid);R.gridH=grid;
+  // stars + moon
+  const r=rnd(11),pos=[];for(let i=0;i<700;i++){const th=r()*Math.PI*2,ph=Math.acos(r()*0.9);const rr=200;pos.push(rr*Math.sin(ph)*Math.cos(th),rr*Math.cos(ph)+5,rr*Math.sin(ph)*Math.sin(th));}
+  const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));sc.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:1.1,fog:false})));
+  const moon=new THREE.Mesh(new THREE.SphereGeometry(5,20,14),basic(0xE9ECFF,{fog:false}));moon.position.set(-60,70,-150);sc.add(moon);
+  // main street (the route) with glowing edge lines
+  const route=[[0,34]].concat(S.mission.jobs.map(j=>[j.station.x,j.station.z])).concat([[S.mission.core.x,S.mission.core.z]]);
+  for(let i=0;i<route.length-1;i++){const [a,b]=route[i],[c,d]=route[i+1];const len=Math.hypot(c-a,d-b);const road=new THREE.Mesh(new THREE.PlaneGeometry(4,len+4),lam(0x1C2248));road.rotation.x=-Math.PI/2;road.rotation.z=-Math.atan2(c-a,d-b);road.position.set((a+c)/2,.04,(b+d)/2);sc.add(road);
+    const n=Math.floor(len/2.4);for(let k=1;k<n;k++){const x=a+(c-a)*k/n,z=b+(d-b)*k/n;const s=new THREE.Mesh(new THREE.BoxGeometry(.25,.05,.8),basic(0x5EEAD4));s.position.set(x,.07,z);s.rotation.y=Math.atan2(c-a,d-b);sc.add(s);}}
+  // buildings away from the route
+  const near=(x,z)=>route.some(([a,b])=>Math.hypot(x-a,z-b)<9)||(Math.abs(x)<13&&z>-50&&z<40);
+  for(let i=0;i<120;i++){const x=(r()-.5)*150,z=(r()-.5)*150-5;if(near(x,z))continue;const w=3+r()*5,d=3+r()*5,ht=4+r()*(Math.hypot(x,z)>45?30:14);
+    const tex=windowTex(i*7+3,.25);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(Math.max(1,Math.round(w/3)),Math.max(1,Math.round(ht/6)));const mat=lam(0xffffff,{map:tex,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:.25});R.winMats.push(mat);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(w,ht,d),mat);b.position.set(x,ht/2,z);sc.add(b);
+    if(r()<.25){const edge=new THREE.Mesh(new THREE.BoxGeometry(w+.1,.25,d+.1),basic([0xF472B6,0x22D3EE,0xA78BFA][i%3]));edge.position.set(x,ht,z);sc.add(edge);}}
+  buildProps();buildCore();buildAvatar();buildMarkers();buildDrones();
+  R.ray=new THREE.Raycaster();R.clock=new THREE.Clock();
+  resize();addEventListener('resize',resize);bindInput();applyZone();setStory(0,true);
+  R.renderer.setAnimationLoop(frame);
+  return true;
+}
+function resize(){const w=innerWidth,hh=innerHeight;R.renderer.setSize(w,hh,false);R.camera.aspect=w/hh;R.camera.fov=w<hh?62:50;R.camera.updateProjectionMatrix();}
+function applyZone(){const z=S.mission.zone;if(!z||!R.coreRing)return;R.coreRing.material.color.set(z.neon);R.gridH.material.color&&R.gridH.material.color.set(z.neon).multiplyScalar(.35);}
+// story = number of stations cleared: red attack haze -> calm blue city
+function setStory(n,instant){S.story=n;const k=n/6;const from={fog:R.scene.fog.color.clone(),win:R.winMats.length?R.winMats[0].emissiveIntensity:.25,hemi:R.hemi.intensity};
+  const to={fog:new THREE.Color(0x3A0A24).lerp(new THREE.Color(0x0B1A3A),k),win:.18+.8*k,hemi:.6+.4*k};
+  const apply=e=>{R.scene.fog.color.copy(from.fog).lerp(to.fog,e);const w=from.win+(to.win-from.win)*e;R.winMats.forEach(m=>m.emissiveIntensity=w);R.hemi.intensity=from.hemi+(to.hemi-from.hemi)*e;};
+  if(instant)apply(1);else tween(2,apply);}
+
+/* --- station props --- */
+function propGroup(j,dx=0,dz=-3.5){const g=new THREE.Group();g.position.set(j.station.x+dx,0,j.station.z+dz);R.scene.add(g);return g;}
+function holo(w,hgt,col){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,hgt),basic(col,{transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));return m;}
+function buildProps(){
+  const J=id=>S.mission.jobs.find(j=>j.id===id);
+  // trace: holo map table
+  let g=propGroup(J('trace'));const tb=new THREE.Mesh(new THREE.BoxGeometry(3.4,1,2.4),lam(0x2A3366));tb.position.y=.5;g.add(tb);
+  const gm=new THREE.GridHelper(3,6,0xFFC83D,0xFFC83D);gm.position.y=1.05;g.add(gm);const hm=holo(3,2,0xFFC83D);hm.position.set(0,2.4,-.6);g.add(hm);R.props.trace=hm;
+  // patrol: server racks with LEDs
+  g=propGroup(J('patrol'));R.props.leds=[];for(let i=0;i<3;i++){const rk=new THREE.Mesh(new THREE.BoxGeometry(1.1,2.6,1),lam(0x1F2547));rk.position.set(i*1.4-1.4,1.3,0);g.add(rk);
+    for(let k=0;k<4;k++){const led=new THREE.Mesh(new THREE.BoxGeometry(.7,.08,.05),basic(0xB39BFF));led.position.set(i*1.4-1.4,.6+k*.5,.53);g.add(led);R.props.leds.push(led);}}
+  // patch: terminal kiosk
+  g=propGroup(J('patch'));const ks=new THREE.Mesh(new THREE.BoxGeometry(1.6,2,1),lam(0x253064));ks.position.y=1;g.add(ks);const scr=new THREE.Mesh(new THREE.PlaneGeometry(1.4,1),basic(0x2ED3C0));scr.position.set(0,2.4,.2);scr.rotation.x=-.3;g.add(scr);R.props.patch=scr;
+  // crack: vault door
+  g=propGroup(J('crack'));const wall=new THREE.Mesh(new THREE.BoxGeometry(3.6,3.4,.6),lam(0x2A3366));wall.position.y=1.7;g.add(wall);
+  const door=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,.3,28),lam(0x8C95B8));door.rotation.x=Math.PI/2;door.position.set(0,1.7,.4);g.add(door);R.props.vault=door;
+  const wh=new THREE.Mesh(new THREE.TorusGeometry(.5,.07,8,20),basic(0xFF8A5C));wh.position.set(0,1.7,.6);g.add(wh);R.props.wheel=wh;
+  // alerts: big screen wall
+  g=propGroup(J('alerts'));const sw=new THREE.Mesh(new THREE.BoxGeometry(4.4,2.6,.3),lam(0x1F2547));sw.position.y=2.2;g.add(sw);const al=new THREE.Mesh(new THREE.PlaneGeometry(4,2.2),basic(0x4EA8FF));al.position.set(0,2.2,.17);g.add(al);R.props.alertScr=al;
+  [-1.8,1.8].forEach(x=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,1,6),lam(0x555E88));p.position.set(x,.5,0);g.add(p);});
+  // phish: inbox hologram with envelopes
+  g=propGroup(J('phish'));const ped=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.1,1,20),lam(0x2A3366));ped.position.y=.5;g.add(ped);R.props.env=[];
+  for(let i=0;i<3;i++){const e=new THREE.Mesh(new THREE.BoxGeometry(1,.65,.05),basic(i===1?0xFF5D73:0xFF7EC8));e.position.set((i-1)*1.1,2+i%2*.4,0);g.add(e);R.props.env.push(e);}
+}
+function buildCore(){
+  const c=S.mission.core;const g=new THREE.Group();g.position.set(c.x,0,c.z);R.scene.add(g);R.core=g;
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(5,6,1,32),lam(0x1F2547));base.position.y=.5;g.add(base);
+  const tower=new THREE.Mesh(new THREE.CylinderGeometry(1.2,2.2,16,16),lam(0x2A3366,{emissive:0x22D3EE,emissiveIntensity:.15}));tower.position.y=9;g.add(tower);R.coreTower=tower;
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(3.2,.18,8,40),basic(0x22D3EE));ring.rotation.x=Math.PI/2;ring.position.y=6;g.add(ring);R.coreRing=ring;
+  const orb=new THREE.Mesh(new THREE.SphereGeometry(1.6,20,14),basic(0xFF5D73));orb.position.y=18;g.add(orb);R.coreOrb=orb;
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(70,32,16,0,Math.PI*2,0,Math.PI/2),basic(0x22D3EE,{transparent:true,opacity:0,side:THREE.BackSide,depthWrite:false,fog:false}));dome.position.set(-c.x,0,-c.z+(-4));g.add(dome);R.dome=dome;
+  const lbl=label('🛡️ CITY CORE',{bg:'rgba(224,36,90,.95)',fg:'#fff',size:42});lbl.position.set(0,21,0);lbl.scale.multiplyScalar(1.6);g.add(lbl);
+}
+function buildDrones(){S.mission.jobs.forEach((j,i)=>{const g=new THREE.Group();const b=new THREE.Mesh(new THREE.OctahedronGeometry(.8,0),basic(0xFF2E63));g.add(b);
+  const halo=new THREE.Mesh(new THREE.RingGeometry(1,1.2,24),basic(0xFF2E63,{transparent:true,opacity:.6,side:THREE.DoubleSide}));g.add(halo);g.position.set(j.station.x+(i%2?-4:4),7,j.station.z-7);R.scene.add(g);R.drones[j.id]={g,base:g.position.clone(),i};});}
+function killDrone(id){const d=R.drones[id];if(!d||d.dead)return;d.dead=true;SFX.zap();const g=d.g;const p0=g.position.clone();tween(.9,k=>{const s=1-k;g.scale.set(s+.01,s+.01,s+.01);g.position.y=p0.y+k*4;g.rotation.y+=.3;},()=>{g.visible=false;});}
+
+/* --- avatar (hooded defender) --- */
+function buildAvatar(){
+  const g=new THREE.Group();const suit=lam(SUITS[S.suit],{emissive:SUITS[S.suit],emissiveIntensity:.35});R.suitMat=suit;const dark=lam(0x1B2140),skin=lam(0xC68B59),coat=lam(0x2B3366);
+  const leg=x=>{const p=new THREE.Group();p.position.set(x,.85,0);const m=new THREE.Mesh(new THREE.BoxGeometry(.28,.85,.32),dark);m.position.y=-.42;p.add(m);g.add(p);return p;};
+  R.legL=leg(-.18);R.legR=leg(.18);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.8,.92,.5),coat);body.position.y=1.3;g.add(body);
+  const stripe=new THREE.Mesh(new THREE.BoxGeometry(.82,.1,.52),suit);stripe.position.y=1.45;g.add(stripe);
+  const pack=new THREE.Mesh(new THREE.BoxGeometry(.6,.7,.25),dark);pack.position.set(0,1.35,-.36);g.add(pack);const pl=new THREE.Mesh(new THREE.BoxGeometry(.4,.06,.02),suit);pl.position.set(0,1.5,-.49);g.add(pl);
+  const arm=x=>{const p=new THREE.Group();p.position.set(x,1.7,0);const m=new THREE.Mesh(new THREE.BoxGeometry(.22,.8,.26),coat);m.position.y=-.38;p.add(m);g.add(p);return p;};
+  R.armL=arm(-.52);R.armR=arm(.52);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.33,18,14),skin);head.position.y=2.08;g.add(head);
+  const hood=new THREE.Mesh(new THREE.SphereGeometry(.4,18,14,0,Math.PI*2,0,Math.PI*.62),coat);hood.position.y=2.12;hood.rotation.x=-.25;g.add(hood);
+  const visor=new THREE.Mesh(new THREE.BoxGeometry(.5,.12,.1),suit);visor.position.set(0,2.12,.3);g.add(visor);
+  const cape=new THREE.Mesh(new THREE.PlaneGeometry(.9,1.2),basic(0xFF7EC8,{transparent:true,opacity:.75,side:THREE.DoubleSide}));cape.position.set(0,1.2,-.52);cape.rotation.x=.15;cape.visible=false;g.add(cape);R.cape=cape;
+  const trail=new THREE.Mesh(new THREE.RingGeometry(.55,.85,28),basic(0x22D3EE,{transparent:true,opacity:.7,side:THREE.DoubleSide}));trail.rotation.x=-Math.PI/2;trail.position.y=.05;trail.visible=false;g.add(trail);R.trail=trail;
+  const sh=new THREE.Mesh(new THREE.CircleGeometry(.55,20),basic(0x000000,{transparent:true,opacity:.3}));sh.rotation.x=-Math.PI/2;sh.position.y=.03;g.add(sh);
+  g.position.set(0,0,34);R.scene.add(g);R.avatar=g;R.walk={target:null,onArrive:null,phase:0};
+}
+function applyPowerups(){if(!R.avatar)return;R.trail.visible=S.pups.includes('trail');R.cape.visible=S.pups.includes('cape');if(S.pups.includes('gold')){R.suitMat.color.setHex(0xFFD54A);R.suitMat.emissive.setHex(0xFFB300);}else{R.suitMat.color.setHex(SUITS[S.suit]);R.suitMat.emissive.setHex(SUITS[S.suit]);}}
+function walkTo(x,z,onArrive){R.walk.target=new THREE.Vector3(x,0,z);R.walk.onArrive=onArrive||null;}
+
+/* --- station markers --- */
+function buildMarkers(){
+  S.mission.jobs.forEach(j=>{const g=new THREE.Group();g.position.set(j.station.x,0,j.station.z);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(1.1,1.5,40),basic(SP[j.superpower].n,{transparent:true,opacity:.9,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.08;g.add(ring);
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,6,20,1,true),basic(SP[j.superpower].n,{transparent:true,opacity:.12,side:THREE.DoubleSide,depthWrite:false}));beam.position.y=3;g.add(beam);
+    const hit=new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,5,12),basic(0xffffff,{transparent:true,opacity:0,depthWrite:false}));hit.position.y=2.5;hit.userData.station=j.id;g.add(hit);R.hits.push(hit);
+    R.scene.add(g);R.markers[j.id]={g,ring,beam,hit,label:null};});
+  refreshMarkerLabels();
+}
+function refreshMarkerLabels(){
+  if(!R.markers)return;S.mission.jobs.forEach((j,i)=>{const mk=R.markers[j.id];if(!mk)return;if(mk.label){mk.g.remove(mk.label);mk.label.material.map.dispose();}
+    const st=S.jobs[j.id]||{};const locked=!isUnlocked(j);const done=st.status==='done';
+    const txt=(done?'★'.repeat(st.stars)+' ':locked?'🔒 ':(i+1)+' · ')+t(j.label);
+    const lb=label(txt,{bg:done?'rgba(16,94,72,.95)':locked?'rgba(30,36,72,.85)':SP[j.superpower].hex,fg:done||locked?'#E6F1FF':'#0B1020'});lb.position.y=3.8;mk.g.add(lb);mk.label=lb;
+    mk.ring.material.opacity=locked?.25:.9;mk.beam.visible=!locked&&!done;});
+}
+
+/* --- input --- */
+function bindInput(){
+  const cv=$('#gl');let down=null;
+  cv.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};});
+  cv.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y);down=null;if(moved<10)tap(e.clientX,e.clientY);});
+}
+function pick(x,y,objs){const v=new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1);R.ray.setFromCamera(v,R.camera);return R.ray.intersectObjects(objs,true);}
+function tap(x,y){
+  if(S.phase!=='play'||S.active)return;
+  const hs=pick(x,y,R.hits);if(hs.length){goToStation(hs[0].object.userData.station);return;}
+  const gh=pick(x,y,[R.ground]);if(gh.length){const p=gh[0].point;if(Math.hypot(p.x,p.z+5)<55){walkTo(p.x,p.z);SFX.tap();}}
+}
+
+/* --- frame loop --- */
+const CAM={pos:new THREE.Vector3(0,12,48),look:new THREE.Vector3(0,2,26)};
+function frame(){
+  const dt=Math.min(.05,R.clock.getDelta());const tt=R.clock.elapsedTime;
+  for(let i=R.tweens.length-1;i>=0;i--){const tw=R.tweens[i];tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.fn(k);if(k>=1){R.tweens.splice(i,1);tw.done&&tw.done();}}
+  const av=R.avatar,w=R.walk;
+  if(w.target){const d=new THREE.Vector3().subVectors(w.target,av.position);d.y=0;const dist=d.length();
+    if(dist<.15){w.target=null;const cb=w.onArrive;w.onArrive=null;cb&&cb();}
+    else{const step=Math.min(dist,8*dt);d.normalize();av.position.addScaledVector(d,step);const ang=Math.atan2(d.x,d.z);let da=ang-av.rotation.y;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;av.rotation.y+=da*Math.min(1,dt*10);w.phase+=dt*12;}}
+  const sw=w.target?Math.sin(w.phase)*.7:0;R.legL.rotation.x=sw;R.legR.rotation.x=-sw;R.armL.rotation.x=-sw*.8;R.armR.rotation.x=sw*.8;
+  av.position.y=(w.target?Math.abs(Math.sin(w.phase))*.08:0);
+  if(R.trail.visible){const s=1+Math.sin(tt*6)*.15;R.trail.scale.set(s,s,s);}if(R.cape.visible)R.cape.rotation.x=.15+(w.target?.35:0)+Math.sin(tt*5)*.05;
+  Object.values(R.markers).forEach((mk,i)=>{const s=1+Math.sin(tt*3+i)*.08;mk.ring.scale.set(s,s,s);});
+  Object.values(R.drones).forEach(d=>{if(d.dead)return;d.g.position.set(d.base.x+Math.sin(tt*.8+d.i)*1.5,d.base.y+Math.sin(tt*2+d.i)*.5,d.base.z+Math.cos(tt*.7+d.i)*1.2);d.g.rotation.y+=dt*1.5;d.g.children[1].lookAt(R.camera.position);});
+  if(R.props.leds)R.props.leds.forEach((l,i)=>{l.material.color.setHex(Math.sin(tt*4+i*1.7)>.3?0xB39BFF:0x2A2450);});
+  if(R.props.alertScr)R.props.alertScr.material.color.setHex(S.jobs.alerts&&S.jobs.alerts.status==='done'?0x3DDC97:(Math.sin(tt*5)>0?0x4EA8FF:0xFF5D73));
+  if(R.props.wheel)R.props.wheel.rotation.z+=dt*(S.jobs.crack&&S.jobs.crack.status==='done'?0:1.2);
+  if(R.props.env)R.props.env.forEach((e,i)=>{e.position.y=2+i%2*.4+Math.sin(tt*2+i)*.15;});
+  if(R.props.trace)R.props.trace.material.opacity=.25+Math.sin(tt*3)*.1;
+  R.coreRing.rotation.z+=dt*.8;R.coreOrb.scale.setScalar(1+Math.sin(tt*3)*.08);
+  let tp,tl;
+  if(S.camMode==='job'&&S.camPose){tp=S.camPose.pos;tl=S.camPose.look;}
+  else if(S.camMode==='core'){const c=S.mission.core;tp=new THREE.Vector3(c.x+14,10,c.z+26);tl=new THREE.Vector3(c.x,9,c.z);}
+  else{const p=av.position;const portrait=innerWidth<innerHeight;tp=new THREE.Vector3(p.x,p.y+(portrait?11:9),p.z+(portrait?15:13));tl=new THREE.Vector3(p.x,p.y+1.2,p.z-3);}
+  const k=1-Math.exp(-dt*3);CAM.pos.lerp(tp,k);CAM.look.lerp(tl,k);R.camera.position.copy(CAM.pos);R.camera.lookAt(CAM.look);
+  R.renderer.render(R.scene,R.camera);
+}
+
+/* ================= the 6 hands-on station tasks ================= */
+const TASKS={};
+const ART={};
+const CH={a:'a',A:'A','1':'1','#':'#','📖':'📖','📋':'📋'};
+
+// 1 · Trace the Attack (C1.1): 7 hops shown, tap hops 8, 9, 10 on the grid
+TASKS.trace=api=>{
+  const j=api.job,V=j.v,N=j.size,cs=44,pad=4,W=N*cs+pad*2;let next=j.shown,done=false,wrong=0;const placed=[];
+  const box=h('div',{class:'tgrid'});api.el.append(box);
+  const prog=h('div',{class:'meta'});api.el.append(prog);
+  const cx=c=>pad+c*cs+cs/2,cy=r=>pad+r*cs+cs/2;
+  function draw(hint){let s=`<svg viewBox="0 0 ${W} ${W}"><rect width="${W}" height="${W}" rx="12" fill="#0B1230"/>`;
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++)s+=`<rect class="tc" data-r="${r}" data-c="${c}" x="${pad+c*cs+2}" y="${pad+r*cs+2}" width="${cs-4}" height="${cs-4}" rx="7" fill="#17204A" stroke="${hint&&hint[0]===r&&hint[1]===c?'#FFC83D':'#25306A'}" stroke-width="${hint&&hint[0]===r&&hint[1]===c?3:1}"/>`;
+    const hops=V.hops.slice(0,j.shown);
+    s+=`<polyline points="${hops.map(p=>cx(p[1])+','+cy(p[0])).join(' ')}" fill="none" stroke="#FF2E63" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/>`;
+    hops.forEach((p,i)=>{s+=`<g pointer-events="none"><circle cx="${cx(p[1])}" cy="${cy(p[0])}" r="15" fill="${i===j.shown-1?'#FF2E63':'#7A1638'}" stroke="#FF6B8F" stroke-width="2"/><text x="${cx(p[1])}" y="${cy(p[0])+5}" font-size="15" font-weight="900" text-anchor="middle" fill="#fff">${i+1}</text></g>`;});
+    placed.forEach((p,i)=>{s+=`<g pointer-events="none"><path d="M${cx(p[1])} ${cy(p[0])-17} l14 6 v8 c0 9 -7 13 -14 16 c-7 -3 -14 -7 -14 -16 v-8z" fill="#22D3EE" stroke="#fff" stroke-width="2"/><text x="${cx(p[1])}" y="${cy(p[0])+5}" font-size="13" font-weight="900" text-anchor="middle" fill="#0B1020">${j.shown+i+1}</text></g>`;});
+    s+='</svg>';box.innerHTML=s;
+    box.querySelectorAll('.tc').forEach(el=>el.addEventListener('click',()=>tapCell(+el.dataset.r,+el.dataset.c,el)));
+    prog.textContent=`🛡️ ${t(UI.hop)} ${Math.min(next+1,j.shown+j.predict)} · ${placed.length}/${j.predict}`;}
+  function tapCell(r,c,el){if(done)return;const want=V.hops[next];
+    if(r===want[0]&&c===want[1]){placed.push([r,c]);next++;SFX.tone(700+placed.length*120,.08,'triangle',.14);api.log('trace_hit',{hop:next,cell:[r,c]});api.say(t(UI.traceGood,{n:next}),'info');
+      if(placed.length===j.predict){done=true;draw();api.say(t(UI.traceDone),'good');setTimeout(()=>api.complete({}),900);return;}draw();}
+    else{if(V.hops.slice(0,next).some(p=>p[0]===r&&p[1]===c))return;wrong++;api.mistake({hop:next+1,cell:[r,c]});api.say(t(UI.traceWrong),'bad');el.setAttribute('fill','#5A1630');setTimeout(()=>draw(wrong>=3?want:null),450);}}
+  draw();
+  return {destroy(){}};
+};
+
+// 2 · Rewind the Patrol (C2.2): watch 6 rack checks, enter them in reverse
+TASKS.patrol=api=>{
+  const j=api.job;let seq=j.v,phase=0,pos=0,tm=[];const grid=h('div',{class:'racks'});const B=[];
+  for(let i=0;i<9;i++){const b=h('button',{class:'rack','aria-label':'rack '+(i+1)},`<svg viewBox="0 0 40 46"><rect x="4" y="2" width="32" height="42" rx="4" fill="#1F2547" stroke="#3B4580"/>${[0,1,2,3].map(k=>`<rect x="9" y="${8+k*9}" width="22" height="4" rx="2" fill="#3A3F70"/>`).join('')}<circle cx="31" cy="38" r="2.5" fill="#B39BFF"/></svg><b>${i+1}</b>`);b.onclick=()=>tapRack(i);B.push(b);grid.append(b);}
+  const bar=h('div',{class:'studybar hidden'},'<i></i>');const row=h('div',{class:'row'});const go=h('button',{class:'big'},'👀 '+t(UI.showPatrol));row.append(go);
+  const entered=h('div',{class:'entered'});api.el.append(bar,grid,entered,row);
+  go.onclick=()=>{if(phase)return;go.remove();play();};
+  async function play(){phase=1;pos=0;entered.innerHTML='';api.log('study_start',{});api.say(t(UI.watchIt),'info');bar.classList.remove('hidden');B.forEach(b=>b.disabled=true);
+    for(let i=0;i<seq.length;i++){if(phase!==1)return;bar.firstChild.style.width=(100-i/seq.length*100)+'%';const b=B[seq[i]];b.classList.add('flash');SFX.tone(520+seq[i]*40,.12,'triangle',.12);await sleep(j.flashMs);b.classList.remove('flash');await sleep(220);}
+    bar.classList.add('hidden');phase=2;api.log('study_end',{});B.forEach(b=>b.disabled=false);api.say(t(UI.rewindNow),'info');S.jobs[j.id].walkAt=performance.now();}
+  function tapRack(i){if(phase!==2)return;const want=seq[seq.length-1-pos];SFX.tap();api.mark();
+    if(i===want){pos++;B[i].classList.add('ok');setTimeout(()=>B[i].classList.remove('ok'),300);entered.innerHTML=Array.from({length:seq.length},(_,k)=>`<i class="${k<pos?'on':''}"></i>`).join('');
+      if(pos===seq.length){phase=3;api.say(t(UI.patrolGood),'good');api.answer(true,{seq,reverse:true});}return;}
+    phase=3;B[i].classList.add('no');setTimeout(()=>B[i].classList.remove('no'),450);api.say(t(UI.patrolWrong),'bad');const r=api.answer(false,{seq,at:pos,got:i});
+    if(!r.final){const again=h('button',{class:'big'},'↻ '+t(UI.patrolAgain));again.onclick=()=>{again.remove();seq=genPatrol(rnd(hashStr(S.ver.seed+'|patrol-retry')),j.len);play();};row.append(again);}}
+  entered.innerHTML=Array.from({length:seq.length},()=>'<i></i>').join('');
+  return {studying:()=>phase===1,destroy(){phase=9;}};
+};
+
+// 3 · Patch Sequence (C3.1): tap fix steps in a working order (dependencies), leave out the traps
+TASKS.order=api=>{
+  const j=api.job,sc=j.sc,V=j.v;const placed=[];let done=false;const btns={};
+  const pipe=h('div',{class:'pipe'});const tiles=h('div',{class:'tiles'});
+  const drawPipe=()=>{pipe.innerHTML=Array.from({length:6},(_,i)=>{const k=placed[i];return `<div class="${k?'on':''}"><b>${i+1}</b>${k?`<span>${sc.steps[k].i}</span>${esc(t(sc.steps[k]))}`:''}</div>`;}).join('');};drawPipe();
+  const valid=k=>sc.steps[k]&&!placed.includes(k)&&sc.steps[k].needs.every(n=>placed.includes(n));
+  const hint=()=>{Object.values(btns).forEach(b=>b.classList.remove('hint'));if(S.jobs[j.id].mistakes<3)return;const k=j.topo.find(valid);if(k)btns[k].classList.add('hint');};
+  V.order.forEach(k=>{const it=sc.steps[k]||sc.decoys[k];const b=h('button',{},`<span class="ti">${it.i}</span>${esc(t(it))}`);b.onclick=()=>press(k);btns[k]=b;tiles.append(b);});
+  function press(k){if(done||placed.includes(k))return;SFX.tap();
+    if(sc.decoys[k]){api.mistake({item:k,decoy:true});api.say('⚠️ '+t(sc.decoys[k].why),'bad');btns[k].classList.add('shake-x','trap');setTimeout(()=>btns[k].classList.remove('shake-x'),400);hint();return;}
+    if(!valid(k)){api.mistake({item:k,placed:placed.slice()});api.say(t(UI.orderNeed),'bad');btns[k].classList.add('shake-x');setTimeout(()=>btns[k].classList.remove('shake-x'),400);hint();return;}
+    placed.push(k);btns[k].classList.add('done');api.log('place',{item:k,order:placed.length});drawPipe();SFX.tone(600+placed.length*70,.1,'triangle',.14);api.say('✓ '+t(sc.steps[k]),'info');hint();
+    if(placed.length===6){done=true;api.say(t(UI.orderDone),'good');setTimeout(()=>api.complete({order:placed.slice()}),1200);}}
+  api.el.append(pipe,tiles);
+  return {destroy(){}};
+};
+
+// 4 · Crack-Time Lab (C4.3): order 5 passwords from cracked-first to cracked-last, then the guess machine runs
+function recipeCard(rc){const chips=rc.icons.map(x=>`<i class="cs">${x}</i>`).join('');const len=rc.N==null?'':`<span class="len">${Array.from({length:Math.min(rc.L,16)},()=>'<u></u>').join('')}</span>`;
+  return `<span class="pw">${esc(rc.show)}</span><span class="pl">${chips}${len}</span><small>${esc(t(rc))}</small>`;}
+TASKS.rank=api=>{
+  const j=api.job,V=j.v,RC=S.mission.recipes;let slots=[null,null,null,null,null],done=false;const t0=performance.now();
+  const wrap=h('div',{class:'rankwrap'});const list=h('div',{class:'pwcards'});const sl=h('div',{class:'rslots'});const row=h('div',{class:'row'});const run=h('button',{class:'big'},'⚡ '+t(UI.runCracker));row.append(run);
+  const sim=h('div',{class:'sim hidden'});
+  api.el.append(h('div',{class:'note'},esc(t(UI.tapToPlace))),list,sl,row,sim);
+  function draw(){list.innerHTML='';V.cards.forEach(k=>{const used=slots.includes(k);const b=h('button',{class:'pwc'+(used?' used':'')},recipeCard(RC[k]));b.onclick=()=>{if(done||used)return;const i=slots.indexOf(null);if(i<0)return;slots[i]=k;SFX.tap();api.mark();api.log('rank_place',{k,slot:i});draw();};list.append(b);});
+    sl.innerHTML='';slots.forEach((k,i)=>{const s=h('button',{class:'rslot'+(k?' on':'')},`<b>${i+1}</b>${k?`<span>${esc(RC[k].show)}</span>`:`<em>${i===0?esc(t(UI.weakest)):i===4?esc(t(UI.strongest)):''}</em>`}`);s.onclick=()=>{if(done||!k)return;slots[i]=null;SFX.tap();draw();};sl.append(s);});
+    run.disabled=slots.includes(null);}
+  run.onclick=()=>{if(done)return;if(slots.includes(null)){api.say(t(UI.fillRank),'bad');return;}const st=S.jobs[j.id];if(st.answerSec==null)st.answerSec=(performance.now()-t0)/1000;
+    const right=slots.filter((k,i)=>k===j.set[i]).length;const ok=right===5;const r=api.answer(ok,{order:slots.slice(),right});
+    if(ok){done=true;api.say('✓ '+t(UI.rankRight,{n:5}),'good');showSim();return;}
+    if(r.final){done=true;api.say(t(UI.rankRight,{n:right}),'bad');showSim();return;}
+    api.say(t(UI.rankRight,{n:right})+' '+t(UI.rankAgain),'bad');};
+  function showSim(){run.remove();list.remove();api.el.querySelector('.note')&&api.el.querySelector('.note').remove();if(!answersOpen())return;sim.classList.remove('hidden');const mx=Math.log10(RC[j.set[4]].sec*10)+5;
+    sim.innerHTML=j.set.map(k=>{const rc=RC[k];const w=Math.max(3,(Math.log10(Math.max(rc.sec,1e-5))+5)/mx*100);return `<div class="sb"><span>${esc(rc.show)}</span><i style="--w:${w.toFixed(1)}%"></i><b>${esc(t(fmtDur(rc.sec)))}</b></div>`;}).join('');
+    requestAnimationFrame(()=>sim.classList.add('go'));SFX.rumble(1.5);}
+  draw();
+  return {destroy(){}};
+};
+
+// 5 · Live Alert Room (C5.2): ALLOW / BLOCK / REPORT; lockdown flips ALLOW -> BLOCK, then all clear
+TASKS.alerts=api=>{
+  const j=api.job;let seq=j.v,run=0,busy=false,raf=null;
+  const rule=h('div',{class:'rxrule'},esc(t(UI.normalRule)));const card=h('div',{class:'rxcard'},`<span style="font-size:40px">🚨</span>`);const bar=h('div',{class:'timebar'},'<i></i>');
+  const btns=h('div',{class:'rxbtns'});['allow','block','report'].forEach(a=>{const b=h('button',{class:a},esc(t(UI[a])));b.onclick=()=>press(a);btns.append(b);});
+  const score=h('div',{class:'score3'});const start=h('button',{class:'big'},'▶ '+t(UI.rxStart));
+  api.el.append(rule,card,bar,btns,score,h('div',{class:'row'}));api.el.lastChild.append(start);
+  let cur=null,shownAt=0,right=0,wrong=0,slow=0,answers=[];const evById=id=>j.events.find(e=>e.id===id);
+  const drawScore=()=>{score.innerHTML=`<span>✅ ${right}</span><span>❌ ${wrong}</span><span>⏳ ${slow}</span>`;};drawScore();
+  start.onclick=()=>{if(busy)return;start.remove();go();};
+  async function go(){busy=true;right=wrong=slow=0;answers=[];drawScore();run++;api.log('alerts_start',{run});
+    for(let si=0;si<seq.length;si++){
+      if(si===1){rule.textContent=t(UI.lockRule);rule.className='rxrule lock flash';card.classList.add('lock');card.innerHTML='<span style="font-size:46px">🔒</span>';SFX.alarm();await sleep(1700);}
+      if(si===2){rule.textContent=t(UI.clearRule);rule.className='rxrule clear flash';card.classList.remove('lock');card.innerHTML='<span style="font-size:46px">✅</span>';SFX.sting();await sleep(1500);}
+      for(const id of seq[si]){const ev=evById(id);const lock=si===1;const need=lock&&ev.a==='allow'?'block':ev.a;const win=j.windowMs[si];
+        cur={need,ev,stage:si,done:false};card.classList.remove('hit','miss');card.innerHTML=`<span class="e">${ev.i}</span><span>${esc(t(ev))}</span>`;shownAt=performance.now();SFX.tone(700,.05,'square',.05);
+        await new Promise(res=>{const f=()=>{const e=performance.now()-shownAt;bar.firstChild.style.width=Math.max(0,100-e/win*100)+'%';if(cur.done){res();return;}if(e>=win){cur.done=true;slow++;answers.push({id:ev.id,stage:si,need,got:null});card.classList.add('miss');shieldChange(-1,'alert_slow');drawScore();res();return;}raf=requestAnimationFrame(f);};f();});
+        await sleep(j.gapMs);}
+    }
+    cur=null;busy=false;const ok=right>=j.pass;api.log('alerts_end',{run,right,wrong,slow});
+    const r=api.answer(ok,{right,wrong,slow,answers});
+    if(ok)api.say(t(UI.rxPass,{n:right}),'good');
+    else if(!r.final){api.say(t(UI.rxFail,{n:right,p:j.pass}),'bad');const again=h('button',{class:'big'},'↻ '+t(UI.rxAgain));again.onclick=()=>{again.remove();seq=genAlerts(rnd(hashStr(S.ver.seed+'|retry')),S.base.jobs.find(x=>x.id==='alerts'));rule.textContent=t(UI.normalRule);rule.className='rxrule';card.classList.remove('lock');go();};api.el.lastChild.append(again);}
+  }
+  function press(a){if(!cur||cur.done)return;cur.done=true;const rt=performance.now()-shownAt;if(rt<S.base.fairPlay.reactFloorMs)S.fp.fastReacts++;
+    const good=a===cur.need;answers.push({id:cur.ev.id,stage:cur.stage,need:cur.need,got:a,rt:Math.round(rt)});
+    if(good){right++;card.classList.add('hit');SFX.tone(880,.06,'triangle',.12);}else{wrong++;card.classList.add('miss');SFX.bad();shieldChange(-1,'alert_wrong');}
+    drawScore();api.mark();}
+  return {destroy(){if(raf)cancelAnimationFrame(raf);}};
+};
+
+// 6 · Phish Hunter (C6.3): tap the 3 phishing messages, then the 3 fake links
+function urlHtml(u){const m=/^(https:\/\/)([^/]+)(.*)$/.exec(u);return m?`<span class="sch">🔒 ${m[1]}</span><span class="host">${esc(m[2])}</span><span class="path">${esc(m[3])}</span>`:esc(u);}
+TASKS.phish=api=>{
+  const j=api.job,V=j.v;let part=0;const area=h('div',{style:{display:'flex',flexDirection:'column',gap:'8px'}});api.el.append(area);
+  const msg=id=>j.msgsPhish.find(x=>x.id===id)||j.msgsLegit.find(x=>x.id===id);const lnk=id=>j.linksFake.find(x=>x.id===id)||j.linksLegit.find(x=>x.id===id);
+  function list(items,okMsg){const need=items.filter(x=>x.bad).length;let found=0,wrong=0;const prog=h('div',{class:'meta'},esc(t(UI.found,{n:0,m:need})));const g=h('div',{class:'plist'});
+    items.forEach(it=>{const b=h('button',{class:'pitem '+it.cls},it.html);
+      b.onclick=()=>{if(b.classList.contains('found')||b.classList.contains('okd'))return;SFX.tap();api.log('spot',{part,key:it.key,bad:it.bad});
+        if(it.bad){b.classList.add('found');found++;if(answersOpen()&&it.why)b.append(h('em',{},'🚩 '+esc(t(it.why))));prog.textContent=t(UI.found,{n:found,m:need});SFX.tone(990,.1,'triangle',.15);if(found===need)setTimeout(nextPart,900);}
+        else{wrong++;api.mistake({part,key:it.key});api.say(t(okMsg),'bad');b.classList.add('no');setTimeout(()=>b.classList.remove('no'),450);
+          if(wrong>=3)[...g.children].forEach((x,k)=>{if(items[k].bad&&!x.classList.contains('found'))x.classList.add('hint');});}};g.append(b);});
+    area.append(prog,g);}
+  const parts=[()=>list(V.msgs.map(id=>{const m=msg(id);return{key:id,bad:!!m.tier||m.tier===0?j.msgsPhish.includes(m):false,why:m.why,cls:'msg',html:`<b>${esc(m.frm)}</b><span>${esc(t(m))}</span>`};}).map(x=>(x.bad=j.msgsPhish.some(p=>p.id===x.key),x)),UI.notPhish),
+               ()=>list(V.links.map(id=>{const l=lnk(id);return{key:id,bad:j.linksFake.some(p=>p.id===id),why:l.why,cls:'url',html:urlHtml(l.url)};}),UI.notFake)];
+  function nextPart(){part++;area.innerHTML='';api.say('','info');if(part>=2){SFX.good();api.complete({});return;}api.setPrompt(j.prompts[part]);parts[part]();}
+  api.setPrompt(j.prompts[0]);parts[0]();
+  return {destroy(){}};
+};
+
+/* ================= animated Learn demos (show, don't tell) =================
+   Captions live in the mission JSON (job.demo[i]); the animation lives here: DEMO[jobId][i] = {ms, d:p=>svg}, p goes 0..1.
+   Demos use fixed example content that never matches a player's own puzzle. Start unlocks after one full play. */
+const DM={cl:(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),e:p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2,lr:(a,b,p)=>a+(b-a)*p,seg:(p,a,b)=>DM.cl((p-a)/(b-a))};
+const VB='0 0 320 190';
+const dBg=()=>`<rect width="320" height="190" fill="#0B1230"/>${Array.from({length:9},(_,i)=>`<path d="M${i*40} 0 V190" stroke="#16204A"/>`).join('')}${Array.from({length:5},(_,i)=>`<path d="M0 ${i*40+15} H320" stroke="#16204A"/>`).join('')}`;
+function dMark(x,y,ok,p){if(p<=0)return '';const s=DM.cl(p*1.6)*(1+Math.sin(DM.cl(p)*Math.PI)*.15);return `<g transform="translate(${x} ${y}) scale(${s.toFixed(2)})"><circle r="15" fill="${ok?'#3DDC97':'#FF5D73'}" stroke="#fff" stroke-width="3"/><path d="${ok?'M-7 0 l5 5 l9 -10':'M-6 -6 L6 6 M6 -6 L-6 6'}" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></g>`;}
+function dTxt(x,y,s,o={}){return `<text x="${x}" y="${y}" font-size="${o.size||13}" font-weight="${o.w||800}" text-anchor="${o.a||'middle'}" fill="${o.c||'#E6F1FF'}" ${o.op!=null?`opacity="${o.op}"`:''}>${esc(s)}</text>`;}
+function dShield(x,y,s=1,c='#22D3EE'){return `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -14 l12 5 v7 c0 8 -6 11 -12 14 c-6 -3 -12 -6 -12 -14 v-7z" fill="${c}" stroke="#fff" stroke-width="2"/>`;}
+function dFinger(x,y,p){const d=Math.sin(p*Math.PI*2)*3;return `<g transform="translate(${x} ${y+d})"><path d="M0 0 l-5 14 q-1 6 5 8 l9 0 q5 -1 5 -7 l0 -8 q0 -3 -3 -3 l-3 0 l0 -2 q0 -3 -3 -3 l-3 0 l0 -2 q0 -3 -3 -3z" fill="#FFE2C4" stroke="#0B1020" stroke-width="1.5"/></g>`;}
+
+// trace: example cycle A=(0,+1) B=(+1,0) C=(-1,+1) on a 7x4 grid (drift 2: never a real puzzle)
+const TR=(()=>{const mv=[[0,1],[1,0],[-1,1]];const p=[[2,0]];for(let i=1;i<8;i++){const d=mv[(i-1)%3];p.push([p[i-1][0]+d[0],p[i-1][1]+d[1]]);}return p;})();
+function dTrace(n,{arrows=0,ghost=0,shield=0,hi=-1}={},p=1){const cs=34,ox=24,oy=28,cx=c=>ox+c*cs+cs/2,cy=r=>oy+r*cs+cs/2;let s=dBg();
+  for(let r=0;r<4;r++)for(let c=0;c<8;c++)s+=`<rect x="${ox+c*cs+2}" y="${oy+r*cs+2}" width="${cs-4}" height="${cs-4}" rx="6" fill="#17204A" stroke="#25306A"/>`;
+  const cols=['#FFC83D','#B39BFF','#2ED3C0'];
+  for(let i=1;i<Math.min(n,TR.length);i++){if(i>arrows)break;const a=TR[i-1],b=TR[i],k=(i-1)%3;s+=`<line x1="${cx(a[1])}" y1="${cy(a[0])}" x2="${cx(b[1])}" y2="${cy(b[0])}" stroke="${cols[k]}" stroke-width="${hi===k?5:3}" stroke-linecap="round"/>`;
+    if(i<=3)s+=dTxt((cx(a[1])+cx(b[1]))/2+(k===1?-10:0),(cy(a[0])+cy(b[0]))/2-6,'ABC'[k],{c:cols[k],size:14});}
+  for(let i=0;i<n&&i<TR.length;i++){const q=TR[i];const sc=i===n-1?DM.cl(p*3):1;s+=`<g transform="translate(${cx(q[1])} ${cy(q[0])}) scale(${sc.toFixed(2)})"><circle r="12" fill="#7A1638" stroke="#FF6B8F" stroke-width="2"/>${dTxt(0,5,String(i+1),{size:12})}</g>`;}
+  if(ghost){const q=TR[n];s+=`<circle cx="${cx(q[1])}" cy="${cy(q[0])}" r="13" fill="none" stroke="#22D3EE" stroke-width="2" stroke-dasharray="4 3"/>`;if(shield)s+=dShield(cx(q[1]),cy(q[0]),DM.cl(shield));}
+  return s;}
+
+// patrol
+const PT=[4,0,8];
+function dRacks(flash,taps,p){let s=dBg();for(let i=0;i<9;i++){const x=95+(i%3)*46,y=22+Math.floor(i/3)*50;const on=flash===i;const tp=taps.indexOf(i);
+  s+=`<rect x="${x}" y="${y}" width="38" height="42" rx="6" fill="${on?'#B39BFF':'#1F2547'}" stroke="${tp>=0?'#3DDC97':'#3B4580'}" stroke-width="${tp>=0?3:1.5}"/>${dTxt(x+19,y+27,String(i+1),{c:on?'#0B1020':'#9AA6D6',size:15})}`;
+  if(tp>=0)s+=dTxt(x+33,y+12,String(tp+1),{c:'#3DDC97',size:11});}return s;}
+
+// patch pipeline
+function dPipe(items,trap,p){let s=dBg();s+=`<path d="M20 150 H300" stroke="#2ED3C0" stroke-width="4" stroke-dasharray="8 6" opacity=".5"/>`;
+  items.forEach((it,i)=>{const x=34+i*64,y=120;s+=`<rect x="${x-26}" y="${y-22}" width="52" height="44" rx="10" fill="#17304A" stroke="#2ED3C0" stroke-width="2"/>${dTxt(x,y+6,it,{size:20})}${dTxt(x,y+38,String(i+1),{c:'#2ED3C0',size:12})}`;});
+  if(trap){const y=DM.lr(20,70,DM.e(DM.cl(p*2)));s+=`<rect x="232" y="${y-22}" width="60" height="44" rx="10" fill="#4A1730" stroke="#FF5D73" stroke-width="2"/>${dTxt(262,y+7,'💸',{size:20})}`;if(p>.5)s+=`<path d="M228 ${y-26} L296 ${y+26} M296 ${y-26} L228 ${y+26}" stroke="#FF5D73" stroke-width="4"/>`;}
+  return s;}
+
+// crack: guess counter bars
+function dGuess(rows,p){let s=dBg();rows.forEach((r,i)=>{const y=34+i*48;const w=DM.cl(p*r.speed)*r.w;s+=dTxt(16,y+4,r.pw,{a:'start',size:13,c:'#FFE2C4'})+`<rect x="16" y="${y+12}" width="288" height="14" rx="7" fill="#17204A"/><rect x="16" y="${y+12}" width="${w.toFixed(1)}" height="14" rx="7" fill="${r.c}"/>`+dTxt(304,y+4,p>=1/r.speed||r.speed>50?r.out:'…',{a:'end',size:13,c:r.c});});return s;}
+
+// alerts
+function dAlert(icon,lbl,mode,press,p){let s=`<rect width="320" height="190" fill="${mode==='lock'?'#2A0E24':'#0B1230'}"/>`;const sc=.7+.3*DM.e(DM.cl(p*4));
+  s+=dTxt(160,22,mode==='lock'?'🔒 LOCKDOWN':mode==='clear'?'✅ ALL CLEAR':'🟢 NORMAL',{c:mode==='lock'?'#FF7EA8':'#9BE7C4',size:14});
+  s+=`<g transform="translate(160 78) scale(${sc.toFixed(2)})"><rect x="-80" y="-36" width="160" height="72" rx="14" fill="#17204A" stroke="${mode==='lock'?'#FF5D73':'#4EA8FF'}" stroke-width="3"/>${dTxt(0,0,icon,{size:28})}${dTxt(0,24,lbl,{size:11})}</g>`;
+  s+=`<rect x="90" y="124" width="140" height="7" rx="3.5" fill="#17204A"/><rect x="90" y="124" width="${(140*(1-DM.cl(p/.6))).toFixed(1)}" height="7" rx="3.5" fill="#4EA8FF"/>`;
+  [['allow','ALLOW','#2FA86F'],['block','BLOCK','#D9534F'],['report','REPORT','#D99A2B']].forEach(([k,l,c],i)=>{const x=60+i*100,on=press===k&&p>.55;s+=`<g transform="translate(${x} 163) scale(${on?1.12:1})"><rect x="-44" y="-15" width="88" height="30" rx="11" fill="${c}" stroke="${on?'#fff':'none'}" stroke-width="3"/>${dTxt(0,5,l,{size:13})}</g>`;});
+  return s;}
+
+// phish
+function dPhone(lines,flags,p){let s=dBg()+`<rect x="70" y="10" width="180" height="172" rx="18" fill="#E9EEF8" stroke="#0B1020" stroke-width="3"/><rect x="82" y="34" width="156" height="96" rx="10" fill="#fff" stroke="#C8D0E6"/>`;
+  lines.forEach((l,i)=>{s+=dTxt(90,54+i*18,l,{a:'start',size:11,c:'#0B1020',w:700});});
+  flags.forEach((f,i)=>{if(p<f.at)return;s+=`<rect x="${f.x}" y="${f.y}" width="${f.w}" height="16" rx="5" fill="none" stroke="#FF2E63" stroke-width="2.5"/>`+dTxt(f.x+f.w/2,f.y+30,f.tag,{c:'#FF2E63',size:11});});return s;}
+function dUrl(p,step){let s=dBg()+`<rect x="10" y="64" width="300" height="40" rx="10" fill="#E9EEF8"/>`;const host='nagarbank.in.secure-login.co',path='/kyc';
+  s+=`<text x="20" y="90" font-size="13.5" font-weight="800" fill="#0B1020" font-family="ui-monospace,monospace">https://<tspan fill="${step>=2?'#8A93B2':'#0B1020'}">nagarbank.in.</tspan><tspan fill="${step>=2?'#FF2E63':'#0B1020'}">secure-login.co</tspan><tspan fill="#5A6380">${path}</tspan></text>`;
+  if(step>=1){const x=DM.lr(20,262,DM.e(DM.cl(p*1.4)));s+=`<path d="M${x} 112 l6 10 h-12z" fill="#FFC83D"/>`+dTxt(x,138,step>=2?'':t(L2('first single /','पहला अकेला /')),{c:'#FFC83D',size:12});}
+  if(step>=2)s+=`<path d="M150 108 q60 30 120 0" fill="none" stroke="#FF2E63" stroke-width="2"/>`+dTxt(210,150,t(L2('real owner: secure-login.co','असली मालिक: secure-login.co')),{c:'#FF7EA8',size:12})+dMark(160,30,false,p);
+  return s;}
+
+const DEMO={
+  trace:[{ms:2600,d:p=>dTrace(1+Math.floor(DM.cl(p*1.2)*3),{},p)},
+         {ms:3800,d:p=>dTrace(4,{arrows:Math.min(3,1+Math.floor(p*3)),hi:Math.min(2,Math.floor(p*3))},p)},
+         {ms:3800,d:p=>dTrace(4+Math.min(3,Math.floor(p*3.4)),{arrows:3+Math.min(3,Math.floor(p*3.4)),hi:Math.floor(p*3.4)%3},p)},
+         {ms:3600,d:p=>dTrace(7,{arrows:6,ghost:1,shield:DM.seg(p,.35,.8)},p)+dMark(285,30,true,DM.seg(p,.7,1))}],
+  patrol:[{ms:3400,d:p=>dRacks(PT[Math.min(2,Math.floor(p*3))],[],p)+dTxt(40,110,'1 → 2 → 3',{c:'#B39BFF',size:12})},
+          {ms:2600,d:p=>dRacks(-1,[],p)+dTxt(48,100,'🧠',{size:32})+dTxt(48,124,`${PT.map(x=>x+1).join(' → ')}`,{c:'#B39BFF',size:12})},
+          {ms:4200,d:p=>{const n=Math.min(3,Math.floor(p*3.3));const taps=PT.slice().reverse().slice(0,n);const last=taps[taps.length-1];let s=dRacks(-1,taps,p)+dTxt(46,100,'⏪',{size:30});if(last!=null)s+=dFinger(95+(last%3)*46+24,22+Math.floor(last/3)*50+26,p);return s;}},
+          {ms:2600,d:p=>dRacks(-1,[8],p)+dFinger(95+46+24,22+26,p)+dMark(285,30,false,DM.seg(p,.3,.7))}],
+  patch:[{ms:3200,d:p=>dPipe(['🔌','🧹','⬆️'].slice(0,1+Math.floor(DM.cl(p*1.1)*3)),false,p)+dTxt(250,70,'🔒 ⇢ 🔓',{size:20,c:'#2ED3C0'})},
+         {ms:3000,d:p=>dPipe(['🔌'],false,p)+dTxt(160,60,'🌐 ✂️',{size:30})+dMark(220,50,true,DM.seg(p,.5,1))},
+         {ms:3800,d:p=>dPipe(['🔌','🧹','⬆️','💾'].slice(0,2+Math.floor(DM.cl(p*1.1)*2)),false,p)+dTxt(160,55,'🧹  →  💾',{size:26})},
+         {ms:3200,d:p=>dPipe(['🔌','🧹'],true,p)}],
+  crack:[{ms:3000,d:p=>dBg()+dTxt(160,70,'⚙️',{size:44})+dTxt(160,120,fmt(Math.floor(DM.cl(p)*1e10))+' / s',{c:'#FF8A5C',size:22})},
+         {ms:3200,d:p=>dGuess([{pw:'Welcome@123',w:20,speed:60,c:'#FF5D73',out:'⚡ 0 s'},{pw:t(L2('leaked list: 1 · 2 · 3 …','लीक लिस्ट: 1 · 2 · 3 …')),w:0,speed:1,c:'#8A93B2',out:''}],p)},
+         {ms:4200,d:p=>dGuess([{pw:'k#9Lm!2q  (8)',w:120,speed:1.3,c:'#FFC83D',out:t(L2('~4 days','~4 दिन'))},{pw:'k#9Lm!2qx  (9)',w:200,speed:1.15,c:'#FF8A5C',out:'×95'},{pw:'k#9Lm!2qxz  (10)',w:288,speed:1,c:'#3DDC97',out:'×95×95'}],p)},
+         {ms:4200,d:p=>dGuess([{pw:t(L2('k#9Lm!2q  (8, all types)','k#9Lm!2q  (8, सब तरह)')),w:120,speed:1.2,c:'#FFC83D',out:t(L2('~4 days','~4 दिन'))},{pw:t(L2('vbqnxlrtzoek  (12 letters)','vbqnxlrtzoek  (12 अक्षर)')),w:200,speed:1,c:'#3DDC97',out:t(L2('~55 days','~55 दिन'))}],p)+dMark(285,170,true,DM.seg(p,.8,1))}],
+  alerts:[{ms:3000,d:p=>dAlert('📱',t(L2('Login: your own phone','लॉगिन: तुम्हारा अपना फ़ोन')),'normal',null,p)},
+          {ms:2800,d:p=>dAlert('📱',t(L2('Login: your own phone','लॉगिन: तुम्हारा अपना फ़ोन')),'normal','allow',p)},
+          {ms:2800,d:p=>dAlert('🔁',t(L2('100 wrong passwords','100 गलत पासवर्ड')),'normal','block',p)},
+          {ms:3000,d:p=>dAlert('☎️',t(L2('"Bank" asks for OTP','"बैंक" OTP माँग रहा है')),'normal','report',p)},
+          {ms:3400,d:p=>dAlert('📱',t(L2('Login: your own phone','लॉगिन: तुम्हारा अपना फ़ोन')),'lock','block',p)},
+          {ms:3000,d:p=>dAlert('📱',t(L2('Login: your own phone','लॉगिन: तुम्हारा अपना फ़ोन')),'clear','allow',p)}],
+  phish:[{ms:3600,d:p=>dPhone(S.lang==='hi'?['नगर बैंक:','KYC आज खत्म!','अभी अपडेट करो','वरना अकाउंट बंद।']:['Nagar Bank:','KYC expires TODAY!','Update NOW or','account blocked.'],[{x:86,y:59,w:118,tag:t(L2('⏰ panic','⏰ घबराहट')),at:.35}],p)},
+         {ms:3600,d:p=>dPhone(S.lang==='hi'?['PaySetu रिफ़ंड:','₹2,000 तैयार।','पाने के लिए','UPI PIN डालो।']:['PaySetu Refund:','₹2,000 waiting.','Enter UPI PIN','to receive.'],[{x:86,y:95,w:96,tag:t(L2('🔢 PIN? never','🔢 PIN? कभी नहीं')),at:.35}],p)},
+         {ms:3800,d:p=>dUrl(p,1)},
+         {ms:4200,d:p=>dUrl(p,2)}]
+};
+
+function showDemo(j,peek){HOST.stop();
+  const beats=DEMO[j.id],caps=j.demo||[];const c=openOv();c.style.setProperty('--c',SP[j.superpower].c);c.classList.add('democard');
+  const head=h('div',{class:'ph'},`<div class="badge">${ICON[j.superpower]}</div><div class="pt"><small>${esc(t(SP[j.superpower]))} · ${j.competency} ${COMP[j.competency]||''}</small><b>${esc(t(j.label))}</b></div>`);
+  const body=h('div',{class:'pb'});c.append(head,body);
+  const stage=h('div',{class:'art demo'});const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox',VB);stage.append(svg);
+  const cap=h('div',{class:'dcap'});const dots=h('div',{class:'ddots'});beats.forEach(()=>dots.append(h('i')));
+  const row=h('div',{class:'row'});body.append(h('div',{class:'kicker'},'▶ '+esc(t(UI.watch))),stage,cap,dots,row);
+  const st=S.jobs[j.id];let i=0,t0=0,raf=0,played=!!st.demoSeen||peek,startBtn=null;
+  const dur=k=>Math.max(beats[k].ms,(caps[k]?t(caps[k]).length:0)*62)/(window.__demoSpeed||1);
+  function speak(k){if(!S.sound||!caps[k])return;try{const sy=window.speechSynthesis;if(!sy)return;sy.cancel();const u=new SpeechSynthesisUtterance(t(caps[k]));u.lang=S.lang==='hi'?'hi-IN':'en-IN';u.rate=1.04;const vs=sy.getVoices();const v=vs.find(x=>x.lang===u.lang)||vs.find(x=>x.lang&&x.lang.startsWith(S.lang));if(v)u.voice=v;sy.speak(u);}catch(e){}}
+  function setBeat(k){i=k;t0=performance.now();cap.innerHTML=`<b>${k+1}</b><span>${esc(caps[k]?t(caps[k]):'')}</span>`;[...dots.children].forEach((d,n)=>d.className=n<k?'done':n===k?'on':'');speak(k);}
+  function frame(now){if(!c.isConnected){cancelAnimationFrame(raf);return;}const p=DM.cl((now-t0)/dur(i));try{svg.innerHTML=beats[i].d(p);}catch(e){svg.innerHTML='';}
+    if(p>=1){if(i<beats.length-1)setBeat(i+1);else if(!played){played=true;st.demoSeen=true;buildRow();}}
+    raf=requestAnimationFrame(frame);}
+  function stopLearnClock(){if(st.learnOpen!=null){st.learnMs+=performance.now()-st.learnOpen;st.learnOpen=null;}}
+  function buildRow(){row.innerHTML='';
+    row.append(h('button',{class:'big alt',title:'replay',onclick:()=>{SFX.tap();setBeat(0);}},'↻'));
+    if(peek)row.append(h('button',{class:'big',onclick:()=>{cancelAnimationFrame(raf);try{speechSynthesis.cancel();}catch(e){}closeOv();S.learnView=null;}},t(UI.backToJob)));
+    else{row.prepend(h('button',{class:'big alt',onclick:()=>{cancelAnimationFrame(raf);try{speechSynthesis.cancel();}catch(e){}stopLearnClock();closeOv();S.learnView=null;leaveJob(false);}},'✕'));
+      startBtn=h('button',{class:'big',disabled:!played,onclick:()=>{cancelAnimationFrame(raf);try{speechSynthesis.cancel();}catch(e){}stopLearnClock();st.learnDone=true;log('learn_done',j.id,{learn_ms:Math.round(st.learnMs),demo:true});closeOv();S.learnView=null;startJob(j);}},played?t(UI.startJob)+' ▶':'⏳ '+t(UI.watchFirst));
+      row.append(startBtn);}}
+  buildRow();setBeat(0);raf=requestAnimationFrame(frame);S.learnView={j,si:0,peek};
+}
+
+/* ================= game flow ================= */
+function isUnlocked(j){if(j.unlock==='start')return true;return S.jobs[j.unlock]&&S.jobs[j.unlock].status==='done';}
+function nextJob(){return S.mission.jobs.find(j=>S.jobs[j.id].status!=='done'&&isUnlocked(j));}
+function jobById(id){return S.mission.jobs.find(j=>j.id===id);}
+function renderHUD(){
+  const tm=$('#timer');tm.textContent='⏱ '+fmtTime(Math.max(0,S.windowLeft)*1000);tm.classList.toggle('low',S.windowLeft<=120);
+  $('#score').textContent='★ '+fmt(S.points);const st=$('#streak');if(S.streak>=2){st.classList.remove('hidden');st.textContent='🔥'+S.streak;}else st.classList.add('hidden');
+  $('#coins').textContent=S.coins;$('#lang').textContent=S.lang==='en'?'हिं':'EN';$('#snd').textContent=S.sound?'🔊':'🔇';
+  $('#meters').classList.toggle('hidden',!(S.phase==='play'||S.phase==='ending'));renderShield();
+}
+function renderJobbar(){
+  const jb=$('#jobbar');jb.innerHTML='';const nx=nextJob();
+  S.mission.jobs.forEach(j=>{const st=S.jobs[j.id];const locked=!isUnlocked(j);const done=st.status==='done';
+    const b=h('button',{class:'jb'+(locked?' lock':'')+(done?' done':'')+(nx&&nx.id===j.id?' next':''),style:{'--c':SP[j.superpower].c},'aria-label':t(j.label)},`<span class="ic">${ICON[j.superpower]}</span><span>${done?'★'.repeat(st.stars):(locked?'🔒 ':'')+esc(t(j.label))}</span>`);
+    b.onclick=()=>goToStation(j.id);jb.append(b);});
+}
+function renderBubble(){const b=$('#bubble');if(S.phase!=='play'||S.active||$('#lower3')){b.classList.add('hidden');return;}b.classList.remove('hidden');
+  const nx=nextJob();b.textContent=(S.mode==='ranked'?'🏆 ':'')+(S.jobs.trace.status!=='done'?t(UI.goFirst):(nx?t(UI.tapStation)+' · '+t(nx.label):t(UI.goCore))+(S.beat!=null?' · 🎯 '+fmt(S.beat):''));}
+function refreshAll(){if(!S.active&&(S.phase==='play'||S.phase==='intro'))showMarkers(true);renderHUD();renderJobbar();renderBubble();refreshMarkerLabels();}
+function toast(msg,ms=2600,kind=''){const e=h('div',{class:'toast '+kind},esc(msg));document.body.append(e);setTimeout(()=>e.remove(),ms);}
+
+let clockId=null;
+function startClock(){S.windowStart=performance.now();clearInterval(clockId);clockId=setInterval(()=>{if(S.phase!=='play'){clearInterval(clockId);return;}
+  S.windowLeft=S.mission.windowSec-Math.floor(playSec());
+  if(S.windowLeft<=0&&!S.windowClosedShown){S.windowClosedShown=true;toast(t(UI.windowClosed),4000);log('window_closed');SFX.bad();}
+  const g=ghostAt(playSec());if(g&&g.n>S.ghostSeen){S.ghostSeen=g.n;const j=S.mission.jobs[g.n-1];if(!S.active)toast(g.n===6?t(UI.ghostFinished,{r:S.ghost.name}):'⚔️ '+t(UI.ghostDone,{r:S.ghost.name,s:t(j.label)}),2200,'ghost');log('ghost_progress',null,{n:g.n,pts:g.pts});}
+  renderHUD();renderBubble();},500);}
+
+function goToStation(id){
+  if(S.phase!=='play'||S.active)return;const j=jobById(id);const st=S.jobs[id];
+  if(st.status==='done'){SFX.tap();return;}
+  if(!isUnlocked(j)){toast(t(UI.locked),1800);SFX.bad();return;}
+  SFX.tap();log('walk_to',id);
+  walkTo(j.station.x,j.station.z,()=>{R.avatar.rotation.y=Math.PI;arrive(j);});
+  renderBubble();
+}
+function camPoseFor(j){const s=j.station;const portrait=innerWidth<innerHeight;const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  return {pos:V(s.x+3,portrait?9:7,s.z+(portrait?11:9)),look:V(s.x,portrait?-3:1,s.z-4)};}
+function showMarkers(v){Object.values(R.markers).forEach(mk=>mk.g.visible=v);if(v)R.avatar.visible=true;}
+function arrive(j){
+  showMarkers(false);const st=S.jobs[j.id];if(!st.learnDone)st.learnOpen=performance.now();S.active={job:j,task:null};st.status='open';log('job_arrive',j.id,{learn_done:st.learnDone});
+  S.camMode='job';S.camPose=camPoseFor(j);renderBubble();$('#jobbar').classList.add('hidden');HOST.stop();
+  if(!st.learnDone)showLearn(j,0,false);else startJob(j);
+}
+
+/* ---------- learn (animated demo) ---------- */
+let ovEl=null;
+function closeOv(){if(ovEl){ovEl.remove();ovEl=null;}}
+function openOv(){closeOv();ovEl=h('div',{class:'ov'});const c=h('div',{class:'card',role:'dialog','aria-modal':'true'});ovEl.append(c);document.body.append(ovEl);return c;}
+function showLearn(j,si,peek){showDemo(j,peek);}
+
+/* ---------- job panel ---------- */
+let panelEl=null;
+function closePanel(){if(panelEl){panelEl.remove();panelEl=null;}}
+function startJob(j){
+  const st=S.jobs[j.id];const sc=S.mission.scoring;closePanel();
+  panelEl=h('div',{class:'panel tall'});panelEl.style.setProperty('--c',SP[j.superpower].c);
+  const head=h('div',{class:'ph'});const tt=h('div',{class:'pt'});let curPrompt=j.prompt||j.prompts[0];
+  const setTitle=()=>{tt.innerHTML=`<small>${esc(t(SP[j.superpower]))} · ${j.competency} ${COMP[j.competency]||''}</small><b>${esc(t(j.label))}</b>`;};setTitle();
+  head.append(h('div',{class:'badge'},ICON[j.superpower]),tt,h('button',{class:'x','aria-label':t(UI.close),onclick:()=>leaveJob(true)},'×'));
+  const body=h('div',{class:'pb'});const prompt=h('div',{class:'prompt'},esc(t(curPrompt)));
+  const meta=h('div',{class:'meta'});const mtxt=h('span');const notes=h('button',{class:'notes'});meta.append(mtxt,notes);
+  const area=h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}});const fb=h('div',{class:'fb info','aria-live':'polite'});
+  body.append(prompt,meta,fb,area);panelEl.append(head,body);document.body.append(panelEl);
+  const attemptTask=['patrol','rank','alerts'].includes(j.task);
+  const drawMeta=()=>{mtxt.textContent=attemptTask?`${t(UI.tries)} ${Math.min(st.tries+1,2)}/2`:`${t(UI.mistakes)}: ${st.mistakes}`;
+    notes.innerHTML=st.notes?`📒 ${esc(t(UI.notes))} ✓`:`📒 ${esc(t(UI.notes))} <i class="coin"></i>-${sc.coins.notesCost}`;notes.disabled=!st.notes&&S.coins<sc.coins.notesCost;};
+  drawMeta();
+  notes.onclick=()=>{if(!st.notes){if(S.coins<sc.coins.notesCost)return;S.coins-=sc.coins.notesCost;st.notes=true;SFX.coin();log('notes',j.id,{coins_left:S.coins});renderHUD();drawMeta();}showLearn(j,0,true);};
+  st.startedAt=performance.now();log('job_start',j.id);
+  let finished=false;const mark=()=>{if(st.firstActMs==null&&st.startedAt!=null)st.firstActMs=Math.round(performance.now()-st.startedAt);};
+  const hitShield=()=>shieldChange(-S.mission.shield.mistake,'mistake');
+  const api={job:j,el:area,mark,
+    say(msg,kind='info'){fb.className='fb '+kind;fb.textContent=msg;},
+    setPrompt(p){curPrompt=p;prompt.textContent=t(p);},
+    log(ev,p){mark();log(ev,j.id,p);},
+    mistake(p={}){if(finished)return;mark();st.mistakes++;SFX.bad();hitShield();log('mistake',j.id,p);drawMeta();},
+    complete(p={}){if(finished)return;finished=true;const lvl=st.mistakes===0?'first':st.mistakes===1?'second':'helped';finishJob(j,lvl,p);},
+    answer(correct,p={}){
+      if(finished)return{final:true};mark();st.tries++;log('attempt',j.id,{n:st.tries,correct,...p});
+      if(correct){finished=true;setTimeout(()=>finishJob(j,st.tries===1?'first':'second',p),j.task==='rank'?2600:800);return{final:true};}
+      hitShield();
+      if(st.tries>=2){finished=true;SFX.bad();setTimeout(()=>finishJob(j,'failed',p),j.task==='rank'?3000:1600);return{final:true};}
+      SFX.bad();drawMeta();return{final:false};}
+  };
+  S.active.api=api;S.active.setTitle=()=>{setTitle();prompt.textContent=t(curPrompt);drawMeta();};
+  S.active.task=TASKS[j.task](api);
+}
+function leaveJob(fromPanel){
+  const a=S.active;if(!a)return;const st=S.jobs[a.job.id];
+  if(a.task&&a.task.destroy)a.task.destroy();
+  if(st.startedAt!=null){st.timeMs+=performance.now()-st.startedAt;st.startedAt=null;}
+  if(st.status==='open')st.status='new';
+  log('job_leave',a.job.id,{time_ms:Math.round(st.timeMs)});
+  closePanel();closeOv();S.active=null;S.camMode='follow';$('#jobbar').classList.remove('hidden');refreshAll();
+}
+function unlockPup(k){if(S.pups.includes(k))return;S.pups.push(k);applyPowerups();toast(UI.pups[k].i+' '+t(UI.powerUp,{p:t(UI.pups[k])}),3200,'pup');log('powerup',null,{k});}
+function finishJob(j,level,p){
+  const st=S.jobs[j.id];const sc=S.mission.scoring,js=sc.job,sk=sc.skillCredit;
+  if(st.startedAt!=null){st.timeMs+=performance.now()-st.startedAt;st.startedAt=null;}
+  st.level=level;st.status='done';st.doneAtSec=Math.round(playSec());
+  let base=level==='first'?js.first:level==='second'?js.second:level==='helped'?js.helped:0;if(st.notes)base*=js.notesFactor;
+  if(level==='first'&&!st.notes){S.streak++;}else S.streak=0;S.bestStreak=Math.max(S.bestStreak,S.streak);
+  const mult=(level==='first'&&!st.notes)?js.streak[Math.min(S.streak,js.streak.length)-1]:1;
+  const speed=level==='failed'?0:Math.round(js.speedMax*Math.max(0,1-st.timeMs/1000/j.targetSec));
+  st.points=Math.round(base*mult)+speed;S.points+=st.points;
+  st.credit=level==='first'?sk.first:level==='second'?sk.second:sk.later;if(st.notes)st.credit=Math.max(0,st.credit-sk.notesPenalty);
+  st.stars=level==='first'?3:level==='second'?2:1;
+  if(level==='first')S.coins+=sc.coins.perFirstTry;
+  if(level!=='failed')shieldChange(S.mission.shield.perJob,'job_done');
+  killDrone(j.id);const doneN=S.mission.jobs.filter(x=>S.jobs[x.id].status==='done').length;setStory(doneN);
+  log('job_done',j.id,{level,mistakes:st.mistakes,tries:st.tries,notes:st.notes,time_ms:Math.round(st.timeMs),points:st.points,skill_credit:st.credit});
+  if(S.streak>=2)unlockPup('trail');if(S.streak>=4)unlockPup('cape');if(doneN===6&&S.mission.jobs.every(x=>S.jobs[x.id].level==='first'))unlockPup('gold');
+  renderHUD();
+  const body=panelEl.querySelector('.pb');body.innerHTML='';
+  const ok=level==='first'||level==='second';if(ok)SFX.good();
+  const dn=h('div',{class:'done'});
+  dn.innerHTML=`<div class="starrow">${[0,1,2].map(i=>`<span class="${i<st.stars?'':'off'}">★</span>`).join('')}</div><b style="font-size:22px">${esc(t(ok?UI.great:UI.helped))}</b>
+   <div class="gain"><span class="piece">${esc(t(SP[j.superpower]))}</span><span class="piece" style="color:var(--sun)">+${fmt(st.points)} ${esc(t(UI.points))}</span>${mult>1?`<span class="piece" style="background:linear-gradient(90deg,#FF3D7F,#7C3AED)">🔥 x${mult}</span>`:''}</div>
+   ${answersOpen()?`<div class="fb ${ok?'good':'bad'}" style="text-align:left">${esc(t(j.explain))}</div>`:`<div class="fb info">${esc(t(UI.answersLater,{t:hhmm(S.slot.end)}))}</div>`}`;
+  dn.append(h('button',{class:'big',onclick:()=>{if(S.active&&S.active.task&&S.active.task.destroy)S.active.task.destroy();closePanel();S.active=null;S.camMode='follow';$('#jobbar').classList.remove('hidden');
+    const nx=nextJob();if(nx){const line=S.mission.host.after[j.id];if(line){HOST.say(t(line));SFX.sting();}refreshAll();}
+    else{refreshAll();ending();}}},t(UI.back)+' ▶'));
+  body.append(dn);refreshMarkerLabels();
+}
+
+/* ---------- ending: City Core saved or rebooted ---------- */
+async function ending(){
+  S.phase='ending';S.active=null;$('#jobbar').classList.add('hidden');showMarkers(false);renderBubble();
+  const saved=S.shield>=S.mission.shield.saved;S.run.ending=saved?'saved':'reboot';log('ending_start',null,{ending:S.run.ending,shield:S.shield});
+  const c=S.mission.core;S.camMode='follow';await new Promise(r=>walkTo(c.x+2,c.z+8,r));
+  S.camMode='core';HOST.say(t(saved?S.mission.host.saved:S.mission.host.reboot),5000);SFX.rumble(3);
+  if(saved){R.coreOrb.material.color.set(0x22D3EE);R.coreTower.material.emissiveIntensity=.8;await new Promise(r=>tween(2.5,k=>{R.dome.material.opacity=.18*Math.sin(k*Math.PI)+.04*k;R.winMats.forEach(m=>m.emissiveIntensity=.9+.3*k);},r));}
+  else{for(let i=0;i<6;i++){R.winMats.forEach(m=>m.emissiveIntensity=i%2?.05:.6);await sleep(220);}R.coreOrb.material.color.set(0xFBBF24);R.winMats.forEach(m=>m.emissiveIntensity=.5);}
+  const tt=h('div',{class:'endtitle'},(saved?'🛡️ ':'🔄 ')+esc(t(saved?UI.saved:UI.reboot)));document.body.append(tt);SFX.good();confetti();
+  endRun();await sleep(2600);tt.remove();S.phase='results';S.camMode='follow';renderHUD();showResults();
+}
+function rankFor(p){const rs=S.mission.scoring.ranks;let r=rs[0],nx=null;for(let i=0;i<rs.length;i++){if(p>=rs[i].min){r=rs[i];nx=rs[i+1]||null;}}return{r,nx};}
+function endRun(){const m=S.mission;
+  const bonus=Math.max(0,S.windowLeft)*m.scoring.windowBonusPerSec;S.run.window_bonus=bonus;S.points+=bonus;
+  S.run.ended_at=new Date().toISOString();S.run.completed=true;S.run.points=S.points;S.run.stars=m.jobs.reduce((a,j)=>a+S.jobs[j.id].stars,0);S.run.first_try=m.jobs.filter(j=>S.jobs[j.id].level==='first').length;S.run.best_streak=S.bestStreak;S.run.coins_end=S.coins;S.run.rank=rankFor(S.points).r.en;
+  S.run.shield_end=S.shield;S.run.powerups=S.pups.slice();
+  if(S.ghost){const res=S.points>S.ghost.total?'win':S.points<S.ghost.total?'lose':'tie';S.run.duel={rival:S.ghost.name,kind:S.ghost.kind,tier:S.ghost.tier,you:S.points,them:S.ghost.total,result:res};}
+  S.run.credibility=computeCred();
+  if(S.mode==='ranked'){const now=Date.now();const dev=store.get('fsl.devRanked.cyber',[]).filter(x=>now-x.at<7*864e5);dev.push({child:S.childId,slot:S.slot.key,at:now,points:S.points,patch:S.ver.patch.scenario,zone:S.ver.zone});store.set('fsl.devRanked.cyber',dev);
+    store.set('fsl.ranked.cyber.'+S.slot.key+'.'+S.childId,{at:now,points:S.points,end:S.slot.end,answers:m.jobs.map(j=>({label:j.label,explain:j.explain}))});}
+  if(S.team){const tb=store.get('fsl.cyber.teams',[]);tb.push({city:S.team.city,school:S.team.school||null,points:S.points,first_try:S.run.first_try,mode:S.mode,at:Date.now()});store.set('fsl.cyber.teams',tb.slice(-300));}
+  log('run_end',null,{points:S.points,window_bonus:S.run.window_bonus,rank:S.run.rank,ending:S.run.ending,duel:S.run.duel,powerups:S.run.powerups});renderHUD();}
+function confetti(){const cv=$('#confetti');cv.hidden=false;const dpr=Math.min(2,devicePixelRatio||1);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';const g=cv.getContext('2d');g.scale(dpr,dpr);
+  const cols=Object.values(SP).map(s=>s.hex);const ps=Array.from({length:140},()=>({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.5,vx:(Math.random()-.5)*2,vy:2+Math.random()*3,r:Math.random()*6.28,s:5+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();(function f(){const e=performance.now()-t0;g.clearRect(0,0,innerWidth,innerHeight);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;g.save();g.translate(p.x,p.y);g.rotate(p.r);g.fillStyle=p.c;g.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);g.restore();});if(e<4500)requestAnimationFrame(f);else cv.hidden=true;})();}
+
+/* ---------- results ---------- */
+function crewKey(){return 'fsl.crew.'+S.mission.id+'.'+S.mission.band;}
+function duelPanel(){const g=S.ghost;if(!g)return null;const d=S.run.duel;const box=h('div',{class:'duelbox'});
+  box.innerHTML=`<h4>⚔️ ${esc(t(UI.duelTitle))}: ${esc(t(d.result==='win'?UI.duelWin:d.result==='lose'?UI.duelLose:UI.duelTie,{r:g.name}))}</h4>
+   <div class="dr head"><span></span><b>${esc(t(UI.you))}</b><b>${esc(g.name)}</b></div>`+
+   S.mission.jobs.map((j,i)=>{const me=S.jobs[j.id].points,th=g.p[i];return `<div class="dr"><span>${ICON[j.superpower]}${esc(t(j.label))}</span><b class="${me>th?'w':''}">${fmt(me)}</b><b class="${th>me?'w':''}">${fmt(th)}</b></div>`;}).join('')+
+   `<div class="dr"><span>⏱ ${esc(t(UI.windowBonus))}</span><b>${fmt(S.run.window_bonus)}</b><b>${fmt(g.bonus)}</b></div><div class="dr tot"><span>Σ</span><b class="${d.result==='win'?'w':''}">${fmt(S.points)}</b><b class="${d.result==='lose'?'w':''}">${fmt(g.total)}</b></div>`;
+  return box;}
+function teamPanel(){const tb=store.get('fsl.cyber.teams',[]);if(!tb.length)return null;const box=h('div',{class:'board'});box.append(h('h4',{},'🏙️ '+esc(t(UI.teamBoard))));
+  const agg=key=>{const m={};tb.forEach(x=>{const k=x[key];if(!k)return;(m[k]=m[k]||[]).push(x.points);});return Object.entries(m).map(([k,v])=>({k,n:v.length,avg:v.reduce((a,b)=>a+b,0)/v.length})).sort((a,b)=>b.avg-a.avg).slice(0,5);};
+  [['city',UI.cityBoard],['school',UI.schoolBoard]].forEach(([key,lbl])=>{const rows=agg(key);if(!rows.length)return;box.append(h('div',{class:'note',style:{fontWeight:'800',color:'var(--ink)'}},esc(t(lbl))));
+    rows.forEach((x,i)=>box.append(h('div',{class:'r'+(S.team&&S.team[key]===x.k?' me':'')},`<span>${i+1}</span><span>${esc(x.k)}</span><small>${x.n} ${esc(t(UI.runsN))}</small><b>${esc(t(UI.avgPts))} ${fmt(x.avg)}</b>`)));});
+  box.append(h('div',{class:'note'},esc(t(UI.teamNote))));return box;}
+function showResults(){
+  const m=S.mission;const c=openOv();const totalMs=new Date(S.run.ended_at)-new Date(S.run.started_at);const {r,nx}=rankFor(S.points);
+  const body=h('div',{class:'intro'});let beat='';if(S.beat!=null)beat=`<div class="beat">${esc(t(S.points>S.beat?UI.duelWin:UI.duelLose,{r:fmt(S.beat)}))}</div>`;
+  body.innerHTML=`<div class="eyebrow">${esc(t(m.title))} · ${esc(t(m.zone.name))}</div><h1>${S.run.ending==='saved'?'🛡️':'🔄'} ${esc(t(S.run.ending==='saved'?UI.saved:UI.reboot))}</h1>${beat}
+   ${S.pups.length?`<div class="endbadges">${S.pups.map(k=>`<div><span>${UI.pups[k].i}</span>${esc(t(UI.pups[k]))}</div>`).join('')}</div>`:''}
+   <div class="note">${esc(t(UI.endWhy,{s:Math.round(S.shield),c:m.shield.saved}))} ${esc(t(UI.shieldNote))}</div>
+   <div><div class="res-big">${fmt(S.points)}</div><div class="rank">${esc(t(r))}</div><div class="note">${nx?esc(t(UI.nextRank,{n:fmt(nx.min-S.points),r:t(nx)})):esc(t(UI.topRank))}</div></div>
+   <div class="res-grid"><div><b>${S.run.first_try}/${m.jobs.length}</b>${esc(t(UI.firstTry))}</div><div><b>${S.run.stars}/${m.jobs.length*3}</b>${esc(t(UI.stars))}</div><div><b>${Math.round(S.shield)}%</b>${esc(t(UI.shieldLbl))}</div><div><b>${fmtTime(totalMs)}</b>${esc(t(UI.time))}</div></div>
+   ${S.run.window_bonus?`<div class="note">${esc(t(UI.windowBonus))}: <b style="color:var(--sun)">+${fmt(S.run.window_bonus)}</b></div>`:''}`;
+  const dp=duelPanel();if(dp)body.append(dp);
+  const list=h('div',{class:'res-list'});m.jobs.forEach(j=>{const st=S.jobs[j.id];list.append(h('div',{},`<span class="badge" style="--c:${SP[j.superpower].c}">${ICON[j.superpower]}</span><span class="l">${esc(t(j.label))}<br><small style="color:var(--muted);font-weight:600">${esc(t(SP[j.superpower]))} · ${fmtTime(st.timeMs)}</small></span><em>${'★'.repeat(st.stars)}${'☆'.repeat(3-st.stars)}</em>`));});
+  body.append(list);
+  const board=h('div',{class:'board'});const acc=Math.round(S.run.first_try/m.jobs.length*100);
+  const drawBoard=me=>{const rows=store.get(crewKey(),[]).sort((a,b)=>b.points-a.points).slice(0,10);board.innerHTML=`<h4>🏆 ${esc(t(UI.crew))}</h4>`;if(!rows.length)board.append(h('div',{class:'note'},esc(t(UI.noScores))));rows.forEach((x,i)=>board.append(h('div',{class:'r'+(x.id===me?' me':'')},`<span>${i+1}</span><span>${esc(x.name)}</span><small>${x.acc}%</small><b>${fmt(x.points)}</b>`)));};
+  const nameRow=h('div',{class:'namerow'});const inp=h('input',{id:'crewName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});const sv=h('button',{class:'big',style:{padding:'8px 16px',fontSize:'17px'}},t(UI.save));
+  sv.onclick=()=>{const name=(inp.value||'').trim().slice(0,14)||'Player';store.set('fsl.name',name);const rows=store.get(crewKey(),[]);if(!rows.find(x=>x.id===S.run.run_id))rows.push({id:S.run.run_id,name:name+(S.run.ending==='saved'?' · 🛡️':''),points:S.points,acc,date:new Date().toISOString().slice(0,10)});store.set(crewKey(),rows.sort((a,b)=>b.points-a.points).slice(0,50));S.run.player_name=name;saveRun();log('crew_save',null,{name});sv.disabled=true;drawBoard(S.run.run_id);};
+  nameRow.append(inp,sv);drawBoard();body.append(nameRow,board);const tp=teamPanel();if(tp)body.append(tp);
+  const row=h('div',{class:'row'});const msg=h('div',{class:'note'});
+  if(S.mode==='ranked'){const open=answersOpen();body.append(h('div',{class:'ranked-rules'},open?'':esc(t(UI.answersLater,{t:hhmm(S.slot.end)}))),h('button',{class:'big alt',disabled:!open,onclick:()=>showAnswers(m.jobs.map(j=>({label:j.label,explain:j.explain})),showResults)},'🔓 '+t(UI.seeAnswers)));}
+  const toPractice=()=>{if(S.mode==='ranked'){S.mode='practice';setWatermark(false);toast(t(UI.nowPractice),2500);}};
+  row.append(h('button',{class:'big',onclick:()=>copyChallenge(msg)},'⚔️ '+t(UI.copyLink)),h('button',{class:'big alt',onclick:()=>shareCard()},t(UI.share)));
+  if(S.ghost)row.append(h('button',{class:'big alt',onclick:()=>{toPractice();restart(true);}},'↻ '+t(UI.rematch)));
+  row.append(h('button',{class:'big alt',onclick:()=>{toPractice();restart(false);}},t(UI.playAgain)));
+  body.append(row,msg,h('div',{class:'note'},esc(t(UI.starNote))+' '+esc(t(UI.verifyNote))));c.append(body);
+}
+function challengeUrl(){const d=encodeDuel();return `${location.origin}${location.pathname}${d?'#duel-'+d:'#beat-'+Math.round(S.points)}`;}
+function showAnswers(list,back){const c=openOv();const b=h('div',{class:'intro'});b.append(h('h1',{style:{fontSize:'24px'}},esc(t(UI.answersTitle))));const l=h('div',{class:'ans-list'});list.forEach(x=>l.append(h('div',{},`<b>${esc(t(x.label))}</b>${esc(t(x.explain))}`)));b.append(l,h('button',{class:'big alt',onclick:()=>back()},t(UI.back)));c.append(b);}
+function copyChallenge(el){const url=challengeUrl();log('share',null,{kind:'duel_link'});const fail=()=>{el.innerHTML=`${esc(t(UI.copyFail))}<br><span style="user-select:text;-webkit-user-select:text;color:var(--ink);word-break:break-all">${esc(url)}</span>`;};try{navigator.clipboard.writeText(url).then(()=>{el.textContent=t(UI.copied);},fail);}catch(e){fail();}}
+function rr(g,x,y,w,hh,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+hh,r);g.arcTo(x+w,y+hh,x,y+hh,r);g.arcTo(x,y+hh,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+async function shareCard(){
+  log('share',null,{kind:'card'});try{await document.fonts.ready;}catch(e){}
+  const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#12082E');gr.addColorStop(.6,'#1B1150');gr.addColorStop(1,'#07091A');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  g.strokeStyle='rgba(124,58,237,.35)';g.lineWidth=2;for(let x=0;x<=W;x+=60){g.beginPath();g.moveTo(x,820);g.lineTo(W/2+(x-W/2)*3,H);g.stroke();}for(let y=820;y<H;y+=40){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}
+  const r=rnd(5);for(let i=0;i<14;i++){const w=50+r()*60,hh=120+r()*300,x=i*80;g.fillStyle='#0E1430';g.fillRect(x,820-hh,w,hh);for(let y=820-hh+10;y<810;y+=22)for(let xx=x+8;xx<x+w-8;xx+=16){if(r()<.4){g.fillStyle=r()<.5?'#7DE3FF':'#FFD27A';g.fillRect(xx,y,8,10);}}}
+  const F="'Baloo 2','Nirmala UI','Noto Sans Devanagari',sans-serif";g.textAlign='center';
+  g.fillStyle='#E0245A';rr(g,W/2-90,60,180,56,28);g.fill();g.fillStyle='#fff';g.font=`800 34px ${F}`;g.fillText('● LIVE',W/2,100);
+  g.fillStyle='#E6F1FF';g.font=`800 70px ${F}`;g.fillText(t(S.mission.title),W/2,210);g.fillStyle='#22D3EE';g.font=`700 40px ${F}`;g.fillText(t(S.mission.tag),W/2,265);
+  g.font=`150px ${F}`;g.fillText(S.run.ending==='saved'?'🛡️':'🔄',W/2,520);
+  g.fillStyle='#E6F1FF';g.font=`700 44px ${F}`;g.fillText(t(UI.cardScored,{zone:t(S.mission.zone.name)}),W/2,900);g.fillStyle='#FFC83D';g.font=`800 170px ${F}`;g.fillText(fmt(S.points),W/2,1060);
+  g.fillStyle='#E6F1FF';g.font=`800 58px ${F}`;g.fillText(t(rankFor(S.points).r),W/2,1135);
+  g.font=`700 38px ${F}`;g.fillText(`${S.run.first_try}/6 ${t(UI.firstTry)}  ·  ★ ${S.run.stars}/18${S.run.duel?'  ·  ⚔️ '+(S.run.duel.result==='win'?'W':S.run.duel.result==='lose'?'L':'D'):''}`,W/2,1195);
+  g.fillStyle='#22D3EE';g.font=`800 56px ${F}`;g.fillText(t(UI.cardBeat),W/2,1290);
+  const url=cv.toDataURL('image/png');
+  try{const blob=await (await fetch(url)).blob();const file=new File([blob],'fsl-cyber-score.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:`${t(UI.cardBeat)} ${challengeUrl()}`});return;}}catch(e){}
+  const c=openOv();const b=h('div',{class:'intro'});b.append(h('img',{src:url,class:'cardimg',alt:'Score card'}),h('div',{class:'note'},esc(t(UI.saveCard))),h('button',{class:'big alt',onclick:()=>showResults()},t(UI.back)));c.append(b);
+}
+
+/* ---------- intro wizard: one step per screen ---------- */
+function zoneSvg(z){const r=rnd(hashStr(z.id));let b='';for(let i=0;i<7;i++){const w=10+r()*8,hh=18+r()*40,x=6+i*16;b+=`<rect x="${x}" y="${70-hh}" width="${w}" height="${hh}" fill="#17204A"/>`;for(let y=74-hh;y<66;y+=7)if(r()<.6)b+=`<rect x="${x+3}" y="${y}" width="3" height="3" fill="${z.neon}"/>`;}
+  return `<svg viewBox="0 0 120 84"><rect width="120" height="84" rx="10" fill="#0B1230"/>${b}<rect y="70" width="120" height="14" fill="#1C2248"/><path d="M0 72 H120" stroke="${z.neon}" stroke-width="2"/></svg>`;}
+function gearSvg(col){return `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="142" rx="34" ry="6" fill="${col}" opacity=".35"/><rect x="40" y="96" width="16" height="42" rx="6" fill="#1B2140"/><rect x="64" y="96" width="16" height="42" rx="6" fill="#1B2140"/>
+  <rect x="34" y="56" width="52" height="50" rx="12" fill="#2B3366"/><rect x="34" y="72" width="52" height="7" fill="${col}"/><rect x="18" y="60" width="14" height="40" rx="7" fill="#2B3366"/><rect x="88" y="60" width="14" height="40" rx="7" fill="#2B3366"/>
+  <path d="M34 44 q26 -40 52 0 v14 h-52z" fill="#2B3366"/><circle cx="60" cy="42" r="15" fill="#C68B59"/><rect x="45" y="36" width="30" height="8" rx="4" fill="${col}"/><path d="M54 50q6 4 12 0" stroke="#0B1020" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;}
+function rivalSvg(c,label){return `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#17204A" stroke="${c}" stroke-width="3"/><path d="M14 52 q18 -22 36 0" fill="${c}" opacity=".8"/><circle cx="32" cy="26" r="11" fill="${c}"/><text x="32" y="31" font-size="12" font-weight="900" text-anchor="middle" fill="#0B1020">${esc(label)}</text></svg>`;}
+function rivalOptions(){const o=[];if(S.friendGhost)o.push({id:'friend',g:S.friendGhost});const b=myBestGhost();if(b)o.push({id:'best',g:b});S.base.rivals.slice().sort((a,b)=>a.tier-b.tier).forEach(rv=>o.push({id:rv.id,rv}));return o;}
+function showIntro(step){
+  S.phase='intro';if(step==null)step=S.introStep||0;S.introStep=step;const m=S.mission;const ranked=S.mode==='ranked';const N=ranked?4:5;
+  const c=openOv();const body=h('div',{class:'intro wiz'});
+  const dots=h('div',{class:'dots'});for(let i=0;i<N;i++)dots.append(h('i',{class:i===step?'on':(i<step?'done':'')}));
+  const langB=h('button',{class:'iconbtn',onclick:()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);refreshAll();showIntro(step);}},S.lang==='en'?'हिंदी में खेलो':'Play in English');
+  const nav=(nextLabel,onNext)=>{const row=h('div',{class:'row'});if(step>0)row.append(h('button',{class:'big alt',onclick:()=>{SFX.tap();showIntro(step-1);}},'◀'));row.append(h('button',{class:'big',onclick:onNext},nextLabel));return row;};
+  const next=()=>{SFX.ensure();SFX.tap();showIntro(step+1);};
+  body.append(dots);
+  if(step===0){
+    const fr=S.friendGhost?`<div class="beat">⚔️ ${esc(t(UI.duelFrom,{n:S.friendGhost.name}))}</div>`:S.beat!=null?`<div class="beat">🎯 ${fmt(S.beat)}</div>`:'';
+    const rk=ranked?`<div class="beat">🏆 ${esc(t(UI.rankedTitle))} · ${hhmm(S.slot.start)}–${hhmm(S.slot.end)}${S.slot.test?' · '+esc(t(UI.testSlot)):''}</div>`:'';
+    body.append(h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.eyebrow))} ${m.band} · 18+</div><div class="hero">🛡️</div><span class="chip live" style="align-self:center">LIVE</span><h1>${esc(t(m.title))}</h1><div class="tagline">${esc(t(m.tag))}</div>${rk}${fr}<p>${esc(t(m.story))}</p>`),nav(t(UI.letsGo)+' ▶',next),langB);
+  } else if(step===1){
+    const steps=[[UI.how1,'🚶'],[UI.how2,'🎬'],[UI.how3,'✋'],[UI.how4,'⚔️']];
+    const ul=h('div',{class:'howlist'});steps.forEach(([x,ic])=>ul.append(h('div',{},`<span class="n">${ic}</span><span>${esc(t(x,{min:Math.round(m.windowSec/60),jobs:m.jobs.length}))}</span>`)));
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.howTitle))}</div><h1>${esc(t(UI.howHead))}</h1>`);wb.append(ul);
+    if(ranked)wb.append(h('div',{class:'ranked-rules'},esc(t(UI.rulesR,{t:hhmm(S.slot.end)}))));else wb.append(h('div',{class:'note'},esc(t(UI.starNote))));
+    body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(step===2){
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:3,m:N}))}</div><h1>${esc(t(UI.pickSuit))}</h1>`);
+    const prev=h('div',{class:'suitprev'});const draw=()=>{prev.innerHTML=gearSvg('#'+SUITS[S.suit].toString(16).padStart(6,'0'));};draw();
+    const suits=h('div',{class:'suits'});SUITS.forEach((col,i)=>{const b=h('button',{class:i===S.suit?'on':'',style:{'--c':'#'+col.toString(16).padStart(6,'0')},'aria-label':'colour '+(i+1)});b.onclick=()=>{S.suit=i;store.set('fsl.suit',i);applyPowerups();suits.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');draw();SFX.tap();};suits.append(b);});
+    wb.append(prev,suits);body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(!ranked&&step===3){
+    const cur=store.get('fsl.cyber.zone','random');
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:4,m:N}))}</div><h1>${esc(t(UI.pickZone))}</h1>`);
+    const dp=h('div',{class:'dests'});
+    S.base.districts.forEach(z=>{const bt=h('button',{class:cur===z.id?'on':'','aria-label':t(z.name)},zoneSvg(z)+`<span>${esc(t(z.name))}</span>`);bt.onclick=()=>{store.set('fsl.cyber.zone',z.id);SFX.tap();showIntro(step);};dp.append(bt);});
+    const rb=h('button',{class:cur==='random'?'on':'','aria-label':t(UI.randomZone)},`<span style="font-size:34px;line-height:44px">🎲</span><span>${esc(t(UI.randomZone))}</span>`);rb.onclick=()=>{store.set('fsl.cyber.zone','random');SFX.tap();showIntro(step);};dp.append(rb);
+    wb.append(dp,h('div',{class:'note'},esc(t(UI.sameRules))));body.append(wb,nav(t(UI.next)+' ▶',next));
+  } else if(!ranked){
+    const opts=rivalOptions();let cur=store.get('fsl.cyber.rival',S.friendGhost?'friend':'riya');if(!opts.find(o=>o.id===cur)&&cur!=='solo')cur=opts[0].id;
+    const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:5,m:N}))}</div><h1>${esc(t(UI.pickRival))}</h1>`);
+    const rp=h('div',{class:'rivals'});
+    opts.forEach(o=>{const nm=o.g?o.g.name:o.rv.name;const sub=o.g?(o.id==='friend'?t(UI.friendGhost):fmt(o.g.total)):t(S.base.tiers[o.rv.tier]);const col=o.g?'#E5E7EB':o.rv.c;
+      const bt=h('button',{class:cur===o.id?'on':''},rivalSvg(col,nm.slice(0,1))+`<span>${esc(nm)}</span><small>${esc(sub)}</small>`);bt.onclick=()=>{store.set('fsl.cyber.rival',o.id);SFX.tap();showIntro(step);};rp.append(bt);});
+    const sb=h('button',{class:cur==='solo'?'on':''},`<span style="font-size:30px;line-height:44px">🧘</span><span>${esc(t(UI.noRival))}</span><small>-</small>`);sb.onclick=()=>{store.set('fsl.cyber.rival','solo');SFX.tap();showIntro(step);};rp.append(sb);
+    const team=store.get('fsl.cyber.team',{city:'',school:''});const sel=h('select',{class:'sel'});sel.append(h('option',{value:''},'🏙️ '+esc(t(UI.playFor))));S.base.cities.forEach(x=>sel.append(h('option',{value:x,selected:team.city===x},esc(x))));
+    const sch=h('input',{maxlength:'12',placeholder:t(UI.schoolCode),value:team.school||''});const fields=h('div',{class:'fields'});fields.append(sel,sch);
+    wb.append(rp,h('div',{class:'note'},esc(t(UI.rivalNote))),fields);
+    body.append(wb,nav(t(UI.enter)+' ⚔️',()=>{store.set('fsl.cyber.team',{city:sel.value,school:(sch.value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'')});S.introStep=0;enter();}));
+  } else {
+    const sl=S.slot;const wb=h('div',{class:'wiz-body'},`<div class="eyebrow">${esc(t(UI.stepOf,{n:4,m:N}))} · 🏆 ${esc(t(UI.rankedTitle))}</div><h1>${esc(t(UI.whoPlays))}</h1>`);
+    const idIn=h('input',{id:'childId',maxlength:'16',placeholder:t(UI.fslId),value:store.get('fsl.childId','')});const nmIn=h('input',{id:'childName',maxlength:'14',placeholder:t(UI.yourName),value:store.get('fsl.name','')});
+    const team=store.get('fsl.cyber.team',{city:'',school:''});const sel=h('select',{class:'sel'});sel.append(h('option',{value:''},'🏙️ '+esc(t(UI.playFor))));S.base.cities.forEach(x=>sel.append(h('option',{value:x,selected:team.city===x},esc(x))));
+    const pl=h('label',{class:'pledge'});const cb=h('input',{type:'checkbox',id:'pledge'});pl.append(cb,h('span',{},esc(t(UI.pledge))));const info=h('div',{class:'note'});
+    const col=h('div',{class:'fields'});col.append(idIn,nmIn,sel);wb.append(col,pl,info,h('div',{class:'note'},esc(t(UI.zoneAssigned))));
+    body.append(wb,nav(t(UI.startRanked)+' 🏆',()=>{const id=(idIn.value||'').trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');const nm=(nmIn.value||'').trim().slice(0,14);
+      if(!id||!cb.checked){info.textContent=t(UI.needId);SFX.bad();return;}
+      const prev=store.get('fsl.ranked.cyber.'+sl.key+'.'+id,null);
+      if(prev){if(Date.now()>prev.end){showAnswers(prev.answers,()=>showIntro(step));}else{info.textContent=t(UI.already,{t:hhmm(prev.end)});SFX.bad();}return;}
+      const st=slotState();if(st==='before'){info.textContent=t(UI.opensAt,{t:hhmm(sl.start)});SFX.bad();return;}
+      if(st!=='open'){info.innerHTML='';info.append(esc(t(UI.startClosed,{m:Math.round(sl.grace/60000)})),h('br'));info.append(h('button',{class:'big alt',style:{marginTop:'8px'},onclick:()=>{S.mode='practice';showIntro(3);}},t(UI.playPractice)));return;}
+      S.childId=id;S.childName=nm||id;store.set('fsl.childId',id);if(nm)store.set('fsl.name',nm);store.set('fsl.cyber.team',{city:sel.value,school:team.school||''});
+      try{const el=document.documentElement;if(el.requestFullscreen)el.requestFullscreen().then(()=>{S.fsOn=true;},()=>{});}catch(e){}
+      S.introStep=0;enter();}));
+  }
+  c.append(body);
+}
+function resetWorld(){Object.values(R.drones).forEach(d=>{d.dead=false;d.g.visible=true;d.g.scale.set(1,1,1);});R.coreOrb.material.color.set(0xFF5D73);R.coreTower.material.emissiveIntensity=.15;R.dome.material.opacity=0;R.avatar.visible=true;applyZone();setStory(0,true);applyPowerups();}
+function pickGhost(seed){
+  if(S.mode==='ranked'){const pros=S.base.rivals.filter(x=>x.tier===1);return ghostFromBot(pros[hashStr(S.childId)%pros.length],seed);}
+  const id=store.get('fsl.cyber.rival',S.friendGhost?'friend':'riya');if(id==='solo')return null;if(id==='friend'&&S.friendGhost)return S.friendGhost;if(id==='best'){const b=myBestGhost();if(b)return b;}
+  const rv=S.base.rivals.find(x=>x.id===id)||S.base.rivals[0];return ghostFromBot(rv,seed);}
+function enter(){SFX.ensure();closeOv();
+  if(S.mode==='ranked'){const used=store.get('fsl.devRanked.cyber',[]).filter(x=>x.slot===S.slot.key&&x.child!==S.childId);applyVersion(makeVersion(S.childId+'|'+S.base.id+'|'+S.slot.key,{zone:used.map(x=>x.zone),patch:used.map(x=>x.patch)}));setWatermark(true);}
+  else{S.childId=store.get('fsl.childId',null);const pz=store.get('fsl.cyber.zone','random');applyVersion(makeVersion('practice|'+uuid(),{},pz==='random'?null:pz));}
+  const tm=store.get('fsl.cyber.team',null);S.team=tm&&tm.city?{city:tm.city,school:tm.school||null}:null;
+  S.ghost=pickGhost(S.ver.seed);
+  newRun();S.run.player_id=S.childId;S.run.player_name=S.childName||store.get('fsl.name',null);resetWorld();
+  showBriefing(()=>{closeOv();S.phase='play';S.run.lang=S.lang;S.run.started_at=new Date().toISOString();log('run_start',null,{beat_target:S.beat,suit:S.suit,mode:S.mode,version:S.ver,rival:S.run.rival,team:S.team});startClock();
+    R.avatar.position.set(0,0,34);S.camMode='follow';walkTo(0,30);$('#jobbar').classList.remove('hidden');refreshAll();HOST.say(t(S.mission.host.intro),5000);SFX.sting();});}
+function showBriefing(go){const z=S.mission.zone;const c=openOv();const b=h('div',{class:'brief'});
+  const rv=S.ghost?`<div><span>⚔️</span>${esc(S.ghost.name)}${S.ghost.tier!=null?' · '+esc(t(S.base.tiers[S.ghost.tier])):''} · ${fmt(S.ghost.total)}</div>`:'';
+  b.innerHTML=`<div class="eyebrow">${esc(t(UI.yourDrop))}${S.mode==='ranked'?' · 🏆 '+esc(t(UI.rankedTitle)):''}</div><div class="zone-ic">${zoneSvg(z)}</div><h1>${esc(t(z.name))}</h1>
+   <div class="brief-rows"><div><span>📍</span>${esc(t(z.place))}</div><div><span>💡</span>${esc(t(z.fact))}</div><div><span>🛡️</span>${esc(t(UI.shieldStart,{s:S.ver.shield}))}</div>${rv}</div>
+   <div class="note">${esc(t(UI.sameRules))} ${esc(t(UI.shieldNote))}</div>`;
+  b.append(h('button',{class:'big',onclick:()=>{log('briefing_go',null,{zone:z.id});go();}},t(UI.goDrop)+' 🛡️'));c.append(b);}
+function restart(rematch){closeOv();closePanel();clearInterval(clockId);HOST.stop();S.phase='intro';newRun();resetWorld();S.camMode='follow';R.avatar.position.set(0,0,34);refreshAll();$('#jobbar').classList.add('hidden');
+  if(rematch&&S.mode==='practice'){S.introStep=0;enter();return;}showIntro(0);}
+
+/* ---------- debug / team view (tap the timer 5 times) ---------- */
+let tTaps=0,tTimer=null;
+function showLog(){const c=openOv();const b=h('div',{class:'intro',style:{alignItems:'stretch',textAlign:'left'}});const runs=store.get(RUNKEY,[]);
+  b.append(h('h1',{style:{fontSize:'22px'}},esc(t(UI.log))));
+  if(S.run&&S.run.started_at){const cr=S.run.credibility||computeCred();const col=cr.band==='Green'?'var(--good)':cr.band==='Amber'?'var(--sun)':'var(--bad)';
+    const cv=h('div',{class:'cred'},`<span style="font-size:16px">Credibility <b style="color:${col}">${cr.score} · ${cr.band}</b>${S.run.credibility?'':' (run not finished)'} · mode ${esc(S.mode)}${S.childId?' · ID '+esc(S.childId):''}</span>`);
+    if(!cr.flags.length)cv.append(h('span',{},'No flags.'));cr.flags.forEach(f=>cv.append(h('span',{},`${f.id} (${f.points}): ${esc(f.detail)}`)));b.append(cv);}
+  const pre=h('pre',{class:'dbg'});pre.textContent=JSON.stringify({current:{run:S.run,job_results:S.run?jobResults():[],events:S.events},saved_runs:runs.length},null,1);b.append(pre);
+  const row=h('div',{class:'row'});const msg=h('div',{class:'note'});row.append(h('button',{class:'big alt',onclick:()=>{try{navigator.clipboard.writeText(JSON.stringify(runs,null,1)).then(()=>msg.textContent='Copied',()=>msg.textContent='Select the text above to copy');}catch(e){msg.textContent='Select the text above to copy';}}},t(UI.copyLog)),h('button',{class:'big',onclick:()=>{closeOv();if(S.phase==='intro')showIntro();else if(S.phase==='results')showResults();}},t(UI.close)));b.append(row,msg);c.append(b);}
+
+/* ---------- boot ---------- */
+async function boot(){
+  let m=null;const qs=new URLSearchParams(location.search);
+  if(qs.get('mission')){try{m=await (await fetch(qs.get('mission'))).json();}catch(e){}}
+  if(!m){m=JSON.parse($('#mission-data').textContent);}
+  S.base=m;
+  S.lang=store.get('fsl.lang',qs.get('lang')||'en');if(qs.get('lang'))S.lang=qs.get('lang');if(!['en','hi'].includes(S.lang))S.lang='en';S.sound=store.get('fsl.sound',true);S.suit=store.get('fsl.suit',0)|0;if(S.suit<0||S.suit>3)S.suit=0;
+  applyVersion(makeVersion('boot|'+uuid()));
+  if(qs.get('mode')==='ranked'){S.mode='ranked';const F=m.fairPlay;const mins=+(qs.get('mins')||F.slotMin);const grace=+(qs.get('grace')||F.startGraceMin);let st=qs.get('slot')?Date.parse(qs.get('slot')):NaN;const test=isNaN(st);if(test)st=Date.now();
+    S.slot={start:st,end:st+mins*60000,grace:grace*60000,key:(test?'test-':'')+new Date(st).toISOString().slice(0,16),test};}
+  const hm=/^#beat-(\d{1,6})$/.exec(location.hash);if(hm)S.beat=+hm[1];
+  const dm=/^#duel-([A-Za-z0-9+/]+)$/.exec(location.hash);if(dm){S.friendGhost=decodeDuel(dm[1]);if(S.friendGhost&&S.mode!=='ranked')store.set('fsl.cyber.rival','friend');}
+  newRun();
+  if(typeof THREE==='undefined'||!init3D()){if(typeof THREE==='undefined')document.body.append(h('div',{class:'nogl'},esc(t(UI.noGL))));return;}
+  S.camMode='follow';refreshAll();
+  $('#lang').onclick=()=>{S.lang=S.lang==='en'?'hi':'en';store.set('fsl.lang',S.lang);if(S.run)S.run.lang=S.lang;refreshAll();
+    if(ovEl&&S.learnView&&S.active)showLearn(S.learnView.j,S.learnView.si,S.learnView.peek);else if(S.active&&S.active.setTitle)S.active.setTitle();else if(S.phase==='intro')showIntro();else if(S.phase==='results')showResults();};
+  $('#snd').onclick=()=>{S.sound=!S.sound;store.set('fsl.sound',S.sound);if(!S.sound)try{speechSynthesis.cancel();}catch(e){}renderHUD();};
+  $('#timer').onclick=()=>{tTaps++;clearTimeout(tTimer);tTimer=setTimeout(()=>tTaps=0,1500);if(tTaps>=5){tTaps=0;showLog();}};
+  document.fonts&&document.fonts.ready.then(()=>refreshMarkerLabels());
+  if(location.hash==='#debug')showLog();else showIntro();
+  window.__fsl={S,R,goToStation,tap,computeCred,makeVersion,applyVersion,finishJob,ending,ghostAt,genTrace};
+}
+boot();
+
+</script>
+
+</body>
+</html>
