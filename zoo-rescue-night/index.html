@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="FSL Round 2 Junior Sim Cup (Band J): Zoo Rescue Night, an 18-minute simulation competition testing all 6 Superpowers.">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Zoo Rescue Night</title>
+<style>
+:root{--bg:#0d1b2a;--bg2:#13263b;--card:#1b3350;--ink:#f4f7fb;--mute:#a9bcd3;--acc:#ffc94a;--ok:#3ddc84;--bad:#ff6b6b;--blue:#4aa3ff;--red:#ff5f5f;--line:#2d4a6d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif;overscroll-behavior:none}
+body{min-height:100vh;display:flex;justify-content:center;user-select:none;-webkit-user-select:none}
+#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(120% 60% at 50% 0%,#1d3d63 0%,var(--bg) 70%)}
+.top{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,0,0,.25);font-size:14px}
+.top .ttl{font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;background:var(--card);font-size:12px;font-weight:700;color:var(--mute)}
+.chip.acc{background:var(--acc);color:#2a1d00}
+.tbtn{border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:6px 9px;font-weight:800;font-size:13px}
+.bar{height:6px;background:#0a1522}.bar i{display:block;height:100%;background:var(--acc);width:100%;transition:width .25s linear}
+.bar.low i{background:var(--bad)}
+.main{flex:1;padding:14px 16px 22px;display:flex;flex-direction:column;gap:12px}
+h1{font-size:26px;margin:4px 0}h2{font-size:20px;margin:2px 0}
+p{margin:0;line-height:1.45;color:var(--mute)}
+.card{background:var(--card);border-radius:16px;padding:14px}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-size:17px;font-weight:800;background:var(--acc);color:#2a1d00;width:100%;cursor:pointer}
+.btn.sec{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;align-items:center}.wrap{flex-wrap:wrap}.center{justify-content:center}
+.prompt{font-size:16px;font-weight:700;color:var(--ink);text-align:center;line-height:1.35}
+.sub{font-size:13px;color:var(--mute);text-align:center}
+.tag{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--acc)}
+.practice-rib{background:#2f6b3f;color:#d9ffe6;text-align:center;font-size:12px;font-weight:800;padding:4px;border-radius:8px}
+.flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20}
+.flash.on{opacity:1}
+.hint{animation:pulse 1s infinite;box-shadow:0 0 0 3px var(--acc)!important}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .3s}
+/* tokens */
+.seq{display:flex;gap:5px;justify-content:center;flex-wrap:nowrap;padding:10px 4px;background:#0f2238;border-radius:14px}
+.slot{width:46px;height:46px;border-radius:10px;border:2px dashed var(--acc);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:var(--acc)}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.opt{background:#0f2238;border:2px solid var(--line);border-radius:14px;padding:8px;display:flex;justify-content:center;cursor:pointer}
+.opt.sel{border-color:var(--acc)}
+/* pens */
+.pens{display:grid;gap:6px}
+.pen{min-height:74px;border-radius:12px;background:#244a2b;border:2px solid #3b7a45;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:34px;cursor:pointer;position:relative}
+.pen b{position:absolute;top:2px;left:6px;font-size:12px;color:#bfe8c7}
+.tray{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:58px}
+.ani{font-size:36px;background:#0f2238;border:2px solid var(--line);border-radius:12px;padding:4px 8px;cursor:pointer}
+.ani.sel{border-color:var(--acc);transform:scale(1.1)}
+.clues{display:flex;flex-direction:column;gap:6px}
+.clue{background:#0f2238;border-radius:10px;padding:8px 10px;font-size:15px;font-weight:700}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;background:#08131f;border-radius:16px}
+.lamp{aspect-ratio:1;border-radius:50%;background:#1d2f45;border:3px solid #2b4566;cursor:pointer;transition:background .1s}
+.lamp.on{background:#ffd75e;box-shadow:0 0 22px #ffd75e;border-color:#fff1b8}
+.lamp.tap{background:#7fd3ff;box-shadow:0 0 16px #7fd3ff}
+/* robo */
+.grid{display:grid;gap:3px;background:#2e5b2f;padding:5px;border-radius:12px;margin:0 auto}
+.cell{background:#7bb661;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:26px;position:relative}
+.cell.p{background:#4a8fd8}
+.cell.trail{background:#a6d48a}
+.prog{display:flex;flex-wrap:wrap;gap:4px;min-height:42px;background:#0f2238;border-radius:10px;padding:6px}
+.pchip{background:var(--blue);color:#fff;border-radius:8px;width:32px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px}
+.pchip.run{background:var(--acc);color:#2a1d00}
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pad button{border:0;border-radius:12px;padding:12px 0;font-size:22px;font-weight:900;background:#25496f;color:#fff}
+.pad button.go{background:var(--ok);color:#00301a}
+/* fair test */
+.bottles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bot{background:#0f2238;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.bot h3{margin:0;text-align:center;font-size:15px}
+.tog{border:1px solid var(--line);background:#1b3350;color:var(--ink);border-radius:10px;padding:8px 4px;font-size:14px;font-weight:700}
+.tog small{display:block;color:var(--mute);font-size:10px;font-weight:600}
+.meter{height:120px;background:#08131f;border-radius:10px;position:relative;overflow:hidden}
+.meter i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#ff8a5c,#ff4d4d);transition:height .3s}
+.meter.dry i{background:linear-gradient(#7fd3ff,#2f7fd8)}
+.meter span{position:absolute;top:6px;left:0;right:0;text-align:center;font-weight:900;font-size:18px;z-index:2}
+/* seesaw */
+.see{position:relative;height:190px;background:#0f2238;border-radius:16px;overflow:hidden}
+.beam{position:absolute;left:4%;right:4%;top:110px;height:12px;background:#c58b4a;border-radius:6px;transform-origin:50% 50%;transition:transform .8s cubic-bezier(.4,1.6,.6,1)}
+.fulcrum{position:absolute;left:50%;top:122px;margin-left:-22px;width:0;height:0;border-left:22px solid transparent;border-right:22px solid transparent;border-bottom:40px solid #8a5a2b}
+.peg{position:absolute;top:-30px;width:11%;margin-left:-5.5%;height:30px;display:flex;align-items:flex-end;justify-content:center;cursor:pointer}
+.peg u{display:block;width:8px;height:12px;background:#e8c48f;border-radius:2px}
+.peg.pick u{background:var(--acc);height:16px}
+.load{pointer-events:none;position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center}
+.blk{width:30px;height:16px;background:#ffb347;border:1px solid #7a4a10;border-radius:3px;font-size:10px;font-weight:900;color:#3a2000;text-align:center;line-height:14px}
+.blk.me{background:#7fd3ff;border-color:#155a8a}
+.pnum{position:absolute;top:16px;font-size:12px;color:#ffe9a8;font-weight:900;width:20px;margin-left:-10px;text-align:center}
+/* rush */
+.rule{display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:900;padding:10px;border-radius:14px}
+.rule.day{background:#ffe08a;color:#3b2a00}.rule.night{background:#28366b;color:#dfe6ff}
+.foodcard{width:130px;height:130px;margin:6px auto;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:70px;background:#fff;border:10px solid #999;animation:pop .15s}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bin{border:0;border-radius:18px;padding:12px 4px;font-size:46px;color:#fff;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bin small{font-size:12px}
+.bin.blue{background:#2f7fd8}.bin.red{background:#d94141}
+/* watch */
+.cams{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cam{aspect-ratio:1;background:#06261a;border:2px solid #1c5a3a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;cursor:pointer;overflow:hidden}
+.cam:after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 2px,transparent 2px 4px);pointer-events:none}
+.cam b{position:absolute;top:3px;left:6px;font-size:10px;color:#7fffb0}
+.cam.alarm{border-color:var(--bad);background:#3a0d0d}
+.cam.hit{border-color:var(--ok)}
+/* spot */
+.spot{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#0f2238;padding:6px;border-radius:12px}
+.spot div{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#162d47;position:relative}
+.spot div.found{outline:3px solid var(--ok)}
+.spot div.miss{outline:3px solid var(--bad)}
+.spot div.wrong{animation:shake .3s}
+/* map */
+.map{width:100%;border-radius:18px;background:#163d2a}
+.stars{font-size:26px;letter-spacing:2px;color:var(--acc)}
+.sp{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:13px;font-weight:700}
+.sp .b{height:10px;background:#0a1522;border-radius:5px;overflow:hidden}.sp .b i{display:block;height:100%;background:var(--acc)}
+input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0f2238;color:var(--ink);font-size:16px}
+label.ck{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--mute)}
+.wm{position:fixed;bottom:4px;right:8px;font-size:10px;color:rgba(255,255,255,.25);pointer-events:none;z-index:50}
+.hand{font-size:44px;text-align:center}
+.small{font-size:12px;color:var(--mute)}
+table.res{width:100%;border-collapse:collapse;font-size:13px}table.res td{padding:5px 4px;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="flash" id="flash"></div>
+<script>
+'use strict';
+/* =========================================================
+   FSL Round 2 · Band J · "Zoo Rescue Night"
+   15-20 min simulation competition testing all 6 Superpowers
+   (2 competencies each = 12 of 18). Local scoring only.
+   ========================================================= */
+const Q = new URLSearchParams(location.search);
+const SPEED = Q.get('dev') === 'fast' ? 0.03 : 1; // dev/testing only
+const DEVHINT = Q.get('dev') === 'hint'; // dev/testing only: shows hints in scored jobs
+const L = (en, hi) => ({ en, hi });
+let LANG = Q.get('lang') === 'hi' ? 'hi' : (store('fsl.lang') || 'en');
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+const T = o => o == null ? '' : (typeof o === 'string' ? o : (o[LANG] || o.en));
+const fmt = (s, m) => s.replace(/\{(\w+)\}/g, (_, k) => m[k] != null ? m[k] : '');
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const now = () => performance.now();
+
+/* ---------- seeded random ---------- */
+function hash(str) { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return (h >>> 0); }
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function R(rng) {
+  return {
+    f: rng, int: (a, b) => a + Math.floor(rng() * (b - a + 1)),
+    pick: arr => arr[Math.floor(rng() * arr.length)],
+    shuffle: arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
+  };
+}
+
+/* ---------- sound + voice ---------- */
+let AC = null, SOUND = store('fsl.sound') !== '0';
+function beep(f = 660, d = .08, type = 'sine', vol = .12) {
+  if (!SOUND) return; try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; g.gain.value = vol;
+    o.connect(g); g.connect(AC.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + d); o.stop(AC.currentTime + d + .02);
+  } catch (e) { }
+}
+const sfx = { ok: () => { beep(660, .08); setTimeout(() => beep(990, .12), 80); }, bad: () => beep(180, .2, 'square', .06), tap: () => beep(520, .04), win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .15), i * 110)) };
+function say(o) {
+  if (!SOUND || !window.speechSynthesis) return; try {
+    speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(T(o).replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, ''));
+    u.lang = LANG === 'hi' ? 'hi-IN' : 'en-IN'; u.rate = 1; speechSynthesis.speak(u);
+  } catch (e) { }
+}
+function flash(ch, ms = 450) { const f = $('#flash'); f.textContent = ch; f.classList.add('on'); setTimeout(() => f.classList.remove('on'), ms); }
+
+/* ---------- text ---------- */
+const TX = {
+  title: L('Zoo Rescue Night', 'ज़ू रेस्क्यू नाइट'),
+  tagline: L('FSL Round 2 · Junior Sim Cup', 'FSL राउंड 2 · जूनियर सिम कप'),
+  story: L('A big storm hit Sundarvan Zoo. The power is out, gates are jammed and the animals are scared. You are the Junior Ranger on duty tonight. Clear 6 zones and switch the zoo lights back on!',
+    'सुंदरवन ज़ू में बड़ा तूफ़ान आया। बिजली चली गई, गेट जाम हो गए और जानवर डरे हुए हैं। आज रात ड्यूटी पर तुम जूनियर रेंजर हो। 6 ज़ोन पार करो और ज़ू की लाइटें वापस जलाओ!'),
+  how1: L('6 zones · 1 Superpower each · about 18 minutes', '6 ज़ोन · हर ज़ोन में 1 सुपरपावर · लगभग 18 मिनट'),
+  how2: L('Every job has its own clock. When it runs out, we move on, so keep going!', 'हर काम की अपनी घड़ी है। समय खत्म होते ही अगला काम, तो रुकना नहीं!'),
+  how3: L('Before each job you get one free practice try. It does not count.', 'हर काम से पहले एक फ्री प्रैक्टिस मिलेगी। वह गिनी नहीं जाएगी।'),
+  how4: L('Your Star level comes from how well you think, not how fast you tap.', 'तुम्हारा स्टार लेवल इस पर है कि तुम कितना अच्छा सोचते हो, कितनी तेज़ टैप करते हो उस पर नहीं।'),
+  start: L('Start', 'शुरू करो'), next: L('Next', 'आगे'), ready: L("I'm ready ▶", 'मैं तैयार हूँ ▶'),
+  practiceMode: L('Practice play', 'प्रैक्टिस खेल'), rankedMode: L('Ranked (competition slot)', 'रैंक्ड (प्रतियोगिता स्लॉट)'),
+  practiceDesc: L('New puzzles every time. See right and wrong after each answer.', 'हर बार नई पहेलियाँ। हर जवाब के बाद सही/गलत दिखेगा।'),
+  rankedDesc: L('One try per FSL ID per slot. Your puzzles are made just for you. Answers show after the slot closes.', 'हर स्लॉट में हर FSL ID की एक ही कोशिश। पहेलियाँ सिर्फ़ तुम्हारे लिए बनी हैं। जवाब स्लॉट बंद होने के बाद दिखेंगे।'),
+  fslid: L('Your FSL ID', 'तुम्हारा FSL ID'), name: L('Your first name (optional)', 'तुम्हारा पहला नाम (ज़रूरी नहीं)'),
+  pledge: L('I will play alone, on my own, without help or searching. I am a fair Ranger.', 'मैं अकेले, खुद से, बिना किसी मदद या सर्च के खेलूँगा/खेलूँगी। मैं एक ईमानदार रेंजर हूँ।'),
+  already: L('This FSL ID has already played this slot. See you in the next slot!', 'यह FSL ID इस स्लॉट में खेल चुका है। अगले स्लॉट में मिलते हैं!'),
+  practiceTry: L('PRACTICE · not scored', 'प्रैक्टिस · गिनी नहीं जाएगी'),
+  nowReal: L('Great! Now the real job starts. The clock is on.', 'बढ़िया! अब असली काम शुरू। घड़ी चालू है।'),
+  timeUp: L("Time's up! Moving on.", 'समय खत्म! आगे चलते हैं।'),
+  saved: L('Saved', 'सेव हुआ'), check: L('Check', 'जाँचो'), tryAgain: L('Not yet. Try again!', 'अभी नहीं। फिर कोशिश करो!'),
+  zoneDone: L('Zone cleared!', 'ज़ोन पार!'), rescued: L('rescued', 'बचाया'),
+  results: L('Your Star Card', 'तुम्हारा स्टार कार्ड'), fsi: L('Future Skills Index (this round)', 'फ्यूचर स्किल्स इंडेक्स (इस राउंड का)'),
+  league: L('League Score', 'लीग स्कोर'), playAgain: L('Play again (new puzzles)', 'फिर खेलो (नई पहेलियाँ)'),
+  estNote: L('One-round estimate. Your full FSI grows from many rounds.', 'एक राउंड का अनुमान। पूरा FSI कई राउंड से बनता है।'),
+  lightsOn: L('The zoo lights are back on! Every animal is safe.', 'ज़ू की लाइटें वापस जल गईं! सारे जानवर सुरक्षित हैं।'),
+  fair: L('Fair-play check', 'फेयर-प्ले जाँच')
+};
+const SPN = {
+  SP1: L('Smart Logic', 'स्मार्ट लॉजिक'), SP2: L('Super Memrix', 'सुपर मेमरिक्स'), SP3: L('Master Algo', 'मास्टर एल्गो'),
+  SP4: L('Sci Idea', 'साइ आइडिया'), SP5: L('Speed Flex', 'स्पीड फ्लेक्स'), SP6: L('Pro Focus', 'प्रो फोकस')
+};
+const COMP = {
+  'C1.1': L('Pattern Recognition', 'पैटर्न पहचान'), 'C1.2': L('Logical Deduction', 'तार्किक निष्कर्ष'),
+  'C2.1': L('Mental Rotation', 'मानसिक घुमाव'), 'C2.2': L('Working Memory', 'वर्किंग मेमोरी'),
+  'C3.1': L('Algorithmic Thinking', 'एल्गोरिदमिक सोच'), 'C3.3': L('Optimisation & Trade-offs', 'ऑप्टिमाइज़ेशन'),
+  'C4.2': L('Experimental Design', 'प्रयोग की रचना'), 'C4.3': L('Cause, Effect & Systems', 'कारण, प्रभाव और सिस्टम'),
+  'C5.1': L('Processing Speed', 'प्रोसेसिंग स्पीड'), 'C5.2': L('Cognitive Flexibility', 'सोच का लचीलापन'),
+  'C6.1': L('Sustained Attention', 'लगातार ध्यान'), 'C6.2': L('Detail & Error Detection', 'बारीकी और गलती पकड़ना')
+};
+const STARS = [
+  { min: 0, n: L('Rookie', 'रूकी'), s: 1 }, { min: 181, n: L('Rising', 'राइज़िंग'), s: 2 }, { min: 361, n: L('Creator', 'क्रिएटर'), s: 3 },
+  { min: 541, n: L('Pro', 'प्रो'), s: 4 }, { min: 721, n: L('Elite', 'एलीट'), s: 5 }];
+
+/* ---------- zones ---------- */
+const ZONES = [
+  { id: 'gate', sp: 'SP1', icon: '🔐', ani: '🐯', x: 70, y: 210, name: L('Gate House', 'गेट हाउस'), intro: L('The storm jammed the gate lock. Crack the light pattern, then put each animal back in the right pen.', 'तूफ़ान ने गेट का ताला जाम कर दिया। लाइट पैटर्न तोड़ो, फिर हर जानवर को सही बाड़े में पहुँचाओ।'), tasks: ['pattern', 'deduce'] },
+  { id: 'lamps', sp: 'SP2', icon: '🏮', ani: '🦒', x: 175, y: 230, name: L('Lantern Path', 'लालटेन पथ'), intro: L('It is dark! Remember the safe lantern path, then fit the torn map pieces.', 'अंधेरा है! सुरक्षित लालटेन रास्ता याद रखो, फिर फटे नक्शे के टुकड़े जोड़ो।'), tasks: ['lamps', 'rotate'] },
+  { id: 'robo', sp: 'SP3', icon: '🤖', ani: '🐘', x: 285, y: 195, name: L('Robo Cart Yard', 'रोबो कार्ट यार्ड'), intro: L('A baby elephant is stuck. Program the rescue cart to reach it without hitting puddles.', 'एक बेबी हाथी फँसा है। रेस्क्यू कार्ट को प्रोग्राम करो ताकि वह गड्ढों से बचकर पहुँचे।'), tasks: ['robo'] },
+  { id: 'lab', sp: 'SP4', icon: '🧪', ani: '🐒', x: 290, y: 95, name: L('Vet Lab', 'वेट लैब'), intro: L('Run a fair test for the baby monkey, then balance the lever that lifts the flood gate.', 'बेबी बंदर के लिए फेयर टेस्ट करो, फिर बाढ़ गेट उठाने वाला लीवर बैलेंस करो।'), tasks: ['fair', 'seesaw'] },
+  { id: 'rush', sp: 'SP5', icon: '🍌', ani: '🦁', x: 180, y: 70, name: L('Feeding Rush', 'फ़ीडिंग रश'), intro: L('Hungry animals! Sort the food fast. Watch out, the rule keeps changing.', 'भूखे जानवर! खाना जल्दी छाँटो। ध्यान रहे, नियम बदलता रहेगा।'), tasks: ['rush'] },
+  { id: 'watch', sp: 'SP6', icon: '📹', ani: '🐻', x: 65, y: 95, name: L('Night Watch Room', 'नाइट वॉच रूम'), intro: L('Guard the cameras: catch every open gate. Then spot what the storm broke.', 'कैमरों की निगरानी करो: हर खुला गेट पकड़ो। फिर देखो तूफ़ान ने क्या तोड़ा।'), tasks: ['watch', 'spot'] }
+];
+
+/* ---------- state ---------- */
+const S = {
+  mode: 'play', id: '', name: '', slot: '', seed: 0, rng: null,
+  started: 0, results: {}, events: [], flags: { hidden: 0, fsExit: 0, fast: 0 }, zone: 0, inTask: false
+};
+function logEv(type, data) { S.events.push({ t: Math.round(now() - S.started), type, ...data }); }
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.inTask) { S.flags.hidden++; logEv('tab_hidden', {}); } });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && S.mode === 'ranked' && S.inTask) { S.flags.fsExit++; logEv('fs_exit', {}); } });
+const showRight = () => S.mode !== 'ranked';
+
+/* ---------- top bar + layout ---------- */
+let tickTimer = null;
+function screen({ title, chip, timer, body }) {
+  app.innerHTML = `<div class="top"><span class="ttl">${title || T(TX.title)}</span>${chip ? `<span class="chip">${chip}</span>` : ''}
+    <span class="chip acc" id="clock" style="${timer ? '' : 'display:none'}">0:00</span>
+    <button class="tbtn" id="lang">${LANG === 'hi' ? 'EN' : 'हिं'}</button><button class="tbtn" id="snd">${SOUND ? '🔊' : '🔇'}</button></div>
+    <div class="bar" id="bar" style="${timer ? '' : 'visibility:hidden'}"><i></i></div><div class="main" id="main"></div>`;
+  $('#lang').onclick = () => { LANG = LANG === 'hi' ? 'en' : 'hi'; store('fsl.lang', LANG); if (S.rerender) S.rerender(); };
+  $('#snd').onclick = () => { SOUND = !SOUND; store('fsl.sound', SOUND ? '1' : '0'); $('#snd').textContent = SOUND ? '🔊' : '🔇'; };
+  const m = $('#main'); if (body) m.innerHTML = body; return m;
+}
+function mm(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+/* ---------- feedback helper ---------- */
+function fb(ok, practice) {
+  if (practice || showRight()) { flash(ok ? '✅' : '❌'); ok ? sfx.ok() : sfx.bad(); }
+  else { flash('💾', 300); sfx.tap(); }
+}
+
+/* =========================================================
+   TASKS. Each: {sp, comps, sec, title, how, play(el, ctx)}
+   play returns {timeout()} -> result. ctx.done(result) ends early.
+   result = {comp:{code:credit 0..1}, detail}
+   ========================================================= */
+const COLORS = { red: '#ff5f5f', blue: '#4aa3ff', green: '#3ddc84', yellow: '#ffd23f', purple: '#b07cff', orange: '#ff9f43' };
+function tokSVG(t, z = 40) {
+  const c = COLORS[t.c] || '#ccc'; let s = '';
+  if (t.s === 'circle') s = `<circle cx="24" cy="24" r="19" fill="${c}"/>`;
+  else if (t.s === 'square') s = `<rect x="6" y="6" width="36" height="36" rx="5" fill="${c}"/>`;
+  else if (t.s === 'triangle') s = `<polygon points="24,4 45,42 3,42" fill="${c}"/>`;
+  else if (t.s === 'diamond') s = `<polygon points="24,3 45,24 24,45 3,24" fill="${c}"/>`;
+  else s = `<polygon points="24,3 30,18 46,18 33,28 38,44 24,34 10,44 15,28 2,18 18,18" fill="${c}"/>`;
+  const n = t.n != null ? `<text x="24" y="30" text-anchor="middle" font-size="${t.n > 99 ? 13 : 17}" font-weight="900" fill="#102030">${t.n}</text>` : '';
+  return `<svg width="${z}" height="${z}" viewBox="0 0 48 48">${s}${n}</svg>`;
+}
+const sameTok = (a, b) => a.s === b.s && a.c === b.c && a.n === b.n;
+
+function genPattern(r, lvl) {
+  const SH = ['circle', 'square', 'triangle', 'diamond', 'star'], CO = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+  let seq = [], ans, dis = [];
+  if (lvl === 1) {
+    const p = r.int(2, 3), cs = r.shuffle(CO).slice(0, p + 1), sh = r.pick(SH);
+    for (let i = 0; i < 5; i++) seq.push({ s: sh, c: cs[i % p] });
+    ans = { s: sh, c: cs[5 % p] };
+    dis = cs.filter(c => c !== ans.c).slice(0, 2).map(c => ({ s: sh, c })); dis.push({ s: r.pick(SH.filter(x => x !== sh)), c: ans.c });
+  } else if (lvl === 2) {
+    const a = r.int(1, 6), d = r.int(2, 4), co = r.pick(CO);
+    for (let i = 0; i < 5; i++) seq.push({ s: 'circle', c: co, n: a + d * i });
+    const v = a + d * 5; ans = { s: 'circle', c: co, n: v };
+    dis = [v + 1, v - 1, v + d].map(n => ({ s: 'circle', c: co, n }));
+  } else if (lvl === 3) {
+    const ss = r.shuffle(SH).slice(0, 3), cs = r.shuffle(CO).slice(0, 2);
+    for (let i = 0; i < 6; i++) seq.push({ s: ss[i % 3], c: cs[i % 2] });
+    ans = { s: ss[0], c: cs[0] };
+    dis = [{ s: ss[0], c: cs[1] }, { s: ss[1], c: cs[0] }, { s: ss[2], c: cs[1] }];
+  } else { // growing step: +1,+2,+3...
+    const a = r.int(1, 4), co = r.pick(CO); let v = a;
+    for (let i = 0; i < 5; i++) { seq.push({ s: 'square', c: co, n: v }); v += i + 1; }
+    ans = { s: 'square', c: co, n: v };
+    dis = [v - 1, v + 1, v + 2].map(n => ({ s: 'square', c: co, n }));
+  }
+  const opts = r.shuffle([ans, ...dis]);
+  return { seq, ans, opts };
+}
+
+const TASKS = {
+  /* ---------- SP1 · C1.1 ---------- */
+  pattern: {
+    sp: 'SP1', comps: ['C1.1'], sec: 75, title: L('Crack the Lock Lights', 'ताले की लाइटें तोड़ो'),
+    how: L('Find the rule. Tap the light that comes next.', 'नियम ढूँढो। अगली आने वाली लाइट पर टैप करो।'),
+    play(el, ctx) {
+      const lv = ctx.practice ? [1] : [1, 2, 3, 4]; let i = 0, got = 0; const per = [];
+      const items = lv.map(l => genPattern(ctx.r, l));
+      const draw = () => {
+        const it = items[i];
+        el.innerHTML = `<div class="sub">${fmt(T(L('Lock light {a} of {b}', 'लाइट {a} / {b}')), { a: i + 1, b: items.length })}</div>
+          <div class="seq">${it.seq.map(t => tokSVG(t)).join('')}<div class="slot">?</div></div>
+          <div class="opts">${it.opts.map((o, k) => `<div class="opt ${ctx.hint && sameTok(o, it.ans) ? 'hint' : ''}" data-k="${k}">${tokSVG(o, 46)}</div>`).join('')}</div>`;
+        const shown = now(); let lock = false;
+        el.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+          if (lock || i >= items.length) return; lock = true;
+          const o = it.opts[+b.dataset.k], ok = sameTok(o, it.ans); if (now() - shown < 400) S.flags.fast++;
+          per.push(ok ? 1 : 0); if (ok) got++; fb(ok, ctx.practice); ctx.log('answer', { item: i, ok });
+          i++; if (i >= items.length) ctx.done(res()); else setTimeout(draw, 350);
+        });
+      };
+      const res = () => ({ comp: { 'C1.1': got / items.length }, detail: { per } });
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP1 · C1.2 ---------- */
+  deduce: {
+    sp: 'SP1', comps: ['C1.2'], sec: 105, title: L('Back to the Right Pen', 'सही बाड़े में वापस'),
+    how: L('Read the clues. Tap an animal, then tap its pen. Then press Check.', 'सुराग पढ़ो। जानवर पर टैप करो, फिर उसके बाड़े पर। फिर जाँचो दबाओ।'),
+    play(el, ctx) {
+      const sizes = ctx.practice ? [3] : [3, 4]; const puzzles = sizes.map(n => genDeduce(ctx.r, n, ctx.practice));
+      let pi = 0, tries = 0, scores = [];
+      let place, sel;
+      const start = () => { place = {}; sel = null; tries = 0; draw(); };
+      const draw = () => {
+        const P = puzzles[pi], n = P.animals.length;
+        const inPen = k => Object.keys(place).find(a => place[a] === k);
+        el.innerHTML = `<div class="sub">${fmt(T(L('Puzzle {a} of {b}', 'पहेली {a} / {b}')), { a: pi + 1, b: puzzles.length })}</div>
+        <div class="clues">${P.clues.map(c => `<div class="clue">${clueText(c)}</div>`).join('')}</div>
+        <div class="pens" style="grid-template-columns:repeat(${n},1fr)">${Array.from({ length: n }, (_, k) => `<div class="pen" data-k="${k}"><b>${k + 1}</b>${inPen(k) || ''}</div>`).join('')}</div>
+        <div class="tray">${P.animals.filter(a => place[a] == null).map(a => `<span class="ani ${sel === a ? 'sel' : ''}" data-a="${a}">${a}</span>`).join('')}</div>
+        <button class="btn" id="chk" ${Object.keys(place).length < n ? 'disabled' : ''}>${T(TX.check)}</button>`;
+        el.querySelectorAll('.ani').forEach(b => b.onclick = () => { sel = b.dataset.a; sfx.tap(); draw(); });
+        el.querySelectorAll('.pen').forEach(b => b.onclick = () => {
+          const k = +b.dataset.k, cur = inPen(k);
+          if (sel) { if (cur) delete place[cur]; place[sel] = k; sel = null; } else if (cur) { delete place[cur]; }
+          sfx.tap(); draw();
+        });
+        if (ctx.hint) { const un = P.animals.find(a => place[a] !== P.sol[a]); if (un) { if (sel !== un) { const e = el.querySelector(`.ani[data-a="${un}"]`); if (e) e.classList.add('hint'); else { const pe = el.querySelector(`.pen[data-k="${place[un]}"]`); pe && pe.classList.add('hint'); } } else el.querySelector(`.pen[data-k="${P.sol[un]}"]`).classList.add('hint'); } else $('#chk').classList.add('hint'); }
+        let lock = false;
+        $('#chk').onclick = () => {
+          if (lock || pi >= puzzles.length || P !== puzzles[pi]) return;
+          const ok = P.animals.every(a => place[a] === P.sol[a]); tries++; ctx.log('check', { puzzle: pi, ok, tries });
+          if (ok || tries >= 2) {
+            lock = true; scores.push(ok ? (tries === 1 ? 1 : .5) : 0); fb(ok, ctx.practice); pi++;
+            if (pi >= puzzles.length) ctx.done(res()); else setTimeout(start, 400);
+          } else {
+            sfx.bad(); el.querySelector('.pens').classList.add('shake');
+            const s = document.createElement('div'); s.className = 'sub'; s.style.color = 'var(--bad)'; s.textContent = T(TX.tryAgain); el.appendChild(s);
+          }
+        };
+      };
+      const res = () => { const arr = puzzles.map((_, k) => scores[k] || 0); return { comp: { 'C1.2': arr.reduce((a, b) => a + b, 0) / arr.length }, detail: { scores: arr } }; };
+      start(); return { timeout: res };
+    }
+  },
+  /* ---------- SP2 · C2.2 Corsi-style ---------- */
+  lamps: {
+    sp: 'SP2', comps: ['C2.2'], sec: 90, title: L('Remember the Lantern Path', 'लालटेन रास्ता याद करो'),
+    how: L('Watch the lanterns light up. Then tap them in the SAME order.', 'लालटेन जलते देखो। फिर उसी क्रम में टैप करो।'),
+    play(el, ctx) {
+      let span = ctx.practice ? 2 : 3, fails = 0, best = ctx.practice ? 0 : 2, alive = true, trial = 0;
+      el.innerHTML = `<div class="prompt" id="lmsg"></div><div class="lamps">${Array.from({ length: 16 }, (_, k) => `<div class="lamp" data-k="${k}"></div>`).join('')}</div><div class="sub" id="lspan"></div>`;
+      const lamps = [...el.querySelectorAll('.lamp')], msg = el.querySelector('#lmsg');
+      let accept = false, seq = [], pos = 0;
+      const runTrial = async () => {
+        if (!alive) return; trial++;
+        seq = ctx.r.shuffle([...Array(16).keys()]).slice(0, span); pos = 0; accept = false;
+        el.querySelector('#lspan').textContent = fmt(T(L('Path length: {n}', 'रास्ते की लंबाई: {n}')), { n: span });
+        msg.textContent = T(L('👀 Watch…', '👀 देखो…')); await sleep(600);
+        for (const k of seq) { if (!alive) return; lamps[k].classList.add('on'); beep(400 + k * 30, .15); await sleep(650); lamps[k].classList.remove('on'); await sleep(220); }
+        if (!alive) return; msg.textContent = T(L('👆 Your turn!', '👆 तुम्हारी बारी!')); accept = true;
+        if (ctx.hint) lamps[seq[0]].classList.add('hint');
+      };
+      lamps.forEach(b => b.onclick = () => {
+        if (!accept) return; const k = +b.dataset.k; lamps.forEach(l => l.classList.remove('hint'));
+        b.classList.add('tap'); setTimeout(() => b.classList.remove('tap'), 200);
+        if (k === seq[pos]) {
+          pos++; sfx.tap(); if (ctx.hint && pos < seq.length) lamps[seq[pos]].classList.add('hint');
+          if (pos === seq.length) {
+            accept = false; fb(true, ctx.practice); best = Math.max(best, span); ctx.log('trial', { span, ok: true });
+            if (ctx.practice) { alive = false; return ctx.done(res()); }
+            span = Math.min(span + 1, 9); fails = 0; setTimeout(runTrial, 700);
+          }
+        } else {
+          accept = false; fb(false, ctx.practice); ctx.log('trial', { span, ok: false });
+          if (ctx.practice) { setTimeout(runTrial, 700); return; }
+          fails++; if (fails >= 2) { alive = false; ctx.done(res()); } else setTimeout(runTrial, 700);
+        }
+      });
+      const res = () => { alive = false; return { comp: { 'C2.2': clamp((best - 2) * .2, 0, 1) }, detail: { bestSpan: best, trials: trial } }; };
+      runTrial(); return { timeout: res };
+    }
+  },
+  /* ---------- SP2 · C2.1 ---------- */
+  rotate: {
+    sp: 'SP2', comps: ['C2.1'], sec: 60, title: L('Fix the Torn Map', 'फटा नक्शा जोड़ो'),
+    how: L('Which hole fits this piece if you only TURN it? (No flipping!)', 'यह टुकड़ा सिर्फ़ घुमाने पर किस छेद में फिट होगा? (पलटना मना है!)'),
+    play(el, ctx) {
+      const n = ctx.practice ? 1 : 5; const items = Array.from({ length: n }, (_, k) => genRot(ctx.r, ctx.practice ? 0 : k));
+      let i = 0, got = 0; const per = [];
+      const draw = () => {
+        const it = items[i];
+        el.innerHTML = `<div class="sub">${fmt(T(L('Piece {a} of {b}', 'टुकड़ा {a} / {b}')), { a: i + 1, b: n })}</div>
+        <div class="card" style="display:flex;justify-content:center;background:#e9dcb8">${polySVG(it.piece, 26, '#c0392b', '#7a2318')}</div>
+        <div class="opts" style="grid-template-columns:repeat(3,1fr)">${it.opts.map((o, k) => `<div class="opt ${ctx.hint && o.ok ? 'hint' : ''}" data-k="${k}" style="background:#e9dcb8">${polySVG(o.cells, 18, '#3b2a1a', '#000')}</div>`).join('')}</div>`;
+        const shown = now(); let lock = false;
+        el.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+          if (lock || i >= n) return; lock = true;
+          const ok = it.opts[+b.dataset.k].ok; if (now() - shown < 400) S.flags.fast++;
+          per.push(ok ? 1 : 0); if (ok) got++; fb(ok, ctx.practice); ctx.log('answer', { item: i, ok });
+          i++; if (i >= n) ctx.done(res()); else setTimeout(draw, 350);
+        });
+      };
+      const res = () => ({ comp: { 'C2.1': got / n }, detail: { per } });
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP3 · C3.1 + C3.3 ---------- */
+  robo: {
+    sp: 'SP3', comps: ['C3.1', 'C3.3'], sec: 210, title: L('Program the Rescue Cart', 'रेस्क्यू कार्ट प्रोग्राम करो'),
+    how: L('Tap arrows to build the path, then press ▶. Avoid 💧 puddles.', 'तीर दबाकर रास्ता बनाओ, फिर ▶ दबाओ। 💧 गड्ढों से बचो।'),
+    play(el, ctx) {
+      const levels = ctx.practice ? [genRobo(ctx.r, 0)] : [genRobo(ctx.r, 1), genRobo(ctx.r, 2), genRobo(ctx.r, 3)];
+      let li = 0, prog = [], runs = 0, busy = false; const scores = [];
+      const D = { U: [0, -1, '⬆️'], D: [0, 1, '⬇️'], L: [-1, 0, '⬅️'], R: [1, 0, '➡️'] };
+      const draw = (cart, trail, food) => {
+        const G = levels[li], N = G.n; cart = cart || G.s; trail = trail || []; const hasFood = food != null ? food : false;
+        const cs = Math.min(58, Math.floor((Math.min(window.innerWidth, 480) - 50) / N));
+        const max = G.max;
+        let cells = '';
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+          const k = y * N + x; let c = '';
+          if (G.wall.has(k)) c = '💧'; if (G.food != null && k === G.food && !hasFood) c = '🍌';
+          if (k === G.g) c = '🐘'; if (k === cart) c = '🛻';
+          cells += `<div class="cell ${G.wall.has(k) ? 'p' : ''} ${trail.includes(k) ? 'trail' : ''}" style="width:${cs}px;height:${cs}px">${c}</div>`;
+        }
+        el.innerHTML = `<div class="sub">${fmt(T(L('Level {a} of {b}', 'लेवल {a} / {b}')), { a: li + 1, b: levels.length })} ${G.food != null ? ' · ' + T(L('Pick up 🍌 first, then reach 🐘', 'पहले 🍌 उठाओ, फिर 🐘 तक पहुँचो')) : ''}</div>
+        <div class="grid" style="grid-template-columns:repeat(${N},${cs}px)">${cells}</div>
+        <div class="row" style="justify-content:space-between"><span class="small">${G.food != null ? fmt(T(L('🔋 Battery: {m} moves max · fewer moves = better', '🔋 बैटरी: ज़्यादा से ज़्यादा {m} चाल · कम चाल = बेहतर')), { m: max }) : fmt(T(L('Up to {m} moves', 'ज़्यादा से ज़्यादा {m} चाल')), { m: max })}</span><span class="chip">${prog.length}/${max}</span></div>
+        <div class="prog" id="prog">${prog.map((p, k) => `<span class="pchip" data-k="${k}">${D[p][2]}</span>`).join('')}</div>
+        <div class="pad"><button data-d="L">⬅️</button><button data-d="U">⬆️</button><button data-d="D">⬇️</button><button data-d="R">➡️</button><button data-x="del">⌫</button><button class="go" data-x="go">▶</button></div>`;
+        el.querySelectorAll('.pad button').forEach(b => b.onclick = () => {
+          if (busy) return;
+          if (b.dataset.d) { if (prog.length < max) { prog.push(b.dataset.d); sfx.tap(); } }
+          else if (b.dataset.x === 'del') prog.pop();
+          else if (b.dataset.x === 'go') return run();
+          draw();
+        });
+        if (ctx.hint && !busy && G.hint) { const need = G.hint[prog.length]; if (need) { const b = el.querySelector(`.pad [data-d="${need}"]`); b && b.classList.add('hint'); } else el.querySelector('.pad .go').classList.add('hint'); }
+      };
+      const run = async () => {
+        if (!prog.length) return; busy = true; runs++; const G = levels[li], N = G.n;
+        let x = G.s % N, y = Math.floor(G.s / N), trail = [G.s], food = false, out = 'short', used = 0;
+        const chips = () => el.querySelectorAll('.pchip');
+        for (let k = 0; k < prog.length; k++) {
+          const [dx, dy] = D[prog[k]]; const nx = x + dx, ny = y + dy; used = k + 1;
+          if (nx < 0 || ny < 0 || nx >= N || ny >= N || G.wall.has(ny * N + nx)) { out = 'crash'; break; }
+          x = nx; y = ny; const kk = y * N + x; trail.push(kk); if (kk === G.food) food = true;
+          draw(kk, trail, food); chips()[k] && chips()[k].classList.add('run'); beep(300 + k * 25, .06);
+          await sleep(330);
+          if (kk === G.g && (G.food == null || food)) { out = 'win'; break; }
+        }
+        ctx.log('run', { level: li, out, moves: used, len: prog.length });
+        if (out === 'win') {
+          let sc; if (G.food == null) sc = [0, 1, .75, .5][runs] || .4;
+          else { sc = used <= G.opt ? 1 : used <= G.opt + 2 ? .7 : .5; sc = Math.max(.3, sc - .1 * (runs - 1)); }
+          scores[li] = { sc, runs, used, opt: G.opt }; fb(true, ctx.practice);
+          li++; prog = []; runs = 0; busy = false;
+          if (li >= levels.length) return ctx.done(res()); await sleep(500); draw(); return;
+        }
+        sfx.bad(); flash(out === 'crash' ? '💦' : '🤔', 500);
+        if (ctx.practice || showRight()) {
+          const m = document.createElement('div'); m.className = 'sub'; m.style.color = 'var(--bad)';
+          m.textContent = out === 'crash' ? T(L('Splash! Fix the program and run again.', 'छपाक! प्रोग्राम ठीक करो और फिर चलाओ।')) : T(L('Not there yet. Add or change moves.', 'अभी नहीं पहुँचे। चाल जोड़ो या बदलो।'));
+          await sleep(700); busy = false; draw(); el.appendChild(m);
+        } else { await sleep(700); busy = false; draw(); }
+      };
+      const res = () => {
+        const g = k => scores[k] ? scores[k].sc : 0;
+        return ctx.practice ? { comp: {} } : { comp: { 'C3.1': (g(0) + g(1)) / 2, 'C3.3': g(2) }, detail: { levels: scores } };
+      };
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP4 · C4.2 ---------- */
+  fair: {
+    sp: 'SP4', comps: ['C4.2'], sec: 100, title: L('Run a Fair Test', 'फेयर टेस्ट करो'),
+    how: L('To test ONE thing, change only that thing. Keep everything else the same.', 'एक चीज़ परखनी है तो सिर्फ़ वही बदलो। बाकी सब एक जैसा रखो।'),
+    play(el, ctx) {
+      const V = ctx.practice ? FAIR[2] : ctx.r.pick([FAIR[0], FAIR[1]]);
+      const keys = Object.keys(V.vars); const st = { A: {}, B: {} };
+      // start unfair: focus same, one other different
+      keys.forEach(k => { const v = ctx.r.int(0, 1); st.A[k] = v; st.B[k] = v; });
+      const other = ctx.r.pick(keys.filter(k => k !== V.focus)); st.B[other] = 1 - st.A[other];
+      let runs = 0, firstFair = null, lastFair = false, phase = 'set', resv = null, concl = null;
+      const isFair = () => st.A[V.focus] !== st.B[V.focus] && keys.every(k => k === V.focus || st.A[k] === st.B[k]);
+      const draw = () => {
+        const bot = s => `<div class="bot"><h3>${V.icon} ${s}</h3>${keys.map(k => `<button class="tog" data-s="${s}" data-k="${k}" ${phase !== 'set' ? 'disabled' : ''}><small>${T(V.vars[k].label)}</small>${T(V.vars[k].opts[st[s][k]])}</button>`).join('')}
+          <div class="meter ${V.dry ? 'dry' : ''}"><span id="v${s}">${resv ? resv[s] + V.unit : '–'}</span><i id="m${s}" style="height:${resv ? clamp(resv[s], 0, 100) : 0}%"></i></div></div>`;
+        el.innerHTML = `<div class="prompt">${T(V.q)}</div><div class="bottles">${bot('A')}${bot('B')}</div>` +
+          (phase === 'set' ? `<button class="btn" id="run">▶ ${T(L('Run the test', 'टेस्ट चलाओ'))}</button>` :
+            phase === 'concl' ? `<div class="prompt">${T(V.cq)}</div><div class="row wrap center" id="cc">${[0, 1].map(o => `<button class="btn sec" style="width:auto;flex:1" data-o="${o}">${T(V.vars[V.focus].opts[o])}</button>`).join('')}<button class="btn sec" data-o="x">${T(L("Can't tell, the test was not fair", 'पता नहीं चल सकता, टेस्ट फेयर नहीं था'))}</button></div>
+              ${runs < 2 ? `<button class="btn sec" id="redo">↺ ${T(L('Change the setup and test again', 'सेटअप बदलकर फिर टेस्ट करो'))}</button>` : ''}` : '');
+        el.querySelectorAll('.tog').forEach(b => b.onclick = () => { st[b.dataset.s][b.dataset.k] ^= 1; sfx.tap(); draw(); });
+        if (ctx.hint && phase === 'set' && !isFair()) keys.forEach(k => { const need = k === V.focus ? st.A[k] === st.B[k] : st.A[k] !== st.B[k]; if (need) { const b = el.querySelector(`.tog[data-k="${k}"][data-s="B"]`); b && b.classList.add('hint'); } });
+        if (ctx.hint && phase === 'set' && isFair()) $('#run').classList.add('hint');
+        const rb = $('#run'); if (rb) rb.onclick = simulate;
+        const rd = $('#redo'); if (rd) rd.onclick = () => { phase = 'set'; resv = null; draw(); };
+        el.querySelectorAll('#cc button').forEach(b => b.onclick = () => {
+          concl = b.dataset.o; const right = lastFair ? String(V.best(st.A[V.focus], st.B[V.focus])) : 'x';
+          const ok = concl === right; ctx.log('conclude', { concl, right, fair: lastFair }); fb(ok && lastFair, ctx.practice);
+          ctx.done(res());
+        });
+      };
+      const simulate = async () => {
+        runs++; lastFair = isFair(); if (firstFair == null) firstFair = lastFair; ctx.log('run', { fair: lastFair, A: { ...st.A }, B: { ...st.B } });
+        phase = 'run'; resv = { A: V.v0(st.A), B: V.v0(st.B) }; draw();
+        for (let t = 1; t <= 10; t++) { resv = { A: V.at(st.A, t), B: V.at(st.B, t) }; ['A', 'B'].forEach(s => { $('#v' + s).textContent = resv[s] + V.unit; $('#m' + s).style.height = clamp(resv[s], 0, 100) + '%'; }); beep(300 + t * 20, .03); await sleep(260); }
+        const sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = T(V.after); el.querySelector('.bottles').after(sub);
+        await sleep(400); phase = 'concl'; draw(); el.querySelector('.bottles').after(sub);
+      };
+      const res = () => {
+        if (ctx.practice) return { comp: {} };
+        const design = lastFair ? (firstFair ? .6 : .4) : 0;
+        const right = lastFair ? String(V.best(st.A[V.focus], st.B[V.focus])) : 'x';
+        const c = concl != null && concl === right ? .4 : 0;
+        return { comp: { 'C4.2': design + c }, detail: { runs, firstFair, lastFair, concl } };
+      };
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP4 · C4.3 ---------- */
+  seesaw: {
+    sp: 'SP4', comps: ['C4.3'], sec: 80, title: L('Balance the Flood-Gate Lever', 'बाढ़-गेट लीवर बैलेंस करो'),
+    how: L('Pick a spot for your blue box so the lever is level. Then press Let go.', 'नीले बॉक्स के लिए जगह चुनो ताकि लीवर सीधा रहे। फिर छोड़ो दबाओ।'),
+    play(el, ctx) {
+      const items = ctx.practice ? [genSee(ctx.r, 0)] : [genSee(ctx.r, 1), genSee(ctx.r, 2), genSee(ctx.r, 3)];
+      let i = 0, tries = 0, pick = null, busy = false; const scores = [];
+      const posX = d => 50 + d * 11; // % across beam, d=-4..4
+      const draw = (tilt = 0) => {
+        const it = items[i];
+        const loads = it.left.map(l => ({ ...l, me: false })).concat(pick ? [{ w: it.w, d: pick, me: true }] : []);
+        el.innerHTML = `<div class="sub">${fmt(T(L('Lever {a} of {b}', 'लीवर {a} / {b}')), { a: i + 1, b: items.length })} · ${fmt(T(L('Your box weighs {w}', 'तुम्हारे बॉक्स का वज़न {w}')), { w: it.w })}</div>
+        <div class="see"><div class="fulcrum"></div><div class="beam" id="beam" style="transform:rotate(${tilt}deg)">
+          ${[-4, -3, -2, -1, 1, 2, 3, 4].map(d => `<div class="peg ${pick === d ? 'pick' : ''} ${d > 0 ? 'rp' : ''}" data-d="${d}" style="left:${posX(d)}%"><u></u></div><div class="pnum" style="left:${posX(d)}%">${Math.abs(d)}</div>`).join('')}
+          ${loads.map(l => `<div class="load" style="left:${posX(l.d * (l.me ? 1 : -1))}%">${Array.from({ length: l.w }, () => `<div class="blk ${l.me ? 'me' : ''}">${l.me ? '' : ''}</div>`).join('')}<div class="small" style="font-weight:900;color:${l.me ? '#7fd3ff' : '#ffb347'}">${l.w}</div></div>`).join('')}
+        </div></div>
+        <div class="sub">${T(L('Tap a spot on the RIGHT side (1 to 4)', 'दाईं तरफ़ (1 से 4) कोई जगह टैप करो'))}</div>
+        <button class="btn" id="go" ${pick ? '' : 'disabled'}>✋ ${T(L('Let go', 'छोड़ो'))}</button>`;
+        el.querySelectorAll('.peg.rp').forEach(p => p.onclick = () => { if (busy) return; pick = +p.dataset.d; sfx.tap(); draw(); });
+        if (ctx.hint && !pick) { const p = el.querySelector(`.peg[data-d="${it.ans}"]`); p && p.classList.add('hint'); }
+        $('#go').onclick = async () => {
+          if (busy || !pick) return; busy = true; tries++;
+          const L_ = it.left.reduce((a, l) => a + l.w * l.d, 0), Rt = it.w * pick; const tilt = L_ === Rt ? 0 : (L_ > Rt ? -14 : 14);
+          ctx.log('try', { item: i, pick, ok: L_ === Rt });
+          $('#beam').style.transform = `rotate(${tilt}deg)`; await sleep(900);
+          const ok = L_ === Rt;
+          if (ok || tries >= 3) {
+            scores.push(ok ? [0, 1, .5, .25][tries] : 0); fb(ok, ctx.practice); i++; tries = 0; pick = null; busy = false;
+            if (i >= items.length) return ctx.done(res()); await sleep(300); draw();
+          } else { sfx.bad(); busy = false; pick = null; draw(tilt); }
+        };
+      };
+      const res = () => { const arr = items.map((_, k) => scores[k] || 0); return { comp: ctx.practice ? {} : { 'C4.3': arr.reduce((a, b) => a + b, 0) / arr.length }, detail: { scores: arr } }; };
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP5 · C5.1 + C5.2 (card-sort with rule switch) ---------- */
+  rush: {
+    sp: 'SP5', comps: ['C5.1', 'C5.2'], sec: 90, fixed: true, title: L('Feeding Rush', 'फ़ीडिंग रश'),
+    how: L('☀️ DAY: sort by FOOD (plants → 🐒, meat → 🦁). 🌙 NIGHT: sort by TRAY COLOUR (blue → left, red → right).', '☀️ दिन: खाने से छाँटो (पौधे → 🐒, मांस → 🦁)। 🌙 रात: ट्रे के रंग से छाँटो (नीला → बाएँ, लाल → दाएँ)।'),
+    play(el, ctx) {
+      const PL = ['🍌', '🥕', '🍎', '🥬', '🍉'], ME = ['🍖', '🥩', '🍗'];
+      const total = ctx.practice ? 0 : 90; const blocks = ctx.practice ? null : [[0, 25, 'day'], [25, 45, 'night'], [45, 90, 'mix']];
+      let n = 0, alive = true, cur = null, tStart = now(), lastRule = null; const trials = [];
+      const pracSeq = ['day', 'day', 'day', 'night', 'night', 'night', 'day', 'night'];
+      el.innerHTML = `<div class="rule" id="rule"></div><div id="cardwrap" style="height:150px"></div>
+        <div class="bins"><button class="bin blue" data-s="L">🐒<small>${T(L('plants · blue', 'पौधे · नीला'))}</small></button><button class="bin red" data-s="R">🦁<small>${T(L('meat · red', 'मांस · लाल'))}</small></button></div>
+        <div class="sub" id="rcount"></div>`;
+      const next = () => {
+        if (!alive) return;
+        const el_t = (now() - tStart) / 1000; let rule;
+        if (ctx.practice) { if (n >= pracSeq.length) { alive = false; return ctx.done({ comp: {} }); } rule = pracSeq[n]; }
+        else { const b = blocks.find(b => el_t >= b[0] && el_t < b[1]) || blocks[2]; rule = b[2] === 'mix' ? (lastRule && ctx.r.f() < .6 ? lastRule : ctx.r.pick(['day', 'night'])) : b[2]; }
+        const plant = ctx.r.f() < .5, food = plant ? ctx.r.pick(PL) : ctx.r.pick(ME);
+        const conflict = ctx.r.f() < .5; const tray = conflict ? (plant ? 'R' : 'L') : (plant ? 'L' : 'R');
+        const correct = rule === 'day' ? (plant ? 'L' : 'R') : tray;
+        const block = ctx.practice ? 'prac' : ((blocks.find(b => el_t >= b[0] && el_t < b[1]) || blocks[2])[2]);
+        cur = { rule, food, tray, correct, t0: now(), sw: lastRule != null && rule !== lastRule, block }; lastRule = rule;
+        const ru = $('#rule'); ru.className = 'rule ' + rule; ru.innerHTML = rule === 'day' ? `☀️ ${T(L('DAY: by FOOD', 'दिन: खाने से'))}` : `🌙 ${T(L('NIGHT: by COLOUR', 'रात: रंग से'))}`;
+        $('#cardwrap').innerHTML = `<div class="foodcard" style="border-color:${tray === 'L' ? '#2f7fd8' : '#d94141'}">${food}</div>`;
+        if (ctx.hint) { el.querySelectorAll('.bin').forEach(b => b.classList.toggle('hint', b.dataset.s === correct)); }
+        n++;
+      };
+      el.querySelectorAll('.bin').forEach(b => b.onclick = () => {
+        if (!cur || !alive) return; const rt = now() - cur.t0, ok = b.dataset.s === cur.correct;
+        trials.push({ ...cur, rt, ok }); ctx.log('sort', { ok, rt: Math.round(rt), rule: cur.rule, sw: cur.sw });
+        if (ctx.practice || showRight()) { ok ? sfx.tap() : sfx.bad(); if (!ok) $('#cardwrap').classList.add('shake'); setTimeout(() => $('#cardwrap') && $('#cardwrap').classList.remove('shake'), 300); } else sfx.tap();
+        if (ctx.practice && !ok) { return; }
+        cur = null; $('#cardwrap').innerHTML = ''; $('#rcount').textContent = '✔ ' + trials.filter(t => t.ok).length;
+        setTimeout(next, 200);
+      });
+      const res = () => {
+        alive = false; if (ctx.practice) return { comp: {} };
+        const pure = trials.filter(t => t.block !== 'mix'), mix = trials.filter(t => t.block === 'mix');
+        const pureOkPerMin = pure.filter(t => t.ok).length / (45 / 60);
+        const pureAcc = pure.length ? pure.filter(t => t.ok).length / pure.length : 0;
+        const c51 = clamp((pureOkPerMin - 15) / 35, 0, 1) * (pureAcc >= .8 ? 1 : pureAcc / .8);
+        const mixAcc = mix.length ? mix.filter(t => t.ok).length / mix.length : 0;
+        const med = a => { if (!a.length) return null; const s = a.map(t => t.rt).sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+        const sw = med(mix.filter(t => t.sw && t.ok)), st = med(mix.filter(t => !t.sw && t.ok));
+        const cost = sw != null && st != null ? sw - st : 600;
+        const c52 = mix.length < 6 ? 0 : clamp((mixAcc - .6) / .35, 0, 1) * .7 + clamp(1 - cost / 800, 0, 1) * .3;
+        return { comp: { 'C5.1': c51, 'C5.2': c52 }, detail: { pureOkPerMin: +pureOkPerMin.toFixed(1), pureAcc: +pureAcc.toFixed(2), mixAcc: +mixAcc.toFixed(2), switchCostMs: Math.round(cost), n: trials.length } };
+      };
+      next(); return { timeout: res };
+    }
+  },
+  /* ---------- SP6 · C6.1 (CPT-style vigilance) ---------- */
+  watch: {
+    sp: 'SP6', comps: ['C6.1'], sec: 75, fixed: true, title: L('Guard the Cameras', 'कैमरों की निगरानी'),
+    how: L('Tap a camera ONLY when its gate opens 🚪. Animals moving or birds are fine, do not tap them.', 'कैमरे पर तभी टैप करो जब उसका गेट खुले 🚪। जानवर हिलें या पक्षी आएँ तो टैप मत करो।'),
+    play(el, ctx) {
+      const ANI = ['🐯', '🦒', '🐘', '🐒', '🦓', '🐻'], DIS = ['🦉', '🦇', '🐦', '🍃'];
+      let alive = true, ev = 0, timer = null; const state = ANI.map(a => ({ a, ev: null })); const stats = { tg: 0, hit: 0, fa: 0, miss: 0, rts: [], half: [[0, 0], [0, 0]] };
+      const t0 = now(); const pracPlan = ['n', 'n', 't', 'n', 't', 'n', 'n', 't'];
+      el.innerHTML = `<div class="cams">${ANI.map((a, k) => `<div class="cam" data-k="${k}"><b>CAM ${k + 1}</b><span>${a}</span></div>`).join('')}</div><div class="sub" id="wstat"></div>`;
+      const cams = [...el.querySelectorAll('.cam')];
+      const step = () => {
+        if (!alive) return;
+        let target;
+        if (ctx.practice) { if (ev >= pracPlan.length) { alive = false; return ctx.done({ comp: {} }); } target = pracPlan[ev] === 't'; }
+        else target = ctx.r.f() < .14;
+        const k = ctx.r.int(0, 5), c = cams[k], s = state[k];
+        if (s.ev) { setTimeout(step, 150); return; }
+        ev++;
+        const evo = { target, t: now(), tapped: false, half: (now() - t0) / 1000 > 37 ? 1 : 0 }; s.ev = evo;
+        if (target) { stats.tg++; stats.half[evo.half][1]++; c.querySelector('span').textContent = '🚪'; c.classList.add('alarm'); if (ctx.hint) c.classList.add('hint'); }
+        else { const d = ctx.r.pick(['move', 'bird']); if (d === 'bird') c.querySelector('span').textContent = ctx.r.pick(DIS); else c.querySelector('span').style.transform = `translateX(${ctx.r.pick([-14, 14])}px) scale(1.1)`; }
+        const dur = ctx.practice ? 2200 : 1300;
+        setTimeout(() => {
+          if (target && !evo.tapped) { stats.miss++; ctx.log('miss', { cam: k }); }
+          c.querySelector('span').textContent = s.a; c.querySelector('span').style.transform = ''; c.classList.remove('alarm', 'hint', 'hit'); s.ev = null;
+        }, dur);
+        timer = setTimeout(step, ctx.practice ? 1500 : ctx.r.int(650, 950));
+      };
+      cams.forEach((c, k) => c.onclick = () => {
+        if (!alive) return; const e = state[k].ev;
+        if (e && e.target && e.tapped) return; // double-tap on a caught gate is not a false alarm
+        if (e && e.target && !e.tapped) { e.tapped = true; c.classList.remove('hint'); stats.hit++; stats.half[e.half][0]++; stats.rts.push(now() - e.t); c.classList.add('hit'); sfx.ok(); ctx.log('hit', { cam: k }); }
+        else { stats.fa++; sfx.bad(); c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 300); ctx.log('false_alarm', { cam: k }); }
+      });
+      step();
+      const res = () => {
+        alive = false; clearTimeout(timer); if (ctx.practice) return { comp: {} };
+        const hr = stats.tg ? stats.hit / stats.tg : 0; const c = clamp(hr - stats.fa * 0.06, 0, 1);
+        return { comp: { 'C6.1': c }, detail: { targets: stats.tg, hits: stats.hit, falseAlarms: stats.fa, firstHalf: stats.half[0], secondHalf: stats.half[1] } };
+      };
+      return { timeout: res };
+    }
+  },
+  /* ---------- SP6 · C6.2 ---------- */
+  spot: {
+    sp: 'SP6', comps: ['C6.2'], sec: 75, title: L('What Did the Storm Break?', 'तूफ़ान ने क्या तोड़ा?'),
+    how: L('Compare BEFORE and NOW. Tap every changed thing in the NOW picture.', 'पहले और अब की तुलना करो। अब वाली तस्वीर में हर बदली चीज़ पर टैप करो।'),
+    play(el, ctx) {
+      const rounds = ctx.practice ? [genSpot(ctx.r, 2, 3)] : [genSpot(ctx.r, 3, 4), genSpot(ctx.r, 4, 4)];
+      let ri = 0, found = 0, wrong = 0, totalD = rounds.reduce((a, r) => a + r.diff.size, 0); let gotR = new Set();
+      const draw = () => {
+        const G = rounds[ri], cols = G.cols;
+        const grid = (arr, live) => `<div class="spot" style="grid-template-columns:repeat(${cols},1fr)">${arr.map((o, k) => `<div data-k="${k}" class="${live && gotR.has(k) ? 'found' : ''} ${live && ctx.hint && G.diff.has(k) && !gotR.has(k) ? 'hint' : ''}">${objSVG(o)}</div>`).join('')}</div>`;
+        el.innerHTML = `<div class="row" style="justify-content:space-between"><span class="tag">${T(L('Before', 'पहले'))}</span><span class="chip">${fmt(T(L('Find {n} changes', '{n} बदलाव ढूँढो')), { n: G.diff.size })} · ${gotR.size}/${G.diff.size}</span></div>${grid(G.a, false)}
+        <span class="tag">${T(L('Now', 'अब'))}</span>${grid(G.b, true)}`;
+        el.querySelectorAll('.spot')[1].querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+          const k = +d.dataset.k; if (ri >= rounds.length || gotR.has(k)) return;
+          if (G.diff.has(k)) { gotR.add(k); found++; sfx.ok(); ctx.log('found', { k }); if (gotR.size === G.diff.size) { ri++; gotR = new Set(); if (ri >= rounds.length) return ctx.done(res()); setTimeout(draw, 400); } else draw(); }
+          else { wrong++; sfx.bad(); d.classList.add('wrong'); setTimeout(() => d.classList.remove('wrong'), 300); ctx.log('wrong_tap', { k }); }
+        });
+      };
+      const res = () => ({ comp: ctx.practice ? {} : { 'C6.2': clamp((found - wrong * .5) / totalD, 0, 1) }, detail: { found, wrong, total: totalD } });
+      draw(); return { timeout: res };
+    }
+  }
+};
+
+/* ---------- generators ---------- */
+function perms(a) { if (a.length <= 1) return [a]; const out = []; a.forEach((x, i) => perms(a.slice(0, i).concat(a.slice(i + 1))).forEach(p => out.push([x, ...p]))); return out; }
+function genDeduce(r, n, easy) {
+  const animals = r.shuffle(['🐯', '🐘', '🦒', '🐒', '🦓', '🐻']).slice(0, n);
+  const order = r.shuffle(animals); const sol = {}; order.forEach((a, k) => sol[a] = k);
+  const all = perms([...Array(n).keys()]).map(p => { const m = {}; animals.forEach((a, i) => m[a] = p[i]); return m; });
+  const pool = [];
+  for (const a of animals) for (const b of animals) if (a !== b) {
+    if (sol[a] < sol[b]) pool.push({ t: 'left', a, b, w: 3 });
+    if (a < b && Math.abs(sol[a] - sol[b]) === 1) pool.push({ t: 'next', a, b, w: 3 });
+    if (a < b && Math.abs(sol[a] - sol[b]) > 1) pool.push({ t: 'notnext', a, b, w: 2 });
+  }
+  for (const a of animals) {
+    for (let k = 0; k < n; k++) if (k !== sol[a]) pool.push({ t: 'notat', a, k, w: 2 });
+    if (sol[a] === 0 || sol[a] === n - 1) pool.push({ t: 'end', a, w: 2 });
+    pool.push({ t: 'at', a, k: sol[a], w: easy ? 4 : 1 });
+  }
+  const holds = (c, m) => c.t === 'left' ? m[c.a] < m[c.b] : c.t === 'next' ? Math.abs(m[c.a] - m[c.b]) === 1 : c.t === 'notnext' ? Math.abs(m[c.a] - m[c.b]) > 1 :
+    c.t === 'notat' ? m[c.a] !== c.k : c.t === 'end' ? (m[c.a] === 0 || m[c.a] === n - 1) : m[c.a] === c.k;
+  const ordered = pool.map(c => ({ c, s: r.f() * c.w })).sort((x, y) => y.s - x.s).map(x => x.c);
+  let cands = all, clues = [];
+  for (const c of ordered) { const nc = cands.filter(m => holds(c, m)); if (nc.length < cands.length) { clues.push(c); cands = nc; } if (cands.length === 1) break; }
+  for (let i = clues.length - 1; i >= 0; i--) { const rest = clues.filter((_, j) => j !== i); if (all.filter(m => rest.every(c => holds(c, m))).length === 1) clues = rest; }
+  return { animals, sol, clues: r.shuffle(clues) };
+}
+function clueText(c) {
+  const P = k => k + 1;
+  switch (c.t) {
+    case 'left': return fmt(T(L('{a} is somewhere LEFT of {b}', '{a}, {b} के बाएँ तरफ़ कहीं है')), c);
+    case 'next': return fmt(T(L('{a} is right NEXT TO {b}', '{a}, {b} के ठीक बगल में है')), c);
+    case 'notnext': return fmt(T(L('{a} is NOT next to {b}', '{a}, {b} के बगल में नहीं है')), c);
+    case 'notat': return fmt(T(L('{a} is NOT in pen {k}', '{a} बाड़ा {k} में नहीं है')), { a: c.a, k: P(c.k) });
+    case 'end': return fmt(T(L('{a} is in an END pen', '{a} किनारे वाले बाड़े में है')), c);
+    default: return fmt(T(L('{a} is in pen {k}', '{a} बाड़ा {k} में है')), { a: c.a, k: P(c.k) });
+  }
+}
+const PENTO = { F: [[1, 0], [2, 0], [0, 1], [1, 1], [1, 2]], L: [[0, 0], [0, 1], [0, 2], [0, 3], [1, 3]], N: [[1, 0], [1, 1], [0, 2], [1, 2], [0, 3]], P: [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2]], Y: [[1, 0], [0, 1], [1, 1], [1, 2], [1, 3]] };
+const HEXO = [[0, 0], [1, 0], [1, 1], [1, 2], [2, 2], [2, 3]];
+const norm = c => { const mx = Math.min(...c.map(p => p[0])), my = Math.min(...c.map(p => p[1])); return c.map(([x, y]) => [x - mx, y - my]).sort((a, b) => a[0] - b[0] || a[1] - b[1]); };
+const rot = (c, k) => { let o = c; for (let i = 0; i < k; i++) o = o.map(([x, y]) => [-y, x]); return norm(o); };
+const mir = c => norm(c.map(([x, y]) => [-x, y]));
+const key = c => JSON.stringify(norm(c));
+function genRot(r, k) {
+  const base = k >= 3 ? HEXO : PENTO[r.pick(Object.keys(PENTO))];
+  const piece = rot(base, r.int(0, 3)); const rs = r.shuffle([1, 2, 3]);
+  const good = rot(piece, k === 0 ? 1 : rs[0]); const m1 = rot(mir(piece), r.int(0, 3));
+  let m2 = rot(mir(piece), r.int(0, 3)); let g = 0; while (key(m2) === key(m1) && g++ < 10) m2 = rot(m2, 1);
+  return { piece, opts: r.shuffle([{ cells: good, ok: true }, { cells: m1, ok: false }, { cells: m2, ok: false }]) };
+}
+function polySVG(cells, u, fill, stroke) {
+  const w = Math.max(...cells.map(c => c[0])) + 1, h = Math.max(...cells.map(c => c[1])) + 1, S_ = 4 * u;
+  const ox = (S_ - w * u) / 2, oy = (S_ - h * u) / 2;
+  return `<svg width="${S_}" height="${S_}" viewBox="0 0 ${S_} ${S_}">${cells.map(([x, y]) => `<rect x="${ox + x * u}" y="${oy + y * u}" width="${u}" height="${u}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`).join('')}</svg>`;
+}
+function bfs(N, wall, s) { const d = new Array(N * N).fill(-1); d[s] = 0; const q = [s]; while (q.length) { const c = q.shift(), x = c % N, y = Math.floor(c / N);[[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const nx = x + dx, ny = y + dy, k = ny * N + nx; if (nx >= 0 && ny >= 0 && nx < N && ny < N && !wall.has(k) && d[k] < 0) { d[k] = d[c] + 1; q.push(k); } }); } return d; }
+function pathDirs(N, wall, s, g) { const d = bfs(N, wall, g); const out = []; let c = s; while (c !== g) { const x = c % N, y = Math.floor(c / N); for (const [dx, dy, n] of [[1, 0, 'R'], [-1, 0, 'L'], [0, 1, 'D'], [0, -1, 'U']]) { const nx = x + dx, ny = y + dy, k = ny * N + nx; if (nx >= 0 && ny >= 0 && nx < N && ny < N && d[k] === d[c] - 1) { out.push(n); c = k; break; } } } return out; }
+function genRobo(r, lvl) {
+  const N = lvl === 0 ? 4 : 5;
+  for (let tries = 0; tries < 500; tries++) {
+    const wall = new Set(); const dens = [0.1, 0.16, 0.26, 0.22][lvl];
+    for (let k = 0; k < N * N; k++) if (r.f() < dens) wall.add(k);
+    const free = [...Array(N * N).keys()].filter(k => !wall.has(k)); if (free.length < 6) continue;
+    const s = r.pick(free), g = r.pick(free.filter(k => k !== s)); const d = bfs(N, wall, s);
+    if (lvl < 3) {
+      const [lo, hi] = [[3, 4], [4, 6], [6, 8]][lvl]; if (d[g] < lo || d[g] > hi) continue;
+      const dirs = pathDirs(N, wall, s, g); const turns = dirs.filter((x, i) => i && x !== dirs[i - 1]).length; if (lvl === 2 && turns < 2) continue;
+      return { n: N, wall, s, g, food: null, opt: d[g], max: lvl === 0 ? 8 : 12, hint: dirs };
+    }
+    const f = r.pick(free.filter(k => k !== s && k !== g)); const df = bfs(N, wall, f);
+    if (d[f] < 0 || df[g] < 0) continue; const opt = d[f] + df[g];
+    if (opt < 7 || opt > 10) continue;
+    return { n: N, wall, s, g, food: f, opt, max: opt + 4, hint: pathDirs(N, wall, s, f).concat(pathDirs(N, wall, f, g)) };
+  }
+  return genRobo(r, Math.max(0, lvl - 1));
+}
+const FAIR = [
+  {
+    icon: '🍼', focus: 'cover', unit: '°C', dry: false,
+    q: L("Which cover keeps the baby monkey's milk warm longer? Set up a FAIR test.", 'कौन-सा कवर बेबी बंदर का दूध ज़्यादा देर गरम रखता है? एक फेयर टेस्ट बनाओ।'),
+    cq: L('So which cover keeps milk warmer?', 'तो कौन-सा कवर दूध ज़्यादा गरम रखता है?'),
+    after: L('10 minutes later…', '10 मिनट बाद…'),
+    vars: {
+      cover: { label: L('Cover', 'कवर'), opts: [L('🧶 Wool', '🧶 ऊन'), L('📄 Paper', '📄 कागज़')] },
+      milk: { label: L('Milk', 'दूध'), opts: [L('Full', 'पूरी'), L('Half', 'आधी')] },
+      start: { label: L('Start', 'शुरुआत'), opts: [L('Hot', 'गरम'), L('Warm', 'हल्का गरम')] }
+    },
+    v0: s => s.start === 0 ? 70 : 50,
+    at: (s, t) => { const k = .09 * (s.cover === 0 ? .45 : 1.1) * (s.milk === 0 ? 1 : 1.7), T0 = s.start === 0 ? 70 : 50; return Math.round(25 + (T0 - 25) * Math.exp(-k * t)); },
+    best: () => 0
+  },
+  {
+    icon: '🧺', focus: 'spot', unit: '%', dry: true,
+    q: L("Where does the elephant's wet blanket dry faster? Set up a FAIR test.", 'हाथी का गीला कंबल कहाँ जल्दी सूखता है? एक फेयर टेस्ट बनाओ।'),
+    cq: L('So where does the blanket dry faster?', 'तो कंबल कहाँ जल्दी सूखता है?'),
+    after: L('% wet after 1 hour', '1 घंटे बाद कितना % गीला'),
+    vars: {
+      spot: { label: L('Place', 'जगह'), opts: [L('☀️ Sun', '☀️ धूप'), L('🌳 Shade', '🌳 छाँव')] },
+      fold: { label: L('Blanket', 'कंबल'), opts: [L('Spread open', 'फैला हुआ'), L('Folded', 'तह किया')] },
+      wet: { label: L('Start', 'शुरुआत'), opts: [L('Dripping', 'टपकता'), L('Damp', 'नम')] }
+    },
+    v0: s => s.wet === 0 ? 100 : 70,
+    at: (s, t) => { const k = .05 * (s.spot === 0 ? 2.2 : .8) * (s.fold === 0 ? 1.4 : .6), W0 = s.wet === 0 ? 100 : 70; return Math.round(W0 * Math.exp(-k * t)); },
+    best: () => 0
+  },
+  {
+    icon: '🌱', focus: 'water', unit: 'cm', dry: true,
+    q: L('Practice: does water help a seedling grow? Change ONLY the water.', 'प्रैक्टिस: क्या पानी पौधे को बढ़ाता है? सिर्फ़ पानी बदलो।'),
+    cq: L('So which seedling grew more?', 'तो कौन-सा पौधा ज़्यादा बढ़ा?'),
+    after: L('Height after 10 days', '10 दिन बाद ऊँचाई'),
+    vars: {
+      water: { label: L('Water', 'पानी'), opts: [L('💧 Daily', '💧 रोज़'), L('🚫 None', '🚫 बिल्कुल नहीं')] },
+      pot: { label: L('Pot', 'गमला'), opts: [L('Big', 'बड़ा'), L('Small', 'छोटा')] },
+      light: { label: L('Light', 'रोशनी'), opts: [L('Window', 'खिड़की'), L('Cupboard', 'अलमारी')] }
+    },
+    v0: () => 1,
+    at: (s, t) => Math.round(1 + t * (s.water === 0 ? 1.2 : .1) * (s.light === 0 ? 1 : .5) * (s.pot === 0 ? 1 : .9)),
+    best: () => 0
+  }
+];
+function genSee(r, lvl) {
+  if (lvl <= 1) { const w = r.int(1, 3), d = r.int(1, 4); return { left: [{ w, d }], w, ans: d }; }
+  if (lvl === 2) {
+    for (let g = 0; g < 100; g++) { const w = r.int(1, 4), d = r.int(1, 4), mw = r.int(1, 5); const t = w * d; if (t % mw || mw === w) continue; const a = t / mw; if (a >= 1 && a <= 4 && a !== d) return { left: [{ w, d }], w: mw, ans: a }; }
+    return { left: [{ w: 2, d: 4 }], w: 4, ans: 2 };
+  }
+  for (let g = 0; g < 200; g++) { const a = r.int(1, 3), da = r.int(1, 4), b = r.int(1, 3), db = r.int(1, 4); if (da === db) continue; const t = a * da + b * db, mw = r.int(2, 5); if (t % mw) continue; const x = t / mw; if (x >= 1 && x <= 4) return { left: [{ w: a, d: da }, { w: b, d: db }], w: mw, ans: x }; }
+  return { left: [{ w: 1, d: 4 }, { w: 2, d: 1 }], w: 2, ans: 3 };
+}
+const OBJ_K = ['lock', 'bowl', 'bulb', 'sign'];
+function genSpot(r, rows, cols) {
+  const n = rows * cols, cl = ['#ffb347', '#4aa3ff', '#3ddc84', '#ff6b6b', '#b07cff'];
+  const a = Array.from({ length: n }, () => ({ k: r.pick(OBJ_K), c: r.pick(cl), dots: r.int(1, 3), rot: r.pick([0, 0, 90]) }));
+  const b = a.map(o => ({ ...o })); const diff = new Set(r.shuffle([...Array(n).keys()]).slice(0, n >= 16 ? 4 : 3));
+  for (const k of diff) { const o = b[k], ch = r.pick(['c', 'dots', 'rot', 'k']); if (ch === 'c') o.c = r.pick(cl.filter(x => x !== o.c)); else if (ch === 'dots') o.dots = o.dots === 3 ? 2 : o.dots + 1; else if (ch === 'rot') o.rot = o.rot === 0 ? 45 : 0; else o.k = r.pick(OBJ_K.filter(x => x !== o.k)); }
+  return { a, b, diff, cols };
+}
+function objSVG(o) {
+  let s = '';
+  if (o.k === 'lock') s = `<rect x="10" y="20" width="28" height="22" rx="4" fill="${o.c}"/><path d="M16 20v-6a8 8 0 0 1 16 0v6" stroke="${o.c}" stroke-width="4" fill="none"/>`;
+  else if (o.k === 'bowl') s = `<path d="M6 22h36a18 16 0 0 1-36 0z" fill="${o.c}"/>`;
+  else if (o.k === 'bulb') s = `<circle cx="24" cy="20" r="13" fill="${o.c}"/><rect x="18" y="32" width="12" height="9" fill="#9aa"/>`;
+  else s = `<rect x="7" y="9" width="34" height="22" rx="3" fill="${o.c}"/><rect x="22" y="31" width="4" height="12" fill="#9aa"/>`;
+  const dots = Array.from({ length: o.dots }, (_, i) => `<circle cx="${17 + i * 7}" cy="${o.k === 'bowl' ? 28 : o.k === 'sign' ? 20 : 32}" r="2.6" fill="#10202f"/>`).join('');
+  return `<svg viewBox="0 0 48 48" width="100%" height="100%" style="transform:rotate(${o.rot}deg)">${s}${dots}</svg>`;
+}
+
+/* =========================================================
+   FLOW
+   ========================================================= */
+let curTask = null;
+function runTask(id, practice) {
+  return new Promise(resolve => {
+    const tk = TASKS[id]; const z = ZONES.find(z => z.tasks.includes(id));
+    const seedR = R(mulberry(hash(S.seed + '|' + id + (practice ? '|p' : ''))));
+    let endAt = practice ? null : now() + tk.sec * 1000 * SPEED, finished = false, inst = null, iv = null;
+    const m = screen({ title: `${z.icon} ${T(tk.title)}`, chip: T(SPN[tk.sp]), timer: !practice });
+    m.innerHTML = `${practice ? `<div class="practice-rib">${T(TX.practiceTry)}</div>` : ''}<div class="prompt" style="font-size:14px;font-weight:600;color:var(--mute)">${T(tk.how)}</div><div id="tk" style="display:flex;flex-direction:column;gap:10px"></div>`;
+    S.rerender = null; // language toggle applies on next screen during a live task
+    const ctx = {
+      r: seedR, practice, hint: practice || DEVHINT, log: (type, d) => logEv(type, { task: id, practice, ...d }),
+      done: res => { if (finished) return; finished = true; clearInterval(iv); const tkEl = m.querySelector('#tk'); if (tkEl) tkEl.style.pointerEvents = 'none'; finish(res, false); }
+    };
+    const finish = (res, timedOut) => {
+      S.inTask = false;
+      if (!practice) {
+        const left = Math.max(0, (endAt - now()) / 1000);
+        S.results[id] = { ...res, timedOut, secLeft: Math.round(left), sec: tk.sec };
+        logEv('task_end', { task: id, timedOut, comp: res.comp });
+      }
+      setTimeout(() => resolve(res), timedOut ? 900 : 450);
+    };
+    S.inTask = !practice;
+    inst = tk.play(m.querySelector('#tk'), ctx);
+    if (!practice) {
+      say(tk.how);
+      iv = setInterval(() => {
+        const left = (endAt - now()) / 1000; const c = $('#clock'), b = $('#bar');
+        if (c) c.textContent = mm(left); if (b) { b.firstChild.style.width = clamp(left / (tk.sec * SPEED) * 100, 0, 100) + '%'; b.classList.toggle('low', left < 10); }
+        if (left <= 0 && !finished) {
+          finished = true; clearInterval(iv); const res = inst.timeout(); const tkEl = m.querySelector('#tk'); if (tkEl) tkEl.style.pointerEvents = 'none';
+          if (!tk.fixed) { flash('⏰', 700); } finish(res, !tk.fixed);
+        }
+      }, 200);
+    } else say(tk.how);
+  });
+}
+async function practiceThenReal(id) {
+  const tk = TASKS[id];
+  await runTask(id, true);
+  await new Promise(res => {
+    const m = screen({ title: `${T(tk.title)}`, chip: T(SPN[tk.sp]) });
+    m.innerHTML = `<div class="card" style="text-align:center"><div class="hand">⏱️</div><h2>${T(TX.nowReal)}</h2><p style="margin-top:6px">${fmt(T(L('You have {s} for this job.', 'इस काम के लिए {s} हैं।')), { s: mm(tk.sec) })}</p></div><button class="btn" id="go">${T(TX.start)}</button>`;
+    S.rerender = () => practiceThenRealResume(res, tk);
+    $('#go').onclick = res;
+  });
+  await runTask(id, false);
+}
+function practiceThenRealResume(res, tk) { const m = screen({ title: T(tk.title), chip: T(SPN[tk.sp]) }); m.innerHTML = `<div class="card" style="text-align:center"><div class="hand">⏱️</div><h2>${T(TX.nowReal)}</h2></div><button class="btn" id="go">${T(TX.start)}</button>`; $('#go').onclick = res; }
+
+function mapSVG(active) {
+  const path = ZONES.map((z, i) => `${i ? 'L' : 'M'}${z.x} ${z.y}`).join(' ');
+  return `<svg class="map" viewBox="0 0 360 285">
+    <rect width="360" height="280" fill="#173f2b"/>
+    <path d="M0 150 Q 90 120 180 150 T 360 140" stroke="#1f5c8a" stroke-width="22" fill="none" opacity=".6"/>
+    ${Array.from({ length: 16 }, (_, i) => `<text x="${(i * 53) % 350}" y="${20 + (i * 71) % 260}" font-size="16" opacity=".5">🌳</text>`).join('')}
+    <path d="${path}" stroke="#d8c38f" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="1 0"/>
+    ${ZONES.map((z, i) => `<g><circle cx="${z.x}" cy="${z.y}" r="25" fill="${i < active ? '#3ddc84' : i === active ? '#ffc94a' : '#2b4566'}" stroke="#fff" stroke-width="${i === active ? 3 : 1}"/>
+      <text x="${z.x}" y="${z.y + 8}" font-size="22" text-anchor="middle">${i < active ? z.ani : z.icon}</text>
+      <text x="${z.x}" y="${z.y + 40}" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">${T(z.name)}</text></g>`).join('')}
+    <rect x="60" y="2" width="240" height="20" rx="10" fill="rgba(0,0,0,.45)"/><text x="180" y="16" font-size="11" fill="#ffe9a8" text-anchor="middle">${active >= 6 ? '💡 ' + T(TX.lightsOn) : '⚡ ' + active + ' / 6'}</text>
+  </svg>`;
+}
+function zoneIntro(i) {
+  return new Promise(res => {
+    const draw = () => {
+      const z = ZONES[i]; const secs = z.tasks.reduce((a, t) => a + TASKS[t].sec, 0);
+      const m = screen({ title: `${T(TX.title)}`, chip: `${i + 1}/6` });
+      m.innerHTML = `${mapSVG(i)}<div class="card"><div class="tag">${fmt(T(L('Zone {n}', 'ज़ोन {n}')), { n: i + 1 })} · ${T(SPN[z.sp])}</div><h2>${z.icon} ${T(z.name)}</h2><p style="margin-top:6px">${T(z.intro)}</p>
+        <div class="row wrap" style="margin-top:10px">${z.tasks.map(t => TASKS[t].comps.map(c => `<span class="chip">${c} ${T(COMP[c])}</span>`).join('')).join('')}<span class="chip acc">⏱ ${mm(secs)}</span></div></div>
+        <button class="btn" id="go">${T(TX.start)}</button>`;
+      $('#go').onclick = res; say(z.intro);
+    };
+    S.rerender = draw; draw();
+  });
+}
+function zoneDone(i) {
+  return new Promise(res => {
+    const z = ZONES[i]; const m = screen({ title: T(TX.title), chip: `${i + 1}/6` }); sfx.win();
+    m.innerHTML = `${mapSVG(i + 1)}<div class="card" style="text-align:center"><div style="font-size:60px;animation:pop .4s">${z.ani}</div><h2>${T(TX.zoneDone)}</h2><p>${z.ani} ${T(TX.rescued)} ✔</p></div><button class="btn" id="go">${T(TX.next)}</button>`;
+    $('#go').onclick = res; S.rerender = null;
+  });
+}
+
+/* ---------- scoring ---------- */
+function score() {
+  const comp = {}; Object.values(S.results).forEach(r => Object.assign(comp, r.comp));
+  const sp = {}; ZONES.forEach(z => { const cs = z.tasks.flatMap(t => TASKS[t].comps); sp[z.sp] = Math.round(cs.reduce((a, c) => a + (comp[c] || 0), 0) / cs.length * 100); });
+  const tasksN = Object.keys(TASKS).length;
+  const attempted = Object.values(S.results).filter(r => Object.values(r.comp).some(v => v > 0)).length;
+  const consistency = attempted / tasksN;
+  const avg = Object.values(sp).reduce((a, b) => a + b, 0) / 6;
+  const fsi = Math.min(900, Math.round(1000 * (0.9 * avg / 100 + 0.1 * consistency)));
+  const star = [...STARS].reverse().find(s => fsi >= s.min);
+  let league = 0; Object.entries(S.results).forEach(([id, r]) => { const c = Object.values(r.comp); const m = c.reduce((a, b) => a + b, 0) / (c.length || 1); league += Math.round(m * 300); if (m >= .8 && !TASKS[id].fixed) league += r.secLeft; });
+  const f = S.flags; const cred = clamp(100 - Math.min(30, f.hidden * 10) - Math.min(15, f.fsExit * 5) - Math.min(20, f.fast * 2), 0, 100);
+  return { comp, sp, fsi, star, league, consistency, cred, credBand: cred >= 80 ? 'green' : cred >= 60 ? 'amber' : 'red' };
+}
+function results() {
+  const sc = score(); const secs = Math.round((now() - S.started) / 1000);
+  const run = { mission: 'zoo-rescue-night', band: 'J', round: 'R2', version: 1, mode: S.mode, fsl_id: S.id || null, name: S.name || null, slot: S.slot, seed: S.seed, lang: LANG, started_at: new Date(Date.now() - secs * 1000).toISOString(), duration_s: secs, fsi: sc.fsi, star: sc.star.n.en, league_score: sc.league, sp: sc.sp, competencies: sc.comp, credibility: sc.cred, flags: S.flags };
+  try { const k = 'fsl.missionRuns.zoo'; const arr = JSON.parse(store(k) || '[]'); arr.push({ mission_run: run, task_results: S.results, events: S.events.slice(-600) }); store(k, JSON.stringify(arr.slice(-20))); } catch (e) { }
+  if (S.mode === 'ranked') store(`fsl.zoo.ranked.${S.slot}.${S.id}`, '1');
+  const draw = () => {
+    const m = screen({ title: T(TX.results) }); sfx.win();
+    m.innerHTML = `${mapSVG(6)}
+    <div class="card" style="text-align:center"><div class="stars">${'★'.repeat(sc.star.s)}<span style="opacity:.25">${'★'.repeat(6 - sc.star.s)}</span></div>
+      <h1>${T(sc.star.n)}</h1><div class="tag">${T(TX.fsi)}</div><div style="font-size:40px;font-weight:900">${sc.fsi}<span class="small"> / 1000</span></div>
+      <p class="small" style="margin-top:4px">${T(TX.estNote)}</p></div>
+    <div class="card">${ZONES.map(z => `<div class="sp"><span>${z.icon} ${T(SPN[z.sp])}</span><span class="b"><i style="width:${sc.sp[z.sp]}%"></i></span><span>${sc.sp[z.sp]}</span></div>`).join('<div style="height:8px"></div>')}</div>
+    <div class="card"><div class="row" style="justify-content:space-between"><b>🏆 ${T(TX.league)}</b><b style="font-size:22px;color:var(--acc)">${sc.league}</b></div>
+      <p class="small">${fmt(T(L('Time played {t} · League Score adds speed bonus for ranking; Stars use thinking only.', 'खेलने का समय {t} · लीग स्कोर में रैंकिंग के लिए स्पीड बोनस है; स्टार सिर्फ़ सोच से बनते हैं।')), { t: mm(secs) })}</p></div>
+    <div class="card"><table class="res">${Object.keys(COMP).map(c => `<tr><td>${c}</td><td>${T(COMP[c])}</td><td style="text-align:right;font-weight:800">${Math.round((sc.comp[c] || 0) * 100)}</td></tr>`).join('')}</table></div>
+    ${S.mode === 'ranked' ? `<div class="card"><b>${T(TX.fair)}</b>: <span class="chip" style="background:${sc.credBand === 'green' ? '#2f6b3f' : sc.credBand === 'amber' ? '#7a5b12' : '#7a1f1f'};color:#fff">${sc.cred}</span><p class="small">${T(L('Tab switches, full-screen exits and too-fast taps are noted. Low scores get a friendly replay, never a ban.', 'टैब बदलना, फ़ुल-स्क्रीन छोड़ना और बहुत तेज़ टैप नोट होते हैं। कम स्कोर पर दोस्ताना दोबारा खेल होता है, कभी बैन नहीं।'))}</p></div>` : ''}
+    <button class="btn" id="again">${T(TX.playAgain)}</button>`;
+    $('#again').onclick = () => { location.href = location.pathname + (LANG === 'hi' ? '?lang=hi' : ''); };
+  };
+  S.rerender = draw; draw();
+}
+
+/* ---------- intro wizard ---------- */
+function intro() {
+  let step = 0, mode = Q.get('mode') === 'ranked' ? 'ranked' : 'play';
+  const draw = () => {
+    const m = screen({});
+    if (step === 0) {
+      m.innerHTML = `<div style="text-align:center;font-size:64px;margin-top:10px">🦁🌩️🔦</div><div class="tag" style="text-align:center">${T(TX.tagline)}</div><h1 style="text-align:center">${T(TX.title)}</h1>
+        <div class="card"><p style="color:var(--ink);font-size:16px">${T(TX.story)}</p></div><button class="btn" id="n">${T(TX.next)}</button>
+        <p class="small" style="text-align:center">${T(L('Band J · ages 9 to 13 · हिंदी / English', 'बैंड J · उम्र 9 से 13 · हिंदी / English'))}</p>`;
+      $('#n').onclick = () => { step = 1; draw(); }; say(TX.story);
+    } else if (step === 1) {
+      m.innerHTML = `${mapSVG(0)}<div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <p style="color:var(--ink)">🗺️ ${T(TX.how1)}</p><p>⏱️ ${T(TX.how2)}</p><p>🧪 ${T(TX.how3)}</p><p>⭐ ${T(TX.how4)}</p></div>
+        <div class="row wrap center">${ZONES.map(z => `<span class="chip">${z.icon} ${T(SPN[z.sp])}</span>`).join('')}</div>
+        <button class="btn" id="n">${T(TX.next)}</button>`;
+      $('#n').onclick = () => { step = 2; draw(); };
+    } else {
+      m.innerHTML = `<h2>${T(L('How do you want to play?', 'कैसे खेलना है?'))}</h2>
+        <div class="card" id="mp" style="cursor:pointer;border:2px solid ${mode === 'play' ? 'var(--acc)' : 'transparent'}"><b>🎮 ${T(TX.practiceMode)}</b><p>${T(TX.practiceDesc)}</p></div>
+        <div class="card" id="mr" style="cursor:pointer;border:2px solid ${mode === 'ranked' ? 'var(--acc)' : 'transparent'}"><b>🏆 ${T(TX.rankedMode)}</b><p>${T(TX.rankedDesc)}</p></div>
+        ${mode === 'ranked' ? `<input type="text" id="fid" placeholder="${T(TX.fslid)}" value="${S.id}" autocomplete="off">
+          <label class="ck"><input type="checkbox" id="pl"> ${T(TX.pledge)}</label>` : `<input type="text" id="nm" placeholder="${T(TX.name)}" value="${S.name}" maxlength="20" autocomplete="off">`}
+        <div id="err" class="sub" style="color:var(--bad)"></div>
+        <button class="btn" id="go">🔦 ${T(TX.start)}</button>`;
+      $('#mp').onclick = () => { mode = 'play'; draw(); }; $('#mr').onclick = () => { mode = 'ranked'; draw(); };
+      const fid = $('#fid'); if (fid) fid.oninput = () => S.id = fid.value.trim().toUpperCase();
+      const nm = $('#nm'); if (nm) nm.oninput = () => S.name = nm.value.trim();
+      $('#go').onclick = () => {
+        S.mode = mode;
+        if (mode === 'ranked') {
+          if (!/^[A-Z0-9-]{4,20}$/.test(S.id)) { $('#err').textContent = T(L('Enter your FSL ID (4 to 20 letters/numbers).', 'अपना FSL ID डालो (4 से 20 अक्षर/अंक)।')); return; }
+          if (!$('#pl').checked) { $('#err').textContent = T(L('Please tick the fair-play promise.', 'कृपया फेयर-प्ले वादे पर टिक करो।')); return; }
+          S.slot = Q.get('slot') || new Date().toISOString().slice(0, 10);
+          if (store(`fsl.zoo.ranked.${S.slot}.${S.id}`)) { $('#err').textContent = T(TX.already); return; }
+          S.seed = hash(S.id + '|' + S.slot + '|zoo');
+          try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (e) { }
+          const wm = document.createElement('div'); wm.className = 'wm'; wm.textContent = S.id + ' · ' + S.slot; document.body.appendChild(wm);
+        } else { S.slot = 'practice'; S.seed = (Math.random() * 1e9) | 0; }
+        game();
+      };
+    }
+  };
+  S.rerender = draw; draw();
+}
+async function game() {
+  S.started = now(); logEv('start', { mode: S.mode, seed: S.seed });
+  const only = Q.get('zone'); const zs = only != null ? [+only] : [0, 1, 2, 3, 4, 5];
+  for (const i of zs) {
+    S.zone = i; await zoneIntro(i);
+    for (const t of ZONES[i].tasks) await practiceThenReal(t);
+    await zoneDone(i);
+  }
+  results();
+}
+// dev hook: ?test=<taskId>[&real=1] jumps to one task
+if (Q.get('test') && TASKS[Q.get('test')]) { S.seed = +(Q.get('seed') || 7); S.started = now(); runTask(Q.get('test'), !Q.get('real')).then(r => { window.__lastResult = r; app.insertAdjacentHTML('beforeend', `<pre id="out" style="white-space:pre-wrap;font-size:11px">${JSON.stringify(r)}</pre>`); }); }
+else intro();
+window.__zoo = { S, TASKS, score, genDeduce, genRobo, genSee, genRot, R, mulberry };
+</script>
+</body>
+</html>
