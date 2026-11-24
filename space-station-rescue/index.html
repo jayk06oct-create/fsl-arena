@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="FSL Band J space mission: pilot Taara-1, launch, dodge asteroids, dock and rescue the crew. 18 minutes, all 6 Superpowers.">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Space Station Rescue</title>
+<style>
+:root{--bg:#0d1b2a;--bg2:#13263b;--card:#1b3350;--ink:#f4f7fb;--mute:#a9bcd3;--acc:#ffc94a;--ok:#3ddc84;--bad:#ff6b6b;--blue:#4aa3ff;--red:#ff5f5f;--line:#2d4a6d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif;overscroll-behavior:none}
+body{min-height:100vh;display:flex;justify-content:center;user-select:none;-webkit-user-select:none}
+#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(120% 60% at 50% 0%,#1d3d63 0%,var(--bg) 70%)}
+.top{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,0,0,.25);font-size:14px}
+.top .ttl{font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;background:var(--card);font-size:12px;font-weight:700;color:var(--mute)}
+.chip.acc{background:var(--acc);color:#2a1d00}
+.tbtn{border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:6px 9px;font-weight:800;font-size:13px}
+.bar{height:6px;background:#0a1522}.bar i{display:block;height:100%;background:var(--acc);width:100%;transition:width .25s linear}
+.bar.low i{background:var(--bad)}
+.main{flex:1;padding:14px 16px 22px;display:flex;flex-direction:column;gap:12px}
+h1{font-size:26px;margin:4px 0}h2{font-size:20px;margin:2px 0}
+p{margin:0;line-height:1.45;color:var(--mute)}
+.card{background:var(--card);border-radius:16px;padding:14px}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-size:17px;font-weight:800;background:var(--acc);color:#2a1d00;width:100%;cursor:pointer}
+.btn.sec{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;align-items:center}.wrap{flex-wrap:wrap}.center{justify-content:center}
+.prompt{font-size:16px;font-weight:700;color:var(--ink);text-align:center;line-height:1.35}
+.sub{font-size:13px;color:var(--mute);text-align:center}
+.tag{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--acc)}
+.practice-rib{background:#2f6b3f;color:#d9ffe6;text-align:center;font-size:12px;font-weight:800;padding:4px;border-radius:8px}
+.flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20}
+.flash.on{opacity:1}
+.hint{animation:pulse 1s infinite;box-shadow:0 0 0 3px var(--acc)!important}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .3s}
+/* tokens */
+.seq{display:flex;gap:5px;justify-content:center;flex-wrap:nowrap;padding:10px 4px;background:#0f2238;border-radius:14px}
+.slot{width:46px;height:46px;border-radius:10px;border:2px dashed var(--acc);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:var(--acc)}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.opt{background:#0f2238;border:2px solid var(--line);border-radius:14px;padding:8px;display:flex;justify-content:center;cursor:pointer}
+.opt.sel{border-color:var(--acc)}
+/* pens */
+.pens{display:grid;gap:6px}
+.pen{min-height:74px;border-radius:12px;background:#244a2b;border:2px solid #3b7a45;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:34px;cursor:pointer;position:relative}
+.pen b{position:absolute;top:2px;left:6px;font-size:12px;color:#bfe8c7}
+.tray{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:58px}
+.ani{font-size:36px;background:#0f2238;border:2px solid var(--line);border-radius:12px;padding:4px 8px;cursor:pointer}
+.ani.sel{border-color:var(--acc);transform:scale(1.1)}
+.clues{display:flex;flex-direction:column;gap:6px}
+.clue{background:#0f2238;border-radius:10px;padding:8px 10px;font-size:15px;font-weight:700}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;background:#08131f;border-radius:16px}
+.lamp{aspect-ratio:1;border-radius:50%;background:#1d2f45;border:3px solid #2b4566;cursor:pointer;transition:background .1s}
+.lamp.on{background:#ffd75e;box-shadow:0 0 22px #ffd75e;border-color:#fff1b8}
+.lamp.tap{background:#7fd3ff;box-shadow:0 0 16px #7fd3ff}
+/* robo */
+.grid{display:grid;gap:3px;background:#2e5b2f;padding:5px;border-radius:12px;margin:0 auto}
+.cell{background:#7bb661;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:26px;position:relative}
+.cell.p{background:#4a8fd8}
+.cell.trail{background:#a6d48a}
+.prog{display:flex;flex-wrap:wrap;gap:4px;min-height:42px;background:#0f2238;border-radius:10px;padding:6px}
+.pchip{background:var(--blue);color:#fff;border-radius:8px;width:32px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px}
+.pchip.run{background:var(--acc);color:#2a1d00}
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pad button{border:0;border-radius:12px;padding:12px 0;font-size:22px;font-weight:900;background:#25496f;color:#fff}
+.pad button.go{background:var(--ok);color:#00301a}
+/* fair test */
+.bottles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bot{background:#0f2238;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.bot h3{margin:0;text-align:center;font-size:15px}
+.tog{border:1px solid var(--line);background:#1b3350;color:var(--ink);border-radius:10px;padding:8px 4px;font-size:14px;font-weight:700}
+.tog small{display:block;color:var(--mute);font-size:10px;font-weight:600}
+.meter{height:120px;background:#08131f;border-radius:10px;position:relative;overflow:hidden}
+.meter i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#ff8a5c,#ff4d4d);transition:height .3s}
+.meter.dry i{background:linear-gradient(#7fd3ff,#2f7fd8)}
+.meter span{position:absolute;top:6px;left:0;right:0;text-align:center;font-weight:900;font-size:18px;z-index:2}
+/* seesaw */
+.see{position:relative;height:190px;background:#0f2238;border-radius:16px;overflow:hidden}
+.beam{position:absolute;left:4%;right:4%;top:110px;height:12px;background:#c58b4a;border-radius:6px;transform-origin:50% 50%;transition:transform .8s cubic-bezier(.4,1.6,.6,1)}
+.fulcrum{position:absolute;left:50%;top:122px;margin-left:-22px;width:0;height:0;border-left:22px solid transparent;border-right:22px solid transparent;border-bottom:40px solid #8a5a2b}
+.peg{position:absolute;top:-30px;width:11%;margin-left:-5.5%;height:30px;display:flex;align-items:flex-end;justify-content:center;cursor:pointer}
+.peg u{display:block;width:8px;height:12px;background:#e8c48f;border-radius:2px}
+.peg.pick u{background:var(--acc);height:16px}
+.load{pointer-events:none;position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center}
+.blk{width:30px;height:16px;background:#ffb347;border:1px solid #7a4a10;border-radius:3px;font-size:10px;font-weight:900;color:#3a2000;text-align:center;line-height:14px}
+.blk.me{background:#7fd3ff;border-color:#155a8a}
+.pnum{position:absolute;top:16px;font-size:12px;color:#ffe9a8;font-weight:900;width:20px;margin-left:-10px;text-align:center}
+/* rush */
+.rule{display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:900;padding:10px;border-radius:14px}
+.rule.day{background:#ffe08a;color:#3b2a00}.rule.night{background:#28366b;color:#dfe6ff}
+.foodcard{width:130px;height:130px;margin:6px auto;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:70px;background:#fff;border:10px solid #999;animation:pop .15s}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bin{border:0;border-radius:18px;padding:12px 4px;font-size:46px;color:#fff;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bin small{font-size:12px}
+.bin.blue{background:#2f7fd8}.bin.red{background:#d94141}
+/* watch */
+.cams{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cam{aspect-ratio:1;background:#06261a;border:2px solid #1c5a3a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;cursor:pointer;overflow:hidden}
+.cam:after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 2px,transparent 2px 4px);pointer-events:none}
+.cam b{position:absolute;top:3px;left:6px;font-size:10px;color:#7fffb0}
+.cam.alarm{border-color:var(--bad);background:#3a0d0d}
+.cam.hit{border-color:var(--ok)}
+/* spot */
+.spot{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#0f2238;padding:6px;border-radius:12px}
+.spot div{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#162d47;position:relative}
+.spot div.found{outline:3px solid var(--ok)}
+.spot div.miss{outline:3px solid var(--bad)}
+.spot div.wrong{animation:shake .3s}
+/* map */
+.map{width:100%;border-radius:18px;background:#163d2a}
+.stars{font-size:26px;letter-spacing:2px;color:var(--acc)}
+.sp{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:13px;font-weight:700}
+.sp .b{height:10px;background:#0a1522;border-radius:5px;overflow:hidden}.sp .b i{display:block;height:100%;background:var(--acc)}
+input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0f2238;color:var(--ink);font-size:16px}
+label.ck{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--mute)}
+.wm{position:fixed;bottom:4px;right:8px;font-size:10px;color:rgba(255,255,255,.25);pointer-events:none;z-index:50}
+.hand{font-size:44px;text-align:center}
+.small{font-size:12px;color:var(--mute)}
+table.res{width:100%;border-collapse:collapse;font-size:13px}table.res td{padding:5px 4px;border-bottom:1px solid var(--line)}
+
+#app{background:radial-gradient(1.2px 1.2px at 30px 40px,#fff,transparent),radial-gradient(1px 1px at 120px 160px,#cfe,transparent),radial-gradient(1.4px 1.4px at 200px 80px,#fff,transparent),radial-gradient(1px 1px at 260px 220px,#ffd,transparent),radial-gradient(1px 1px at 80px 260px,#fff,transparent),radial-gradient(120% 70% at 50% 0%,#1b2250 0%,#070b1d 70%);background-size:300px 300px,300px 300px,300px 300px,300px 300px,300px 300px,100% 100%}
+:root{--card:#151d3d;--line:#2c3a70;--acc:#5fd3ff}
+.btn{background:linear-gradient(#ffd25e,#ffb02e)}
+.chip.acc{background:#5fd3ff;color:#00243a}.bar i{background:#5fd3ff}.tag{color:#5fd3ff}
+.fuel{position:relative;height:16px;background:#0a1230;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.fuel i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb02e,#ff5f2e)}
+.fuel b{position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;background:#3ddc84;box-shadow:0 0 8px #3ddc84}
+.btn.burn{touch-action:none;-webkit-touch-callout:none;font-size:20px;padding:20px;background:linear-gradient(#ff8a3d,#ff4d2e);color:#fff}
+.btn.burn:active{transform:scale(.97);filter:brightness(1.2)}
+.lanes{position:relative;height:300px;border-radius:16px;overflow:hidden;background:linear-gradient(#050a1c,#0d1640);border:1px solid var(--line);touch-action:none}
+.lanes:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 33%,rgba(95,211,255,.12) 33.3%,transparent 33.6%,transparent 66.4%,rgba(95,211,255,.12) 66.6%,transparent 67%)}
+.lanes.shield{background:linear-gradient(#1a0631,#3b0d6b)}
+.lanes .ship{position:absolute;bottom:10px;font-size:40px;transform:translateX(-50%) rotate(-45deg);transition:left .12s}
+.lanes .ship.glow{filter:drop-shadow(0 0 12px #5fd3ff)}
+.lanes .obj{position:absolute;top:-20%;font-size:36px;transform:translateX(-50%)}
+.lanebtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lanebtns button{border:0;border-radius:14px;padding:16px 0;font-size:22px;font-weight:900;background:#22306a;color:#fff;touch-action:none}
+.hudseq{display:flex;gap:4px;align-items:center;justify-content:center;background:#0a1230;border:1px solid #5fd3ff;border-radius:12px;padding:6px;box-shadow:0 0 14px rgba(95,211,255,.25) inset}
+.hudseq .tag{margin-right:4px}
+.gates{position:absolute;left:0;right:0;top:20px;height:70px;transform-origin:50% 0}
+.gate{position:absolute;top:0;width:64px;height:64px;margin-left:-32px;border-radius:50%;border:4px solid #b07cff;box-shadow:0 0 16px #b07cff,inset 0 0 16px #b07cff;display:flex;align-items:center;justify-content:center;background:rgba(40,10,80,.5)}
+.dockbay{position:relative;height:300px;border-radius:16px;background:linear-gradient(#0b1430,#050a1c);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px;overflow:hidden}
+.port{background:repeating-linear-gradient(45deg,#7d8aa8 0 8px,#6b7795 8px 16px);border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center}
+.port small{font-size:10px;font-weight:900;color:#0a1230}
+.clamp{transition:transform .35s;margin-top:8px}
+.shipbody{font-size:46px;transform:rotate(-45deg);margin-top:-14px}
+.dockpad{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dockpad button{border:0;border-radius:14px;padding:14px 0;font-size:22px;font-weight:900;background:#22306a;color:#fff}
+.dockpad .go{background:#3ddc84;color:#00301a;font-size:17px}.dockpad .ab{background:#d94141;font-size:15px}
+.pen{background:#1d2a55;border-color:#5fd3ff}.pen b{color:#9fe3ff}
+.lamp{background:#14204a;border-color:#2c3a70;border-radius:14px}.lamp.on{background:#5fd3ff;box-shadow:0 0 22px #5fd3ff;border-color:#e0f7ff}
+.grid{background:#0b1430}.cell{background:#26355f}.cell.p{background:#3a1f3f}.cell.trail{background:#2f5a8a}
+.cam{background:#050a1c;border-color:#2c3a70;border-radius:50%}.cam b{color:#9fe3ff}
+.rule.day{background:#bff0ff;color:#002a3a}.rule.night{background:#5b2a9a;color:#f2e6ff}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="flash" id="flash"></div>
+<script>
+'use strict';
+/* =========================================================
+   FSL · Band J · "Space Station Rescue" (built from the Zoo Rescue Night engine)
+   15-20 min simulation competition testing all 6 Superpowers
+   (2 competencies each = 12 of 18). Local scoring only.
+   ========================================================= */
+const Q = new URLSearchParams(location.search);
+const SPEED = Q.get('dev') === 'fast' ? 0.03 : 1; // dev/testing only
+const DEVHINT = Q.get('dev') === 'hint'; // dev/testing only: shows hints in scored jobs
+const L = (en, hi) => ({ en, hi });
+let LANG = Q.get('lang') === 'hi' ? 'hi' : (store('fsl.lang') || 'en');
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+const T = o => o == null ? '' : (typeof o === 'string' ? o : (o[LANG] || o.en));
+const fmt = (s, m) => s.replace(/\{(\w+)\}/g, (_, k) => m[k] != null ? m[k] : '');
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const now = () => performance.now();
+
+/* ---------- seeded random ---------- */
+function hash(str) { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return (h >>> 0); }
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function R(rng) {
+  return {
+    f: rng, int: (a, b) => a + Math.floor(rng() * (b - a + 1)),
+    pick: arr => arr[Math.floor(rng() * arr.length)],
+    shuffle: arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
+  };
+}
+
+/* ---------- sound + voice ---------- */
+let AC = null, SOUND = store('fsl.sound') !== '0';
+function beep(f = 660, d = .08, type = 'sine', vol = .12) {
+  if (!SOUND) return; try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; g.gain.value = vol;
+    o.connect(g); g.connect(AC.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + d); o.stop(AC.currentTime + d + .02);
+  } catch (e) { }
+}
+const sfx = { ok: () => { beep(660, .08); setTimeout(() => beep(990, .12), 80); }, bad: () => beep(180, .2, 'square', .06), tap: () => beep(520, .04), win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .15), i * 110)) };
+function say(o) {
+  if (!SOUND || !window.speechSynthesis) return; try {
+    speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(T(o).replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, ''));
+    u.lang = LANG === 'hi' ? 'hi-IN' : 'en-IN'; u.rate = 1; speechSynthesis.speak(u);
+  } catch (e) { }
+}
+function flash(ch, ms = 450) { const f = $('#flash'); f.textContent = ch; f.classList.add('on'); setTimeout(() => f.classList.remove('on'), ms); }
+
+/* ---------- text ---------- */
+const TX = {
+  title: L('Space Station Rescue', 'स्पेस स्टेशन रेस्क्यू'),
+  tagline: L('FSL · Junior Space Mission', 'FSL · जूनियर स्पेस मिशन'),
+  story: L('A meteor shower has hit the Bharat Antariksh Station! 3 astronauts and Laika the space dog are stuck on board. You are the pilot of the spaceship Taara-1. Launch, fly, dock, fix the station and bring the crew home!',
+    'भारत अंतरिक्ष स्टेशन पर उल्का बौछार हुई है! 3 अंतरिक्ष यात्री और स्पेस डॉग लाइका फँसे हैं। तुम स्पेसशिप तारा-1 के पायलट हो। लॉन्च करो, उड़ो, डॉक करो, स्टेशन ठीक करो और क्रू को घर लाओ!'),
+  how1: L('6 stages · 9 pilot jobs · about 18 minutes', '6 पड़ाव · 9 पायलट काम · लगभग 18 मिनट'),
+  how2: L('Every job has its own clock. When it runs out, the mission moves on!', 'हर काम की अपनी घड़ी है। समय खत्म होते ही मिशन आगे बढ़ेगा!'),
+  how3: L('Before each job you get one free practice run. It does not count.', 'हर काम से पहले एक फ्री प्रैक्टिस मिलेगी। वह गिनी नहीं जाएगी।'),
+  how4: L('Your Star level comes from how well you think and fly.', 'तुम्हारा स्टार लेवल इस पर है कि तुम कितना अच्छा सोचते और उड़ाते हो।'),
+  start: L('Start', 'शुरू करो'), next: L('Next', 'आगे'), ready: L("I'm ready ▶", 'मैं तैयार हूँ ▶'),
+  practiceMode: L('Practice mission', 'प्रैक्टिस मिशन'), rankedMode: L('Ranked (competition slot)', 'रैंक्ड (प्रतियोगिता स्लॉट)'),
+  practiceDesc: L('A new mission every time. See right and wrong as you play.', 'हर बार नया मिशन। खेलते समय सही/गलत दिखेगा।'),
+  rankedDesc: L('One try per FSL ID per slot. Your mission is made just for you. Answers show after the slot closes.', 'हर स्लॉट में हर FSL ID की एक ही कोशिश। मिशन सिर्फ़ तुम्हारे लिए बना है। जवाब स्लॉट बंद होने के बाद दिखेंगे।'),
+  fslid: L('Your FSL ID', 'तुम्हारा FSL ID'), name: L('Pilot name (optional)', 'पायलट का नाम (ज़रूरी नहीं)'),
+  pledge: L('I will fly alone, on my own, without help or searching. I am a fair pilot.', 'मैं अकेले, खुद से, बिना किसी मदद या सर्च के उड़ाऊँगा/उड़ाऊँगी। मैं एक ईमानदार पायलट हूँ।'),
+  already: L('This FSL ID has already flown this slot. See you in the next slot!', 'यह FSL ID इस स्लॉट में उड़ चुका है। अगले स्लॉट में मिलते हैं!'),
+  practiceTry: L('PRACTICE RUN · not scored', 'प्रैक्टिस रन · गिनी नहीं जाएगी'),
+  nowReal: L('Practice done! Now the real job. The clock is on.', 'प्रैक्टिस पूरी! अब असली काम। घड़ी चालू है।'),
+  timeUp: L("Time's up! Moving on.", 'समय खत्म! आगे चलते हैं।'),
+  saved: L('Saved', 'सेव हुआ'), check: L('Launch pod', 'पॉड लॉन्च करो'), tryAgain: L('Not yet. Try again!', 'अभी नहीं। फिर कोशिश करो!'),
+  zoneDone: L('Stage cleared!', 'पड़ाव पार!'), rescued: L('mission log updated', 'मिशन लॉग अपडेट'),
+  results: L('Mission Report', 'मिशन रिपोर्ट'), fsi: L('Future Skills Index (this mission)', 'फ्यूचर स्किल्स इंडेक्स (इस मिशन का)'),
+  league: L('League Score', 'लीग स्कोर'), playAgain: L('Fly again (new mission)', 'फिर उड़ो (नया मिशन)'),
+  estNote: L('One-mission estimate. Your full FSI grows from many missions.', 'एक मिशन का अनुमान। पूरा FSI कई मिशन से बनता है।'),
+  lightsOn: L('Splash-down! The crew and Laika are safe.', 'स्प्लैश-डाउन! क्रू और लाइका सुरक्षित हैं।'),
+  fair: L('Fair-play check', 'फेयर-प्ले जाँच')
+};
+const SPS = ['SP1', 'SP2', 'SP3', 'SP4', 'SP5', 'SP6'], SPI = { SP1: '🧩', SP2: '🧠', SP3: '🤖', SP4: '🔬', SP5: '⚡', SP6: '🎯' };
+const SPN = {
+  SP1: L('Smart Logic', 'स्मार्ट लॉजिक'), SP2: L('Super Memrix', 'सुपर मेमरिक्स'), SP3: L('Master Algo', 'मास्टर एल्गो'),
+  SP4: L('Sci Idea', 'साइ आइडिया'), SP5: L('Speed Flex', 'स्पीड फ्लेक्स'), SP6: L('Pro Focus', 'प्रो फोकस')
+};
+const COMP = {
+  'C1.1': L('Pattern Recognition', 'पैटर्न पहचान'), 'C1.2': L('Logical Deduction', 'तार्किक निष्कर्ष'),
+  'C2.1': L('Mental Rotation', 'मानसिक घुमाव'), 'C2.2': L('Working Memory', 'वर्किंग मेमोरी'),
+  'C3.1': L('Algorithmic Thinking', 'एल्गोरिदमिक सोच'), 'C3.3': L('Optimisation & Trade-offs', 'ऑप्टिमाइज़ेशन'),
+  'C4.3': L('Cause, Effect & Systems', 'कारण, प्रभाव और सिस्टम'),
+  'C5.1': L('Processing Speed', 'प्रोसेसिंग स्पीड'), 'C5.2': L('Cognitive Flexibility', 'सोच का लचीलापन'),
+  'C6.1': L('Sustained Attention', 'लगातार ध्यान'), 'C6.2': L('Detail & Error Detection', 'बारीकी और गलती पकड़ना')
+};
+const STARS = [
+  { min: 0, n: L('Rookie', 'रूकी'), s: 1 }, { min: 181, n: L('Rising', 'राइज़िंग'), s: 2 }, { min: 361, n: L('Creator', 'क्रिएटर'), s: 3 },
+  { min: 541, n: L('Pro', 'प्रो'), s: 4 }, { min: 721, n: L('Elite', 'एलीट'), s: 5 }];
+
+/* ---------- zones ---------- */
+const ZONES = [
+  { id: 'launch', icon: '🚀', ani: '🛰️', x: 55, y: 235, name: L('Launch Pad', 'लॉन्च पैड'), intro: L('Taara-1, you are GO for launch! Burn the engine just right to reach orbit.', 'तारा-1, लॉन्च के लिए तैयार! इंजन सही से चलाओ और ऑर्बिट में पहुँचो।'), tasks: ['orbit'] },
+  { id: 'belt', icon: '☄️', ani: '💎', x: 165, y: 240, name: L('Asteroid Belt', 'एस्टेरॉयड बेल्ट'), intro: L('Rocks ahead! Grab fuel crystals, dodge rocks, and watch out for shield mode.', 'आगे चट्टानें! फ्यूल क्रिस्टल पकड़ो, चट्टानों से बचो, और शील्ड मोड पर नज़र रखो।'), tasks: ['asteroids'] },
+  { id: 'warp', icon: '🌀', ani: '✨', x: 290, y: 200, name: L('Warp Gates', 'वार्प गेट्स'), intro: L('Only the right gate warps you to the station. Read the code on your screen!', 'सिर्फ़ सही गेट तुम्हें स्टेशन तक पहुँचाएगा। स्क्रीन पर कोड पढ़ो!'), tasks: ['gates'] },
+  { id: 'dock', icon: '🛰️', ani: '🔓', x: 285, y: 95, name: L('Docking Bay', 'डॉकिंग बे'), intro: L('The station is in sight! Line up your clamp, then open the airlock with the code.', 'स्टेशन दिख रहा है! क्लैम्प सही करो, फिर कोड से एयरलॉक खोलो।'), tasks: ['dock', 'lamps'] },
+  { id: 'walk', icon: '👨‍🚀', ani: '🛠️', x: 170, y: 70, name: L('Spacewalk', 'स्पेसवॉक'), intro: L('Suit up! Program the repair robot, guard the windows from meteors and check the panels.', 'सूट पहनो! रिपेयर रोबोट प्रोग्राम करो, खिड़कियों को उल्काओं से बचाओ और पैनल जाँचो।'), tasks: ['robo', 'watch', 'spot'] },
+  { id: 'pod', icon: '🛟', ani: '🐕', x: 55, y: 95, name: L('Escape Pod', 'एस्केप पॉड'), intro: L('Time to go home! Seat the crew and Laika the right way, then launch the pod.', 'घर चलने का समय! क्रू और लाइका को सही सीट पर बिठाओ, फिर पॉड लॉन्च करो।'), tasks: ['deduce'] }
+];
+
+/* ---------- state ---------- */
+const S = {
+  mode: 'play', id: '', name: '', slot: '', seed: 0, rng: null,
+  started: 0, results: {}, events: [], flags: { hidden: 0, fsExit: 0, fast: 0 }, zone: 0, inTask: false
+};
+function logEv(type, data) { S.events.push({ t: Math.round(now() - S.started), type, ...data }); }
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.inTask) { S.flags.hidden++; logEv('tab_hidden', {}); } });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && S.mode === 'ranked' && S.inTask) { S.flags.fsExit++; logEv('fs_exit', {}); } });
+const showRight = () => S.mode !== 'ranked';
+
+/* ---------- top bar + layout ---------- */
+let tickTimer = null;
+function screen({ title, chip, timer, body }) {
+  app.innerHTML = `<div class="top"><span class="ttl">${title || T(TX.title)}</span>${chip ? `<span class="chip">${chip}</span>` : ''}
+    <span class="chip acc" id="clock" style="${timer ? '' : 'display:none'}">0:00</span>
+    <button class="tbtn" id="lang">${LANG === 'hi' ? 'EN' : 'हिं'}</button><button class="tbtn" id="snd">${SOUND ? '🔊' : '🔇'}</button></div>
+    <div class="bar" id="bar" style="${timer ? '' : 'visibility:hidden'}"><i></i></div><div class="main" id="main"></div>`;
+  $('#lang').onclick = () => { LANG = LANG === 'hi' ? 'en' : 'hi'; store('fsl.lang', LANG); if (S.rerender) S.rerender(); };
+  $('#snd').onclick = () => { SOUND = !SOUND; store('fsl.sound', SOUND ? '1' : '0'); $('#snd').textContent = SOUND ? '🔊' : '🔇'; };
+  const m = $('#main'); if (body) m.innerHTML = body; return m;
+}
+function mm(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+/* ---------- feedback helper ---------- */
+function fb(ok, practice) {
+  if (practice || showRight()) { flash(ok ? '✅' : '❌'); ok ? sfx.ok() : sfx.bad(); }
+  else { flash('💾', 300); sfx.tap(); }
+}
+
+/* =========================================================
+   TASKS. Each: {sp, comps, sec, title, how, play(el, ctx)}
+   play returns {timeout()} -> result. ctx.done(result) ends early.
+   result = {comp:{code:credit 0..1}, detail}
+   ========================================================= */
+const COLORS = { red: '#ff5f5f', blue: '#4aa3ff', green: '#3ddc84', yellow: '#ffd23f', purple: '#b07cff', orange: '#ff9f43' };
+function tokSVG(t, z = 40) {
+  const c = COLORS[t.c] || '#ccc'; let s = '';
+  if (t.s === 'circle') s = `<circle cx="24" cy="24" r="19" fill="${c}"/>`;
+  else if (t.s === 'square') s = `<rect x="6" y="6" width="36" height="36" rx="5" fill="${c}"/>`;
+  else if (t.s === 'triangle') s = `<polygon points="24,4 45,42 3,42" fill="${c}"/>`;
+  else if (t.s === 'diamond') s = `<polygon points="24,3 45,24 24,45 3,24" fill="${c}"/>`;
+  else s = `<polygon points="24,3 30,18 46,18 33,28 38,44 24,34 10,44 15,28 2,18 18,18" fill="${c}"/>`;
+  const n = t.n != null ? `<text x="24" y="30" text-anchor="middle" font-size="${t.n > 99 ? 13 : 17}" font-weight="900" fill="#102030">${t.n}</text>` : '';
+  return `<svg width="${z}" height="${z}" viewBox="0 0 48 48">${s}${n}</svg>`;
+}
+const sameTok = (a, b) => a.s === b.s && a.c === b.c && a.n === b.n;
+
+function genPattern(r, lvl) {
+  const SH = ['circle', 'square', 'triangle', 'diamond', 'star'], CO = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+  let seq = [], ans, dis = [];
+  if (lvl === 1) {
+    const p = r.int(2, 3), cs = r.shuffle(CO).slice(0, p + 1), sh = r.pick(SH);
+    for (let i = 0; i < 5; i++) seq.push({ s: sh, c: cs[i % p] });
+    ans = { s: sh, c: cs[5 % p] };
+    dis = cs.filter(c => c !== ans.c).slice(0, 2).map(c => ({ s: sh, c })); dis.push({ s: r.pick(SH.filter(x => x !== sh)), c: ans.c });
+  } else if (lvl === 2) {
+    const a = r.int(1, 6), d = r.int(2, 4), co = r.pick(CO);
+    for (let i = 0; i < 5; i++) seq.push({ s: 'circle', c: co, n: a + d * i });
+    const v = a + d * 5; ans = { s: 'circle', c: co, n: v };
+    dis = [v + 1, v - 1, v + d].map(n => ({ s: 'circle', c: co, n }));
+  } else if (lvl === 3) {
+    const ss = r.shuffle(SH).slice(0, 3), cs = r.shuffle(CO).slice(0, 2);
+    for (let i = 0; i < 6; i++) seq.push({ s: ss[i % 3], c: cs[i % 2] });
+    ans = { s: ss[0], c: cs[0] };
+    dis = [{ s: ss[0], c: cs[1] }, { s: ss[1], c: cs[0] }, { s: ss[2], c: cs[1] }];
+  } else { // growing step: +1,+2,+3...
+    const a = r.int(1, 4), co = r.pick(CO); let v = a;
+    for (let i = 0; i < 5; i++) { seq.push({ s: 'square', c: co, n: v }); v += i + 1; }
+    ans = { s: 'square', c: co, n: v };
+    dis = [v - 1, v + 1, v + 2].map(n => ({ s: 'square', c: co, n }));
+  }
+  const opts = r.shuffle([ans, ...dis]);
+  return { seq, ans, opts };
+}
+
+const TASKS = {
+  /* ---------- SP4 · C4.3 · Orbit Burn ---------- */
+  orbit: {
+    sp: 'SP4', comps: ['C4.3'], sec: 90, title: L('Orbit Burn', 'ऑर्बिट बर्न'),
+    how: L('Hold 🔥 BURN. Let go when you are fast enough to circle the planet.', '🔥 बर्न दबाकर रखो। जब ग्रह के चारों ओर घूमने लायक तेज़ हो जाओ, तब छोड़ो।'),
+    play(el, ctx) {
+      const PL = [
+        { n: L('Moon', 'चाँद'), v: 1.7, need: 1.6, r: 38, c: '#c9ccd3' },
+        { n: L('Mars', 'मंगल'), v: 3.6, need: 2.4, r: 52, c: '#d8643a' },
+        { n: L('Earth', 'पृथ्वी'), v: 7.8, need: 3.2, r: 68, c: '#3a7bd5' }];
+      const cargo = ctx.practice ? { f: 1, n: L('light', 'हल्का') } : ctx.r.pick([{ f: .85, n: L('light', 'हल्का') }, { f: 1, n: L('medium', 'मध्यम') }, { f: 1.2, n: L('heavy', 'भारी') }]);
+      const planets = ctx.practice ? [PL[0]] : PL; const MAXT = 6;
+      let pi = 0, tries = 0, burning = false, v = 0, tb = 0, t0 = 0, busy = false, raf = null; const scores = [];
+      el.innerHTML = `<div class="sub" id="oinfo"></div>
+        <canvas id="ocv" width="340" height="300" style="width:100%;max-width:340px;margin:0 auto;display:block;border-radius:14px;background:#030814"></canvas>
+        <div class="fuel" id="ofuel"><i id="ofb"></i>${ctx.hint ? '<b id="omark"></b>' : ''}</div>
+        <div class="sub" id="omsg" style="min-height:20px">&nbsp;</div>
+        <button class="btn burn" id="burn">🔥 ${T(L('HOLD TO BURN', 'दबाकर रखो: बर्न'))}</button>`;
+      const cv = el.querySelector('#ocv'), g = cv.getContext('2d'), btn = el.querySelector('#burn');
+      const stars = Array.from({ length: 60 }, () => [ctx.r.f() * 340, ctx.r.f() * 300, ctx.r.f() * 1.4]);
+      const P = () => planets[pi]; const cx = 170, cy = 215;
+      const acc = () => P().v / (P().need * cargo.f);
+      const ringR = () => P().r + 55;
+      const info = () => {
+        el.querySelector('#oinfo').textContent = fmt(T(L('Planet {a} of {b}: {p} · cargo {c} · try {t} of 3', 'ग्रह {a} / {b}: {p} · सामान {c} · कोशिश {t} / 3')), { a: pi + 1, b: planets.length, p: T(P().n), c: T(cargo.n), t: tries + 1 });
+        const mk = el.querySelector('#omark'); if (mk) mk.style.left = clamp(P().need * cargo.f / MAXT * 100, 0, 100) + '%';
+      };
+      const scene = (sx, sy, ang, extra) => {
+        g.clearRect(0, 0, 340, 300); g.fillStyle = '#fff';
+        stars.forEach(([x, y, s]) => { g.globalAlpha = .4 + s / 3; g.fillRect(x, y, s + .4, s + .4); }); g.globalAlpha = 1;
+        g.setLineDash([6, 6]); g.strokeStyle = 'rgba(127,211,255,.6)'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, ringR(), 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+        const gr = g.createRadialGradient(cx - P().r / 3, cy - P().r / 3, 4, cx, cy, P().r); gr.addColorStop(0, '#fff'); gr.addColorStop(.25, P().c); gr.addColorStop(1, '#111');
+        g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, P().r, 0, Math.PI * 2); g.fill();
+        g.save(); g.translate(sx, sy); g.rotate(ang); g.font = '26px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.rotate(-Math.PI / 4); g.fillText('🚀', 0, 0); g.restore();
+        if (extra) extra(g);
+      };
+      const rest = () => scene(cx, cy - P().r - 14, 0);
+      const flameAt = (y, sz) => g2 => { g2.font = sz + 'px serif'; g2.textAlign = 'center'; g2.fillText('🔥', cx, y + 22); };
+      const start = e => {
+        if (e) e.preventDefault(); if (busy || burning) return; burning = true; t0 = now(); beep(90, .15, 'sawtooth', .05);
+        const loop = () => {
+          if (!burning) return; tb = (now() - t0) / 1000; v = acc() * tb;
+          el.querySelector('#ofb').style.width = clamp(tb / MAXT * 100, 0, 100) + '%';
+          const y = cy - P().r - 14 - Math.min(40, tb * 8);
+          scene(cx, y, 0, flameAt(y, 18 + Math.sin(tb * 30) * 4));
+          if (tb >= MAXT) return release(); raf = requestAnimationFrame(loop);
+        }; loop();
+      };
+      const release = async () => {
+        if (!burning) return; burning = false; busy = true; cancelAnimationFrame(raf); tries++;
+        const q = v / P().v, out = q < .88 ? 'fall' : q > 1.12 ? 'escape' : 'orbit';
+        ctx.log('burn', { planet: P().n.en, t: +tb.toFixed(2), v: +v.toFixed(2), q: +q.toFixed(2), out });
+        const y0 = cy - P().r - 14 - Math.min(40, tb * 8), t1 = now();
+        await new Promise(done => {
+          const anim = () => {
+            const k = (now() - t1) / 1000;
+            if (out === 'orbit') {
+              if (k < .6) { const y = y0 + (cy - ringR() - y0) * (k / .6); scene(cx, y, 0); }
+              else { const a = -Math.PI / 2 + (k - .6) * 3.2; scene(cx + ringR() * Math.cos(a), cy + ringR() * Math.sin(a), a + Math.PI / 2); if (k > 2.6) return done(); }
+            } else if (out === 'fall') {
+              const peak = (cy - P().r - 14) - (ringR() - P().r) * q * q; const T_ = 1.4, x = cx + k * 40;
+              const y = k < T_ / 2 ? y0 + (peak - y0) * Math.sin(k / (T_ / 2) * Math.PI / 2) : peak + (cy - P().r - 6 - peak) * Math.pow((k - T_ / 2) / (T_ / 2), 2);
+              scene(Math.min(x, cx + 50), Math.min(y, cy - P().r + 4), Math.PI / 2 * Math.min(1, k / T_));
+              if (k > T_) { scene(cx + 50, cy - P().r, 0, g2 => { g2.font = '30px serif'; g2.fillText('💥', cx + 50, cy - P().r - 6); }); return done(); }
+            } else {
+              const y = y0 - k * k * 260; scene(cx + k * 30, y, .2); if (y < -40) return done();
+            }
+            requestAnimationFrame(anim);
+          }; anim();
+        });
+        const sp = v.toFixed(1);
+        const msg = el.querySelector('#omsg');
+        if (out === 'orbit') {
+          sfx.ok(); msg.style.color = 'var(--ok)'; msg.textContent = fmt(T(L('ORBIT! {p} needs about {v} km/s. You hit {s} km/s.', 'ऑर्बिट! {p} को लगभग {v} km/s चाहिए। तुमने {s} km/s किया।')), { p: T(P().n), v: P().v, s: sp });
+          scores[pi] = [0, 1, .6, .3][tries]; await sleep(1500); next();
+        } else {
+          sfx.bad(); msg.style.color = 'var(--bad)';
+          msg.textContent = out === 'fall' ? fmt(T(L('Too slow ({s} km/s), fell back! Burn longer.', 'बहुत धीमा ({s} km/s), वापस गिर गए! ज़्यादा देर बर्न करो।')), { s: sp }) : fmt(T(L('Too fast ({s} km/s), flew into deep space! Burn shorter.', 'बहुत तेज़ ({s} km/s), गहरे अंतरिक्ष में उड़ गए! कम देर बर्न करो।')), { s: sp });
+          if (tries >= 3) { scores[pi] = 0; await sleep(1500); next(); } else { await sleep(900); busy = false; el.querySelector('#ofb').style.width = '0%'; info(); rest(); }
+        }
+      };
+      const next = () => {
+        pi++; tries = 0; busy = false; el.querySelector('#ofb').style.width = '0%'; el.querySelector('#omsg').innerHTML = '&nbsp;'; el.querySelector('#omsg').style.color = '';
+        if (pi >= planets.length) return ctx.done(res()); info(); rest();
+      };
+      btn.addEventListener('pointerdown', start); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, () => release()));
+      btn.oncontextmenu = e => e.preventDefault();
+      const res = () => { burning = false; const arr = planets.map((_, k) => scores[k] || 0); return { comp: ctx.practice ? {} : { 'C4.3': arr.reduce((a, b) => a + b, 0) / arr.length }, detail: { scores: arr, cargo: cargo.f } }; };
+      info(); rest(); return { timeout: res };
+    }
+  },
+  /* ---------- SP5 · C5.1 + C5.2 · Asteroid Run ---------- */
+  asteroids: {
+    sp: 'SP5', comps: ['C5.1', 'C5.2'], sec: 90, fixed: true, title: L('Asteroid Run', 'एस्टेरॉयड रन'),
+    how: L('NORMAL: grab 💎, dodge 🪨. 🛡️ SHIELD: smash 🪨, dodge 💎. Tap a lane to move.', 'नॉर्मल: 💎 पकड़ो, 🪨 से बचो। 🛡️ शील्ड: 🪨 तोड़ो, 💎 से बचो। लेन पर टैप करके चलो।'),
+    play(el, ctx) {
+      const blocks = ctx.practice ? null : [[0, 25, 'norm'], [25, 45, 'shield'], [45, 90, 'mix']];
+      const prac = ['norm', 'norm', 'norm', 'shield', 'shield', 'shield'];
+      el.innerHTML = `<div class="rule" id="arule"></div>
+        <div class="lanes" id="lanes"><div class="obj" id="og"></div><div class="obj" id="ob"></div><div class="ship" id="aship">🚀</div></div>
+        <div class="lanebtns">${[0, 1, 2].map(l => `<button data-l="${l}">${['◀', '▲', '▶'][l]}</button>`).join('')}</div><div class="sub" id="acount"></div>`;
+      const lanesEl = el.querySelector('#lanes'), ship = el.querySelector('#aship'), og = el.querySelector('#og'), ob = el.querySelector('#ob');
+      let lane = 1, n = 0, alive = true, last = null, tStart = now(), raf = null, cur = null; const trials = [];
+      const lx = l => (l * 33.33 + 16.66) + '%';
+      const setLane = l => { lane = l; ship.style.left = lx(l); sfx.tap(); el.querySelectorAll('.lanebtns button').forEach(b => b.classList.remove('hint')); };
+      el.querySelectorAll('.lanebtns button').forEach(b => b.onpointerdown = e => { e.preventDefault(); if (alive) setLane(+b.dataset.l); });
+      lanesEl.onpointerdown = e => { if (!alive) return; const r = lanesEl.getBoundingClientRect(); setLane(clamp(Math.floor((e.clientX - r.left) / r.width * 3), 0, 2)); };
+      setLane(1);
+      const wave = () => {
+        if (!alive) return;
+        const el_t = (now() - tStart) / 1000; let rule, block;
+        if (ctx.practice) { if (n >= prac.length) { alive = false; return ctx.done({ comp: {} }); } rule = prac[n]; block = 'prac'; }
+        else { const b = blocks.find(b => el_t >= b[0] && el_t < b[1]) || blocks[2]; block = b[2]; rule = block === 'mix' ? (last && ctx.r.f() < .6 ? last : ctx.r.pick(['norm', 'shield'])) : block; }
+        const sw = last != null && rule !== last; last = rule;
+        const ru = el.querySelector('#arule'); ru.className = 'rule ' + (rule === 'norm' ? 'day' : 'night');
+        ru.innerHTML = rule === 'norm' ? `💎 ${T(L('NORMAL: grab 💎', 'नॉर्मल: 💎 पकड़ो'))}` : `🛡️ ${T(L('SHIELD: smash 🪨', 'शील्ड: 🪨 तोड़ो'))}`;
+        lanesEl.classList.toggle('shield', rule === 'shield');
+        const lanes = ctx.r.shuffle([0, 1, 2]); const gl = lanes[0], bl = lanes[1];
+        og.textContent = rule === 'norm' ? '💎' : '🪨'; ob.textContent = rule === 'norm' ? '🪨' : '💎';
+        og.style.left = lx(gl); ob.style.left = lx(bl);
+        const dur = ctx.practice ? 3200 : Math.max(1150, 2300 - n * 28);
+        cur = { rule, block, sw, gl, bl, t0: now(), dur }; n++;
+        if (ctx.hint) { const b = el.querySelector(`.lanebtns [data-l="${gl}"]`); b && b.classList.add('hint'); }
+        const step = () => {
+          if (!alive) return; const k = (now() - cur.t0) / cur.dur;
+          const top = -8 + k * 86; og.style.top = top + '%'; ob.style.top = top + '%';
+          if (k >= 1) {
+            const ok = lane === cur.gl, hitBad = lane === cur.bl;
+            trials.push({ block: cur.block, rule: cur.rule, sw: cur.sw, ok }); ctx.log('wave', { ok, rule: cur.rule, sw: cur.sw });
+            if (ok) { beep(880, .06); ship.classList.add('glow'); setTimeout(() => ship.classList.remove('glow'), 200); }
+            else if (hitBad) { sfx.bad(); lanesEl.classList.add('shake'); setTimeout(() => lanesEl.classList.remove('shake'), 300); }
+            el.querySelector('#acount').textContent = '✔ ' + trials.filter(t => t.ok).length;
+            og.style.top = '-20%'; ob.style.top = '-20%'; setTimeout(wave, 160); return;
+          }
+          raf = requestAnimationFrame(step);
+        }; step();
+      };
+      const res = () => {
+        alive = false; cancelAnimationFrame(raf); if (ctx.practice) return { comp: {} };
+        const acc = a => a.length ? a.filter(t => t.ok).length / a.length : 0;
+        const pure = trials.filter(t => t.block !== 'mix'), mix = trials.filter(t => t.block === 'mix'), sw = mix.filter(t => t.sw);
+        const pureAcc = acc(pure), mixAcc = acc(mix), swAcc = sw.length ? acc(sw) : mixAcc;
+        const c51 = clamp((pureAcc - .5) / .45, 0, 1);
+        const c52 = mix.length < 5 ? 0 : .7 * clamp((mixAcc - .5) / .4, 0, 1) + .3 * clamp((swAcc - .4) / .5, 0, 1);
+        return { comp: { 'C5.1': c51, 'C5.2': c52 }, detail: { waves: trials.length, pureAcc: +pureAcc.toFixed(2), mixAcc: +mixAcc.toFixed(2), switchAcc: +swAcc.toFixed(2) } };
+      };
+      wave(); return { timeout: res };
+    }
+  },
+  /* ---------- SP1 · C1.1 · Warp Gates ---------- */
+  gates: {
+    sp: 'SP1', comps: ['C1.1'], sec: 80, title: L('Warp Gate Code', 'वार्प गेट कोड'),
+    how: L('Your screen shows a code. Steer into the gate that comes NEXT.', 'स्क्रीन पर एक कोड है। उस गेट में घुसो जो अगला आता है।'),
+    play(el, ctx) {
+      const lv = ctx.practice ? [1] : [1, 2, 3, 4, 2, 3];
+      const items = lv.map(l => { const p = genPattern(ctx.r, l); const dis = p.opts.filter(o => !sameTok(o, p.ans)).slice(0, 2); return { seq: p.seq, ans: p.ans, opts: ctx.r.shuffle([p.ans, ...dis]) }; });
+      let i = 0, lane = 1, alive = true, raf = null; const per = [];
+      el.innerHTML = `<div class="hudseq" id="ghud"></div><div class="lanes warp" id="glanes"><div class="gates" id="gts"></div><div class="ship" id="gship">🚀</div></div>
+        <div class="lanebtns">${[0, 1, 2].map(l => `<button data-l="${l}">${['◀', '▲', '▶'][l]}</button>`).join('')}</div><div class="sub" id="gcount"></div>`;
+      const lanesEl = el.querySelector('#glanes'), ship = el.querySelector('#gship'), gts = el.querySelector('#gts');
+      const lx = l => (l * 33.33 + 16.66) + '%';
+      const setLane = l => { lane = l; ship.style.left = lx(l); sfx.tap(); };
+      el.querySelectorAll('.lanebtns button').forEach(b => b.onpointerdown = e => { e.preventDefault(); if (alive) setLane(+b.dataset.l); });
+      lanesEl.onpointerdown = e => { if (!alive) return; const r = lanesEl.getBoundingClientRect(); setLane(clamp(Math.floor((e.clientX - r.left) / r.width * 3), 0, 2)); };
+      setLane(1);
+      const fly = () => {
+        if (!alive) return; const it = items[i];
+        el.querySelector('#ghud').innerHTML = `<span class="tag">${T(L('CODE', 'कोड'))}</span>${it.seq.map(t => tokSVG(t, 32)).join('')}<span class="slot" style="width:32px;height:32px">?</span>`;
+        el.querySelector('#gcount').textContent = fmt(T(L('Gate {a} of {b}', 'गेट {a} / {b}')), { a: i + 1, b: items.length });
+        gts.innerHTML = it.opts.map((o, k) => `<div class="gate ${ctx.hint && sameTok(o, it.ans) ? 'hint' : ''}" style="left:${lx(k)}">${tokSVG(o, 34)}</div>`).join('');
+        const dur = ctx.practice ? 8000 : Math.max(5200, 7200 - i * 350), t0 = now();
+        const step = () => {
+          if (!alive) return; const k = Math.min(1, (now() - t0) / dur);
+          gts.style.transform = `translateY(${k * 150}px) scale(${.45 + k * .65})`;
+          if (k >= 1) {
+            const pick = it.opts[lane], ok = sameTok(pick, it.ans); per.push(ok ? 1 : 0); ctx.log('gate', { item: i, ok });
+            if (ctx.practice || showRight()) { if (ok) { flash('✨', 400); sfx.ok(); } else { sfx.bad(); lanesEl.classList.add('shake'); setTimeout(() => lanesEl.classList.remove('shake'), 300); } } else { flash('🌀', 300); sfx.tap(); }
+            gts.style.transform = ''; i++;
+            if (i >= items.length) { alive = false; return ctx.done(res()); }
+            setTimeout(fly, 500); return;
+          }
+          raf = requestAnimationFrame(step);
+        }; step();
+      };
+      const res = () => { alive = false; cancelAnimationFrame(raf); const got = per.reduce((a, b) => a + b, 0); return { comp: ctx.practice ? {} : { 'C1.1': got / items.length }, detail: { per } }; };
+      fly(); return { timeout: res };
+    }
+  },
+  /* ---------- SP2 · C2.1 · Docking ---------- */
+  dock: {
+    sp: 'SP2', comps: ['C2.1'], sec: 75, title: L('Dock the Ship', 'शिप डॉक करो'),
+    how: L('Turn your clamp to fit the port, then DOCK. If it can NEVER fit (mirror), ABORT.', 'क्लैम्प घुमाकर पोर्ट में फिट करो, फिर डॉक। अगर कभी फिट नहीं हो सकता (उल्टा), तो अबॉर्ट।'),
+    play(el, ctx) {
+      const n = ctx.practice ? 1 : 5; const mirrors = new Set(ctx.practice ? [] : ctx.r.shuffle([1, 2, 3, 4]).slice(0, 2));
+      const items = Array.from({ length: n }, (_, k) => {
+        const base = (!ctx.practice && k >= 3) ? HEXO : PENTO[ctx.r.pick(Object.keys(PENTO))];
+        const sr = ctx.r.int(0, 3); let pr = ctx.r.int(0, 3); if (pr === sr) pr = (pr + ctx.r.int(1, 3)) % 4;
+        const mirror = mirrors.has(k); const ship = rot(base, sr), port = mirror ? rot(mir(base), pr) : rot(base, pr);
+        let d = 0; for (let j = 0; j < 4; j++) if (key(rot(ship, j)) === key(port)) { d = j; break; }
+        return { ship, port, mirror, d };
+      });
+      let i = 0, k = 0, presses = 0, busy = false; const per = [];
+      const draw = () => {
+        const it = items[i];
+        const minP = Math.min(it.d, 4 - it.d);
+        el.innerHTML = `<div class="sub">${fmt(T(L('Docking {a} of {b}', 'डॉकिंग {a} / {b}')), { a: i + 1, b: n })}</div>
+          <div class="dockbay"><div class="port">${polySVG(it.port, 22, '#02060f', '#5fd3ff')}<small>${T(L('STATION PORT', 'स्टेशन पोर्ट'))}</small></div>
+          <div class="clamp" id="clamp" style="transform:rotate(${k * 90}deg)">${polySVG(it.ship, 22, '#ff9f43', '#7a4a10')}</div><div class="shipbody">🚀</div></div>
+          <div class="dockpad"><button id="ccw">↺</button><button id="cw">↻</button><button id="dk" class="go">${T(L('DOCK', 'डॉक'))}</button><button id="ab" class="ab">🚫 ${T(L('ABORT', 'अबॉर्ट'))}</button></div>`;
+        const rotBy = s => { if (busy) return; k += s; presses++; sfx.tap(); el.querySelector('#clamp').style.transform = `rotate(${k * 90}deg)`; hint(); };
+        el.querySelector('#cw').onclick = () => rotBy(1); el.querySelector('#ccw').onclick = () => rotBy(-1);
+        const finish = async (score, ok) => {
+          busy = true; per.push(score); ctx.log('dock', { item: i, mirror: it.mirror, presses, min: minP, score });
+          if (ok && !it.mirror) { el.querySelector('#clamp').style.transform = `translateY(-70px) rotate(${k * 90}deg)`; await sleep(500); }
+          fb(ok, ctx.practice); await sleep(450); i++; k = 0; presses = 0; busy = false;
+          if (i >= n) ctx.done(res()); else draw();
+        };
+        el.querySelector('#dk').onclick = () => {
+          if (busy) return; const cur = ((k % 4) + 4) % 4;
+          if (!it.mirror && key(rot(it.ship, cur)) === key(it.port)) finish(presses <= minP ? 1 : .7, true); else finish(0, false);
+        };
+        el.querySelector('#ab').onclick = () => { if (!busy) finish(it.mirror ? 1 : 0, it.mirror); };
+        const hint = () => {
+          if (!ctx.hint) return; el.querySelectorAll('.dockpad button').forEach(b => b.classList.remove('hint'));
+          if (it.mirror) return el.querySelector('#ab').classList.add('hint');
+          const cur = ((k % 4) + 4) % 4, need = ((it.d - cur) % 4 + 4) % 4;
+          el.querySelector(need === 0 ? '#dk' : need <= 2 ? '#cw' : '#ccw').classList.add('hint');
+        }; hint();
+      };
+      const res = () => ({ comp: ctx.practice ? {} : { 'C2.1': items.reduce((a, _, j) => a + (per[j] || 0), 0) / n }, detail: { per } });
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP1 · C1.2 ---------- */
+  deduce: {
+    sp: 'SP1', comps: ['C1.2'], sec: 105, title: L('Crew Seats', 'क्रू की सीटें'),
+    how: L('Read the crew notes. Tap a crew member, then a seat. Then launch the pod.', 'क्रू नोट्स पढ़ो। क्रू सदस्य पर टैप करो, फिर सीट पर। फिर पॉड लॉन्च करो।'),
+    play(el, ctx) {
+      const sizes = ctx.practice ? [3] : [3, 4]; const puzzles = sizes.map(n => genDeduce(ctx.r, n, ctx.practice));
+      let pi = 0, tries = 0, scores = [];
+      let place, sel;
+      const start = () => { place = {}; sel = null; tries = 0; draw(); };
+      const draw = () => {
+        const P = puzzles[pi], n = P.animals.length;
+        const inPen = k => Object.keys(place).find(a => place[a] === k);
+        el.innerHTML = `<div class="sub">${fmt(T(L('Puzzle {a} of {b}', 'पहेली {a} / {b}')), { a: pi + 1, b: puzzles.length })}</div>
+        <div class="clues">${P.clues.map(c => `<div class="clue">${clueText(c)}</div>`).join('')}</div>
+        <div class="pens" style="grid-template-columns:repeat(${n},1fr)">${Array.from({ length: n }, (_, k) => `<div class="pen" data-k="${k}"><b>${k + 1}</b>${inPen(k) || ''}</div>`).join('')}</div>
+        <div class="tray">${P.animals.filter(a => place[a] == null).map(a => `<span class="ani ${sel === a ? 'sel' : ''}" data-a="${a}">${a}</span>`).join('')}</div>
+        <button class="btn" id="chk" ${Object.keys(place).length < n ? 'disabled' : ''}>${T(TX.check)}</button>`;
+        el.querySelectorAll('.ani').forEach(b => b.onclick = () => { sel = b.dataset.a; sfx.tap(); draw(); });
+        el.querySelectorAll('.pen').forEach(b => b.onclick = () => {
+          const k = +b.dataset.k, cur = inPen(k);
+          if (sel) { if (cur) delete place[cur]; place[sel] = k; sel = null; } else if (cur) { delete place[cur]; }
+          sfx.tap(); draw();
+        });
+        if (ctx.hint) { const un = P.animals.find(a => place[a] !== P.sol[a]); if (un) { if (sel !== un) { const e = el.querySelector(`.ani[data-a="${un}"]`); if (e) e.classList.add('hint'); else { const pe = el.querySelector(`.pen[data-k="${place[un]}"]`); pe && pe.classList.add('hint'); } } else el.querySelector(`.pen[data-k="${P.sol[un]}"]`).classList.add('hint'); } else $('#chk').classList.add('hint'); }
+        let lock = false;
+        $('#chk').onclick = () => {
+          if (lock || pi >= puzzles.length || P !== puzzles[pi]) return;
+          const ok = P.animals.every(a => place[a] === P.sol[a]); tries++; ctx.log('check', { puzzle: pi, ok, tries });
+          if (ok || tries >= 2) {
+            lock = true; scores.push(ok ? (tries === 1 ? 1 : .5) : 0); fb(ok, ctx.practice); pi++;
+            if (pi >= puzzles.length) ctx.done(res()); else setTimeout(start, 400);
+          } else {
+            sfx.bad(); el.querySelector('.pens').classList.add('shake');
+            const s = document.createElement('div'); s.className = 'sub'; s.style.color = 'var(--bad)'; s.textContent = T(TX.tryAgain); el.appendChild(s);
+          }
+        };
+      };
+      const res = () => { const arr = puzzles.map((_, k) => scores[k] || 0); return { comp: { 'C1.2': arr.reduce((a, b) => a + b, 0) / arr.length }, detail: { scores: arr } }; };
+      start(); return { timeout: res };
+    }
+  },
+  /* ---------- SP2 · C2.2 Corsi-style ---------- */
+  lamps: {
+    sp: 'SP2', comps: ['C2.2'], sec: 90, title: L('Airlock Code', 'एयरलॉक कोड'),
+    how: L('Watch the airlock keys flash. Then tap them in the SAME order.', 'एयरलॉक की बटन चमकते देखो। फिर उसी क्रम में टैप करो।'),
+    play(el, ctx) {
+      let span = ctx.practice ? 2 : 3, fails = 0, best = ctx.practice ? 0 : 2, alive = true, trial = 0;
+      el.innerHTML = `<div class="prompt" id="lmsg"></div><div class="lamps">${Array.from({ length: 16 }, (_, k) => `<div class="lamp" data-k="${k}"></div>`).join('')}</div><div class="sub" id="lspan"></div>`;
+      const lamps = [...el.querySelectorAll('.lamp')], msg = el.querySelector('#lmsg');
+      let accept = false, seq = [], pos = 0;
+      const runTrial = async () => {
+        if (!alive) return; trial++;
+        seq = ctx.r.shuffle([...Array(16).keys()]).slice(0, span); pos = 0; accept = false;
+        el.querySelector('#lspan').textContent = fmt(T(L('Code length: {n}', 'कोड की लंबाई: {n}')), { n: span });
+        msg.textContent = T(L('👀 Watch…', '👀 देखो…')); await sleep(600);
+        for (const k of seq) { if (!alive) return; lamps[k].classList.add('on'); beep(400 + k * 30, .15); await sleep(650); lamps[k].classList.remove('on'); await sleep(220); }
+        if (!alive) return; msg.textContent = T(L('👆 Your turn!', '👆 तुम्हारी बारी!')); accept = true;
+        if (ctx.hint) lamps[seq[0]].classList.add('hint');
+      };
+      lamps.forEach(b => b.onclick = () => {
+        if (!accept) return; const k = +b.dataset.k; lamps.forEach(l => l.classList.remove('hint'));
+        b.classList.add('tap'); setTimeout(() => b.classList.remove('tap'), 200);
+        if (k === seq[pos]) {
+          pos++; sfx.tap(); if (ctx.hint && pos < seq.length) lamps[seq[pos]].classList.add('hint');
+          if (pos === seq.length) {
+            accept = false; fb(true, ctx.practice); best = Math.max(best, span); ctx.log('trial', { span, ok: true });
+            if (ctx.practice) { alive = false; return ctx.done(res()); }
+            span = Math.min(span + 1, 9); fails = 0; setTimeout(runTrial, 700);
+          }
+        } else {
+          accept = false; fb(false, ctx.practice); ctx.log('trial', { span, ok: false });
+          if (ctx.practice) { setTimeout(runTrial, 700); return; }
+          fails++; if (fails >= 2) { alive = false; ctx.done(res()); } else setTimeout(runTrial, 700);
+        }
+      });
+      const res = () => { alive = false; return { comp: { 'C2.2': clamp((best - 2) * .2, 0, 1) }, detail: { bestSpan: best, trials: trial } }; };
+      runTrial(); return { timeout: res };
+    }
+  },
+  /* ---------- SP3 · C3.1 + C3.3 ---------- */
+  robo: {
+    sp: 'SP3', comps: ['C3.1', 'C3.3'], sec: 210, title: L('Repair Robot', 'रिपेयर रोबोट'),
+    how: L('Tap arrows to program the robot to the broken panel 🛠️, then press ▶. Avoid ☄️ debris.', 'तीर दबाकर रोबोट को टूटे पैनल 🛠️ तक प्रोग्राम करो, फिर ▶ दबाओ। ☄️ मलबे से बचो।'),
+    play(el, ctx) {
+      const levels = ctx.practice ? [genRobo(ctx.r, 0)] : [genRobo(ctx.r, 1), genRobo(ctx.r, 2), genRobo(ctx.r, 3)];
+      let li = 0, prog = [], runs = 0, busy = false; const scores = [];
+      const D = { U: [0, -1, '⬆️'], D: [0, 1, '⬇️'], L: [-1, 0, '⬅️'], R: [1, 0, '➡️'] };
+      const draw = (cart, trail, food) => {
+        const G = levels[li], N = G.n; cart = cart || G.s; trail = trail || []; const hasFood = food != null ? food : false;
+        const cs = Math.min(58, Math.floor((Math.min(window.innerWidth, 480) - 50) / N));
+        const max = G.max;
+        let cells = '';
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+          const k = y * N + x; let c = '';
+          if (G.wall.has(k)) c = '☄️'; if (G.food != null && k === G.food && !hasFood) c = '🔋';
+          if (k === G.g) c = '🛠️'; if (k === cart) c = '🤖';
+          cells += `<div class="cell ${G.wall.has(k) ? 'p' : ''} ${trail.includes(k) ? 'trail' : ''}" style="width:${cs}px;height:${cs}px">${c}</div>`;
+        }
+        el.innerHTML = `<div class="sub">${fmt(T(L('Level {a} of {b}', 'लेवल {a} / {b}')), { a: li + 1, b: levels.length })} ${G.food != null ? ' · ' + T(L('Pick up 🔋 first, then reach 🛠️', 'पहले 🔋 उठाओ, फिर 🛠️ तक पहुँचो')) : ''}</div>
+        <div class="grid" style="grid-template-columns:repeat(${N},${cs}px)">${cells}</div>
+        <div class="row" style="justify-content:space-between"><span class="small">${G.food != null ? fmt(T(L('🔋 Battery: {m} moves max · fewer moves = better', '🔋 बैटरी: ज़्यादा से ज़्यादा {m} चाल · कम चाल = बेहतर')), { m: max }) : fmt(T(L('Up to {m} moves', 'ज़्यादा से ज़्यादा {m} चाल')), { m: max })}</span><span class="chip">${prog.length}/${max}</span></div>
+        <div class="prog" id="prog">${prog.map((p, k) => `<span class="pchip" data-k="${k}">${D[p][2]}</span>`).join('')}</div>
+        <div class="pad"><button data-d="L">⬅️</button><button data-d="U">⬆️</button><button data-d="D">⬇️</button><button data-d="R">➡️</button><button data-x="del">⌫</button><button class="go" data-x="go">▶</button></div>`;
+        el.querySelectorAll('.pad button').forEach(b => b.onclick = () => {
+          if (busy) return;
+          if (b.dataset.d) { if (prog.length < max) { prog.push(b.dataset.d); sfx.tap(); } }
+          else if (b.dataset.x === 'del') prog.pop();
+          else if (b.dataset.x === 'go') return run();
+          draw();
+        });
+        if (ctx.hint && !busy && G.hint) { const need = G.hint[prog.length]; if (need) { const b = el.querySelector(`.pad [data-d="${need}"]`); b && b.classList.add('hint'); } else el.querySelector('.pad .go').classList.add('hint'); }
+      };
+      const run = async () => {
+        if (!prog.length) return; busy = true; runs++; const G = levels[li], N = G.n;
+        let x = G.s % N, y = Math.floor(G.s / N), trail = [G.s], food = false, out = 'short', used = 0;
+        const chips = () => el.querySelectorAll('.pchip');
+        for (let k = 0; k < prog.length; k++) {
+          const [dx, dy] = D[prog[k]]; const nx = x + dx, ny = y + dy; used = k + 1;
+          if (nx < 0 || ny < 0 || nx >= N || ny >= N || G.wall.has(ny * N + nx)) { out = 'crash'; break; }
+          x = nx; y = ny; const kk = y * N + x; trail.push(kk); if (kk === G.food) food = true;
+          draw(kk, trail, food); chips()[k] && chips()[k].classList.add('run'); beep(300 + k * 25, .06);
+          await sleep(330);
+          if (kk === G.g && (G.food == null || food)) { out = 'win'; break; }
+        }
+        ctx.log('run', { level: li, out, moves: used, len: prog.length });
+        if (out === 'win') {
+          let sc; if (G.food == null) sc = [0, 1, .75, .5][runs] || .4;
+          else { sc = used <= G.opt ? 1 : used <= G.opt + 2 ? .7 : .5; sc = Math.max(.3, sc - .1 * (runs - 1)); }
+          scores[li] = { sc, runs, used, opt: G.opt }; fb(true, ctx.practice);
+          li++; prog = []; runs = 0; busy = false;
+          if (li >= levels.length) return ctx.done(res()); await sleep(500); draw(); return;
+        }
+        sfx.bad(); flash(out === 'crash' ? '💥' : '🤔', 500);
+        if (ctx.practice || showRight()) {
+          const m = document.createElement('div'); m.className = 'sub'; m.style.color = 'var(--bad)';
+          m.textContent = out === 'crash' ? T(L('Bonk! Hit debris. Fix the program and run again.', 'धड़ाम! मलबे से टकराए। प्रोग्राम ठीक करो और फिर चलाओ।')) : T(L('Not there yet. Add or change moves.', 'अभी नहीं पहुँचे। चाल जोड़ो या बदलो।'));
+          await sleep(700); busy = false; draw(); el.appendChild(m);
+        } else { await sleep(700); busy = false; draw(); }
+      };
+      const res = () => {
+        const g = k => scores[k] ? scores[k].sc : 0;
+        return ctx.practice ? { comp: {} } : { comp: { 'C3.1': (g(0) + g(1)) / 2, 'C3.3': g(2) }, detail: { levels: scores } };
+      };
+      draw(); return { timeout: res };
+    }
+  },
+  /* ---------- SP6 · C6.1 (CPT-style vigilance) ---------- */
+  watch: {
+    sp: 'SP6', comps: ['C6.1'], sec: 75, fixed: true, title: L('Meteor Watch', 'उल्का निगरानी'),
+    how: L('Tap a window ONLY when a meteor ☄️ appears. Satellites, sparkles and astronauts are fine, do not tap them.', 'खिड़की पर तभी टैप करो जब उल्का ☄️ दिखे। सैटेलाइट, चमक और अंतरिक्ष यात्री ठीक हैं, उन पर टैप मत करो।'),
+    play(el, ctx) {
+      const ANI = ['🌍', '🌙', '🪐', '🌌', '🌑', '⭐'], DIS = ['🛰️', '✨', '👨‍🚀', '🛸'];
+      let alive = true, ev = 0, timer = null; const state = ANI.map(a => ({ a, ev: null })); const stats = { tg: 0, hit: 0, fa: 0, miss: 0, rts: [], half: [[0, 0], [0, 0]] };
+      const t0 = now(); const pracPlan = ['n', 'n', 't', 'n', 't', 'n', 'n', 't'];
+      el.innerHTML = `<div class="cams">${ANI.map((a, k) => `<div class="cam" data-k="${k}"><b>${k + 1}</b><span>${a}</span></div>`).join('')}</div><div class="sub" id="wstat"></div>`;
+      const cams = [...el.querySelectorAll('.cam')];
+      const step = () => {
+        if (!alive) return;
+        let target;
+        if (ctx.practice) { if (ev >= pracPlan.length) { alive = false; return ctx.done({ comp: {} }); } target = pracPlan[ev] === 't'; }
+        else target = ctx.r.f() < .14;
+        const k = ctx.r.int(0, 5), c = cams[k], s = state[k];
+        if (s.ev) { setTimeout(step, 150); return; }
+        ev++;
+        const evo = { target, t: now(), tapped: false, half: (now() - t0) / 1000 > 37 ? 1 : 0 }; s.ev = evo;
+        if (target) { stats.tg++; stats.half[evo.half][1]++; c.querySelector('span').textContent = '☄️'; c.classList.add('alarm'); if (ctx.hint) c.classList.add('hint'); }
+        else { const d = ctx.r.pick(['move', 'bird']); if (d === 'bird') c.querySelector('span').textContent = ctx.r.pick(DIS); else c.querySelector('span').style.transform = `translateX(${ctx.r.pick([-14, 14])}px) scale(1.1)`; }
+        const dur = ctx.practice ? 2200 : 1300;
+        setTimeout(() => {
+          if (target && !evo.tapped) { stats.miss++; ctx.log('miss', { cam: k }); }
+          c.querySelector('span').textContent = s.a; c.querySelector('span').style.transform = ''; c.classList.remove('alarm', 'hint', 'hit'); s.ev = null;
+        }, dur);
+        timer = setTimeout(step, ctx.practice ? 1500 : ctx.r.int(650, 950));
+      };
+      cams.forEach((c, k) => c.onclick = () => {
+        if (!alive) return; const e = state[k].ev;
+        if (e && e.target && e.tapped) return; // double-tap on a caught gate is not a false alarm
+        if (e && e.target && !e.tapped) { e.tapped = true; c.classList.remove('hint'); stats.hit++; stats.half[e.half][0]++; stats.rts.push(now() - e.t); c.classList.add('hit'); sfx.ok(); ctx.log('hit', { cam: k }); }
+        else { stats.fa++; sfx.bad(); c.classList.add('shake'); setTimeout(() => c.classList.remove('shake'), 300); ctx.log('false_alarm', { cam: k }); }
+      });
+      step();
+      const res = () => {
+        alive = false; clearTimeout(timer); if (ctx.practice) return { comp: {} };
+        const hr = stats.tg ? stats.hit / stats.tg : 0; const c = clamp(hr - stats.fa * 0.06, 0, 1);
+        return { comp: { 'C6.1': c }, detail: { targets: stats.tg, hits: stats.hit, falseAlarms: stats.fa, firstHalf: stats.half[0], secondHalf: stats.half[1] } };
+      };
+      return { timeout: res };
+    }
+  },
+  /* ---------- SP6 · C6.2 ---------- */
+  spot: {
+    sp: 'SP6', comps: ['C6.2'], sec: 75, title: L('Panel Check', 'पैनल जाँच'),
+    how: L('Compare BEFORE and AFTER the meteor hit. Tap every damaged part in the AFTER picture.', 'उल्का टकराने से पहले और बाद की तुलना करो। बाद वाली तस्वीर में हर टूटे हिस्से पर टैप करो।'),
+    play(el, ctx) {
+      const rounds = ctx.practice ? [genSpot(ctx.r, 2, 3)] : [genSpot(ctx.r, 3, 4), genSpot(ctx.r, 4, 4)];
+      let ri = 0, found = 0, wrong = 0, totalD = rounds.reduce((a, r) => a + r.diff.size, 0); let gotR = new Set();
+      const draw = () => {
+        const G = rounds[ri], cols = G.cols;
+        const grid = (arr, live) => `<div class="spot" style="grid-template-columns:repeat(${cols},1fr)">${arr.map((o, k) => `<div data-k="${k}" class="${live && gotR.has(k) ? 'found' : ''} ${live && ctx.hint && G.diff.has(k) && !gotR.has(k) ? 'hint' : ''}">${objSVG(o)}</div>`).join('')}</div>`;
+        el.innerHTML = `<div class="row" style="justify-content:space-between"><span class="tag">${T(L('Before', 'पहले'))}</span><span class="chip">${fmt(T(L('Find {n} changes', '{n} बदलाव ढूँढो')), { n: G.diff.size })} · ${gotR.size}/${G.diff.size}</span></div>${grid(G.a, false)}
+        <span class="tag">${T(L('After the hit', 'टक्कर के बाद'))}</span>${grid(G.b, true)}`;
+        el.querySelectorAll('.spot')[1].querySelectorAll('div[data-k]').forEach(d => d.onclick = () => {
+          const k = +d.dataset.k; if (ri >= rounds.length || gotR.has(k)) return;
+          if (G.diff.has(k)) { gotR.add(k); found++; sfx.ok(); ctx.log('found', { k }); if (gotR.size === G.diff.size) { ri++; gotR = new Set(); if (ri >= rounds.length) return ctx.done(res()); setTimeout(draw, 400); } else draw(); }
+          else { wrong++; sfx.bad(); d.classList.add('wrong'); setTimeout(() => d.classList.remove('wrong'), 300); ctx.log('wrong_tap', { k }); }
+        });
+      };
+      const res = () => ({ comp: ctx.practice ? {} : { 'C6.2': clamp((found - wrong * .5) / totalD, 0, 1) }, detail: { found, wrong, total: totalD } });
+      draw(); return { timeout: res };
+    }
+  }
+};
+
+/* ---------- generators ---------- */
+function perms(a) { if (a.length <= 1) return [a]; const out = []; a.forEach((x, i) => perms(a.slice(0, i).concat(a.slice(i + 1))).forEach(p => out.push([x, ...p]))); return out; }
+function genDeduce(r, n, easy) {
+  const animals = r.shuffle(['👩‍🚀', '🐕', '🤖', '👽', '🐵', '🦜']).slice(0, n);
+  const order = r.shuffle(animals); const sol = {}; order.forEach((a, k) => sol[a] = k);
+  const all = perms([...Array(n).keys()]).map(p => { const m = {}; animals.forEach((a, i) => m[a] = p[i]); return m; });
+  const pool = [];
+  for (const a of animals) for (const b of animals) if (a !== b) {
+    if (sol[a] < sol[b]) pool.push({ t: 'left', a, b, w: 3 });
+    if (a < b && Math.abs(sol[a] - sol[b]) === 1) pool.push({ t: 'next', a, b, w: 3 });
+    if (a < b && Math.abs(sol[a] - sol[b]) > 1) pool.push({ t: 'notnext', a, b, w: 2 });
+  }
+  for (const a of animals) {
+    for (let k = 0; k < n; k++) if (k !== sol[a]) pool.push({ t: 'notat', a, k, w: 2 });
+    if (sol[a] === 0 || sol[a] === n - 1) pool.push({ t: 'end', a, w: 2 });
+    pool.push({ t: 'at', a, k: sol[a], w: easy ? 4 : 1 });
+  }
+  const holds = (c, m) => c.t === 'left' ? m[c.a] < m[c.b] : c.t === 'next' ? Math.abs(m[c.a] - m[c.b]) === 1 : c.t === 'notnext' ? Math.abs(m[c.a] - m[c.b]) > 1 :
+    c.t === 'notat' ? m[c.a] !== c.k : c.t === 'end' ? (m[c.a] === 0 || m[c.a] === n - 1) : m[c.a] === c.k;
+  const ordered = pool.map(c => ({ c, s: r.f() * c.w })).sort((x, y) => y.s - x.s).map(x => x.c);
+  let cands = all, clues = [];
+  for (const c of ordered) { const nc = cands.filter(m => holds(c, m)); if (nc.length < cands.length) { clues.push(c); cands = nc; } if (cands.length === 1) break; }
+  for (let i = clues.length - 1; i >= 0; i--) { const rest = clues.filter((_, j) => j !== i); if (all.filter(m => rest.every(c => holds(c, m))).length === 1) clues = rest; }
+  return { animals, sol, clues: r.shuffle(clues) };
+}
+function clueText(c) {
+  const P = k => k + 1;
+  switch (c.t) {
+    case 'left': return fmt(T(L('{a} is somewhere LEFT of {b}', '{a}, {b} के बाएँ तरफ़ कहीं है')), c);
+    case 'next': return fmt(T(L('{a} is right NEXT TO {b}', '{a}, {b} के ठीक बगल में है')), c);
+    case 'notnext': return fmt(T(L('{a} is NOT next to {b}', '{a}, {b} के बगल में नहीं है')), c);
+    case 'notat': return fmt(T(L('{a} is NOT in seat {k}', '{a} सीट {k} पर नहीं है')), { a: c.a, k: P(c.k) });
+    case 'end': return fmt(T(L('{a} sits at a WINDOW (an end seat)', '{a} खिड़की वाली (किनारे की) सीट पर है')), c);
+    default: return fmt(T(L('{a} is in seat {k}', '{a} सीट {k} पर है')), { a: c.a, k: P(c.k) });
+  }
+}
+const PENTO = { F: [[1, 0], [2, 0], [0, 1], [1, 1], [1, 2]], L: [[0, 0], [0, 1], [0, 2], [0, 3], [1, 3]], N: [[1, 0], [1, 1], [0, 2], [1, 2], [0, 3]], P: [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2]], Y: [[1, 0], [0, 1], [1, 1], [1, 2], [1, 3]] };
+const HEXO = [[0, 0], [1, 0], [1, 1], [1, 2], [2, 2], [2, 3]];
+const norm = c => { const mx = Math.min(...c.map(p => p[0])), my = Math.min(...c.map(p => p[1])); return c.map(([x, y]) => [x - mx, y - my]).sort((a, b) => a[0] - b[0] || a[1] - b[1]); };
+const rot = (c, k) => { let o = c; for (let i = 0; i < k; i++) o = o.map(([x, y]) => [-y, x]); return norm(o); };
+const mir = c => norm(c.map(([x, y]) => [-x, y]));
+const key = c => JSON.stringify(norm(c));
+function genRot(r, k) {
+  const base = k >= 3 ? HEXO : PENTO[r.pick(Object.keys(PENTO))];
+  const piece = rot(base, r.int(0, 3)); const rs = r.shuffle([1, 2, 3]);
+  const good = rot(piece, k === 0 ? 1 : rs[0]); const m1 = rot(mir(piece), r.int(0, 3));
+  let m2 = rot(mir(piece), r.int(0, 3)); let g = 0; while (key(m2) === key(m1) && g++ < 10) m2 = rot(m2, 1);
+  return { piece, opts: r.shuffle([{ cells: good, ok: true }, { cells: m1, ok: false }, { cells: m2, ok: false }]) };
+}
+function polySVG(cells, u, fill, stroke) {
+  const w = Math.max(...cells.map(c => c[0])) + 1, h = Math.max(...cells.map(c => c[1])) + 1, S_ = 4 * u;
+  const ox = (S_ - w * u) / 2, oy = (S_ - h * u) / 2;
+  return `<svg width="${S_}" height="${S_}" viewBox="0 0 ${S_} ${S_}">${cells.map(([x, y]) => `<rect x="${ox + x * u}" y="${oy + y * u}" width="${u}" height="${u}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`).join('')}</svg>`;
+}
+function bfs(N, wall, s) { const d = new Array(N * N).fill(-1); d[s] = 0; const q = [s]; while (q.length) { const c = q.shift(), x = c % N, y = Math.floor(c / N);[[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const nx = x + dx, ny = y + dy, k = ny * N + nx; if (nx >= 0 && ny >= 0 && nx < N && ny < N && !wall.has(k) && d[k] < 0) { d[k] = d[c] + 1; q.push(k); } }); } return d; }
+function pathDirs(N, wall, s, g) { const d = bfs(N, wall, g); const out = []; let c = s; while (c !== g) { const x = c % N, y = Math.floor(c / N); for (const [dx, dy, n] of [[1, 0, 'R'], [-1, 0, 'L'], [0, 1, 'D'], [0, -1, 'U']]) { const nx = x + dx, ny = y + dy, k = ny * N + nx; if (nx >= 0 && ny >= 0 && nx < N && ny < N && d[k] === d[c] - 1) { out.push(n); c = k; break; } } } return out; }
+function genRobo(r, lvl) {
+  const N = lvl === 0 ? 4 : 5;
+  for (let tries = 0; tries < 500; tries++) {
+    const wall = new Set(); const dens = [0.1, 0.16, 0.26, 0.22][lvl];
+    for (let k = 0; k < N * N; k++) if (r.f() < dens) wall.add(k);
+    const free = [...Array(N * N).keys()].filter(k => !wall.has(k)); if (free.length < 6) continue;
+    const s = r.pick(free), g = r.pick(free.filter(k => k !== s)); const d = bfs(N, wall, s);
+    if (lvl < 3) {
+      const [lo, hi] = [[3, 4], [4, 6], [6, 8]][lvl]; if (d[g] < lo || d[g] > hi) continue;
+      const dirs = pathDirs(N, wall, s, g); const turns = dirs.filter((x, i) => i && x !== dirs[i - 1]).length; if (lvl === 2 && turns < 2) continue;
+      return { n: N, wall, s, g, food: null, opt: d[g], max: lvl === 0 ? 8 : 12, hint: dirs };
+    }
+    const f = r.pick(free.filter(k => k !== s && k !== g)); const df = bfs(N, wall, f);
+    if (d[f] < 0 || df[g] < 0) continue; const opt = d[f] + df[g];
+    if (opt < 7 || opt > 10) continue;
+    return { n: N, wall, s, g, food: f, opt, max: opt + 4, hint: pathDirs(N, wall, s, f).concat(pathDirs(N, wall, f, g)) };
+  }
+  return genRobo(r, Math.max(0, lvl - 1));
+}
+const FAIR = [
+  {
+    icon: '🍼', focus: 'cover', unit: '°C', dry: false,
+    q: L("Which cover keeps the baby monkey's milk warm longer? Set up a FAIR test.", 'कौन-सा कवर बेबी बंदर का दूध ज़्यादा देर गरम रखता है? एक फेयर टेस्ट बनाओ।'),
+    cq: L('So which cover keeps milk warmer?', 'तो कौन-सा कवर दूध ज़्यादा गरम रखता है?'),
+    after: L('10 minutes later…', '10 मिनट बाद…'),
+    vars: {
+      cover: { label: L('Cover', 'कवर'), opts: [L('🧶 Wool', '🧶 ऊन'), L('📄 Paper', '📄 कागज़')] },
+      milk: { label: L('Milk', 'दूध'), opts: [L('Full', 'पूरी'), L('Half', 'आधी')] },
+      start: { label: L('Start', 'शुरुआत'), opts: [L('Hot', 'गरम'), L('Warm', 'हल्का गरम')] }
+    },
+    v0: s => s.start === 0 ? 70 : 50,
+    at: (s, t) => { const k = .09 * (s.cover === 0 ? .45 : 1.1) * (s.milk === 0 ? 1 : 1.7), T0 = s.start === 0 ? 70 : 50; return Math.round(25 + (T0 - 25) * Math.exp(-k * t)); },
+    best: () => 0
+  },
+  {
+    icon: '🧺', focus: 'spot', unit: '%', dry: true,
+    q: L("Where does the elephant's wet blanket dry faster? Set up a FAIR test.", 'हाथी का गीला कंबल कहाँ जल्दी सूखता है? एक फेयर टेस्ट बनाओ।'),
+    cq: L('So where does the blanket dry faster?', 'तो कंबल कहाँ जल्दी सूखता है?'),
+    after: L('% wet after 1 hour', '1 घंटे बाद कितना % गीला'),
+    vars: {
+      spot: { label: L('Place', 'जगह'), opts: [L('☀️ Sun', '☀️ धूप'), L('🌳 Shade', '🌳 छाँव')] },
+      fold: { label: L('Blanket', 'कंबल'), opts: [L('Spread open', 'फैला हुआ'), L('Folded', 'तह किया')] },
+      wet: { label: L('Start', 'शुरुआत'), opts: [L('Dripping', 'टपकता'), L('Damp', 'नम')] }
+    },
+    v0: s => s.wet === 0 ? 100 : 70,
+    at: (s, t) => { const k = .05 * (s.spot === 0 ? 2.2 : .8) * (s.fold === 0 ? 1.4 : .6), W0 = s.wet === 0 ? 100 : 70; return Math.round(W0 * Math.exp(-k * t)); },
+    best: () => 0
+  },
+  {
+    icon: '🌱', focus: 'water', unit: 'cm', dry: true,
+    q: L('Practice: does water help a seedling grow? Change ONLY the water.', 'प्रैक्टिस: क्या पानी पौधे को बढ़ाता है? सिर्फ़ पानी बदलो।'),
+    cq: L('So which seedling grew more?', 'तो कौन-सा पौधा ज़्यादा बढ़ा?'),
+    after: L('Height after 10 days', '10 दिन बाद ऊँचाई'),
+    vars: {
+      water: { label: L('Water', 'पानी'), opts: [L('💧 Daily', '💧 रोज़'), L('🚫 None', '🚫 बिल्कुल नहीं')] },
+      pot: { label: L('Pot', 'गमला'), opts: [L('Big', 'बड़ा'), L('Small', 'छोटा')] },
+      light: { label: L('Light', 'रोशनी'), opts: [L('Window', 'खिड़की'), L('Cupboard', 'अलमारी')] }
+    },
+    v0: () => 1,
+    at: (s, t) => Math.round(1 + t * (s.water === 0 ? 1.2 : .1) * (s.light === 0 ? 1 : .5) * (s.pot === 0 ? 1 : .9)),
+    best: () => 0
+  }
+];
+function genSee(r, lvl) {
+  if (lvl <= 1) { const w = r.int(1, 3), d = r.int(1, 4); return { left: [{ w, d }], w, ans: d }; }
+  if (lvl === 2) {
+    for (let g = 0; g < 100; g++) { const w = r.int(1, 4), d = r.int(1, 4), mw = r.int(1, 5); const t = w * d; if (t % mw || mw === w) continue; const a = t / mw; if (a >= 1 && a <= 4 && a !== d) return { left: [{ w, d }], w: mw, ans: a }; }
+    return { left: [{ w: 2, d: 4 }], w: 4, ans: 2 };
+  }
+  for (let g = 0; g < 200; g++) { const a = r.int(1, 3), da = r.int(1, 4), b = r.int(1, 3), db = r.int(1, 4); if (da === db) continue; const t = a * da + b * db, mw = r.int(2, 5); if (t % mw) continue; const x = t / mw; if (x >= 1 && x <= 4) return { left: [{ w: a, d: da }, { w: b, d: db }], w: mw, ans: x }; }
+  return { left: [{ w: 1, d: 4 }, { w: 2, d: 1 }], w: 2, ans: 3 };
+}
+const OBJ_K = ['panel', 'dish', 'antenna', 'light'];
+function genSpot(r, rows, cols) {
+  const n = rows * cols, cl = ['#ffb347', '#4aa3ff', '#3ddc84', '#ff6b6b', '#b07cff'];
+  const a = Array.from({ length: n }, () => ({ k: r.pick(OBJ_K), c: r.pick(cl), dots: r.int(1, 3), rot: r.pick([0, 0, 90]) }));
+  const b = a.map(o => ({ ...o })); const diff = new Set(r.shuffle([...Array(n).keys()]).slice(0, n >= 16 ? 4 : 3));
+  for (const k of diff) { const o = b[k], ch = r.pick(['c', 'dots', 'rot', 'k']); if (ch === 'c') o.c = r.pick(cl.filter(x => x !== o.c)); else if (ch === 'dots') o.dots = o.dots === 3 ? 2 : o.dots + 1; else if (ch === 'rot') o.rot = o.rot === 0 ? 45 : 0; else o.k = r.pick(OBJ_K.filter(x => x !== o.k)); }
+  return { a, b, diff, cols };
+}
+function objSVG(o) {
+  let s = '';
+  if (o.k === 'panel') s = `<rect x="5" y="12" width="38" height="24" fill="${o.c}"/><path d="M17 12v24M30 12v24M5 24h38" stroke="#0a1230" stroke-width="1.5"/>`;
+  else if (o.k === 'dish') s = `<path d="M8 14a18 18 0 0 0 32 14z" fill="${o.c}"/><line x1="24" y1="21" x2="34" y2="10" stroke="#ccd" stroke-width="2"/><rect x="21" y="30" width="6" height="12" fill="#889"/>`;
+  else if (o.k === 'antenna') s = `<line x1="24" y1="10" x2="24" y2="42" stroke="#aab" stroke-width="3"/><circle cx="24" cy="10" r="6" fill="${o.c}"/><line x1="14" y1="20" x2="34" y2="20" stroke="#aab" stroke-width="2"/>`;
+  else s = `<circle cx="24" cy="22" r="13" fill="${o.c}"/><circle cx="24" cy="22" r="7" fill="#fff" opacity=".5"/><rect x="18" y="35" width="12" height="7" fill="#889"/>`;
+  const dots = Array.from({ length: o.dots }, (_, i) => `<circle cx="${17 + i * 7}" cy="${o.k === 'panel' ? 41 : 45}" r="2.6" fill="#ff5f5f"/>`).join('');
+  return `<svg viewBox="0 0 48 48" width="100%" height="100%" style="transform:rotate(${o.rot}deg)">${s}${dots}</svg>`;
+}
+
+/* =========================================================
+   FLOW
+   ========================================================= */
+let curTask = null;
+function runTask(id, practice) {
+  return new Promise(resolve => {
+    const tk = TASKS[id]; const z = ZONES.find(z => z.tasks.includes(id));
+    const seedR = R(mulberry(hash(S.seed + '|' + id + (practice ? '|p' : ''))));
+    let endAt = practice ? null : now() + tk.sec * 1000 * SPEED, finished = false, inst = null, iv = null;
+    const m = screen({ title: `${z.icon} ${T(tk.title)}`, chip: T(SPN[tk.sp]), timer: !practice });
+    m.innerHTML = `${practice ? `<div class="practice-rib">${T(TX.practiceTry)}</div>` : ''}<div class="prompt" style="font-size:14px;font-weight:600;color:var(--mute)">${T(tk.how)}</div><div id="tk" style="display:flex;flex-direction:column;gap:10px"></div>`;
+    S.rerender = null; // language toggle applies on next screen during a live task
+    const ctx = {
+      r: seedR, practice, hint: practice || DEVHINT, log: (type, d) => logEv(type, { task: id, practice, ...d }),
+      done: res => { if (finished) return; finished = true; clearInterval(iv); const tkEl = m.querySelector('#tk'); if (tkEl) tkEl.style.pointerEvents = 'none'; finish(res, false); }
+    };
+    const finish = (res, timedOut) => {
+      S.inTask = false;
+      if (!practice) {
+        const left = Math.max(0, (endAt - now()) / 1000);
+        S.results[id] = { ...res, timedOut, secLeft: Math.round(left), sec: tk.sec };
+        logEv('task_end', { task: id, timedOut, comp: res.comp });
+      }
+      setTimeout(() => resolve(res), timedOut ? 900 : 450);
+    };
+    S.inTask = !practice;
+    inst = tk.play(m.querySelector('#tk'), ctx);
+    if (!practice) {
+      say(tk.how);
+      iv = setInterval(() => {
+        const left = (endAt - now()) / 1000; const c = $('#clock'), b = $('#bar');
+        if (c) c.textContent = mm(left); if (b) { b.firstChild.style.width = clamp(left / (tk.sec * SPEED) * 100, 0, 100) + '%'; b.classList.toggle('low', left < 10); }
+        if (left <= 0 && !finished) {
+          finished = true; clearInterval(iv); const res = inst.timeout(); const tkEl = m.querySelector('#tk'); if (tkEl) tkEl.style.pointerEvents = 'none';
+          if (!tk.fixed) { flash('⏰', 700); } finish(res, !tk.fixed);
+        }
+      }, 200);
+    } else say(tk.how);
+  });
+}
+async function practiceThenReal(id) {
+  const tk = TASKS[id];
+  await runTask(id, true);
+  await new Promise(res => {
+    const m = screen({ title: `${T(tk.title)}`, chip: T(SPN[tk.sp]) });
+    m.innerHTML = `<div class="card" style="text-align:center"><div class="hand">⏱️</div><h2>${T(TX.nowReal)}</h2><p style="margin-top:6px">${fmt(T(L('You have {s} for this job.', 'इस काम के लिए {s} हैं।')), { s: mm(tk.sec) })}</p></div><button class="btn" id="go">${T(TX.start)}</button>`;
+    S.rerender = () => practiceThenRealResume(res, tk);
+    $('#go').onclick = res;
+  });
+  await runTask(id, false);
+}
+function practiceThenRealResume(res, tk) { const m = screen({ title: T(tk.title), chip: T(SPN[tk.sp]) }); m.innerHTML = `<div class="card" style="text-align:center"><div class="hand">⏱️</div><h2>${T(TX.nowReal)}</h2></div><button class="btn" id="go">${T(TX.start)}</button>`; $('#go').onclick = res; }
+
+function mapSVG(active) {
+  const path = ZONES.map((z, i) => `${i ? 'L' : 'M'}${z.x} ${z.y}`).join(' ');
+  const st = Array.from({ length: 50 }, (_, i) => `<circle cx="${(i * 73) % 360}" cy="${(i * 131) % 285}" r="${(i % 3) * .5 + .5}" fill="#fff" opacity="${.3 + (i % 4) * .15}"/>`).join('');
+  return `<svg class="map" viewBox="0 0 360 285" style="background:#060a1c">
+    ${st}<circle cx="330" cy="30" r="40" fill="#d8643a" opacity=".25"/><circle cx="-10" cy="300" r="70" fill="#3a7bd5" opacity=".35"/>
+    <path d="${path}" stroke="#5fd3ff" stroke-width="3" fill="none" stroke-dasharray="6 6" opacity=".7"/>
+    ${ZONES.map((z, i) => `<g><circle cx="${z.x}" cy="${z.y}" r="25" fill="${i < active ? '#1f8a55' : i === active ? '#ffb02e' : '#1b2550'}" stroke="${i === active ? '#fff' : '#5fd3ff'}" stroke-width="${i === active ? 3 : 1}"/>
+      <text x="${z.x}" y="${z.y + 8}" font-size="22" text-anchor="middle">${i < active ? z.ani : z.icon}</text>
+      <text x="${z.x}" y="${z.y + 40}" font-size="10" fill="#cfe9ff" text-anchor="middle" font-weight="700">${T(z.name)}</text></g>`).join('')}
+    <rect x="50" y="2" width="260" height="20" rx="10" fill="rgba(0,0,0,.55)"/><text x="180" y="16" font-size="11" fill="#9fe3ff" text-anchor="middle">${active >= 6 ? '🌊 ' + T(TX.lightsOn) : '🛰️ ' + fmt(T(L('Stage {a} / 6 · Oxygen {o}%', 'पड़ाव {a} / 6 · ऑक्सीजन {o}%')), { a: Math.min(active + 1, 6), o: 100 - active * 12 })}</text>
+  </svg>`;
+}
+function zoneIntro(i) {
+  return new Promise(res => {
+    const draw = () => {
+      const z = ZONES[i]; const secs = z.tasks.reduce((a, t) => a + TASKS[t].sec, 0);
+      const m = screen({ title: `${T(TX.title)}`, chip: `${i + 1}/6` });
+      m.innerHTML = `${mapSVG(i)}<div class="card"><div class="tag">${fmt(T(L('Stage {n}', 'पड़ाव {n}')), { n: i + 1 })} · ${[...new Set(z.tasks.map(t => TASKS[t].sp))].map(p => T(SPN[p])).join(' + ')}</div><h2>${z.icon} ${T(z.name)}</h2><p style="margin-top:6px">${T(z.intro)}</p>
+        <div class="row wrap" style="margin-top:10px">${z.tasks.map(t => TASKS[t].comps.map(c => `<span class="chip">${c} ${T(COMP[c])}</span>`).join('')).join('')}<span class="chip acc">⏱ ${mm(secs)}</span></div></div>
+        <button class="btn" id="go">${T(TX.start)}</button>`;
+      $('#go').onclick = res; say(z.intro);
+    };
+    S.rerender = draw; draw();
+  });
+}
+function zoneDone(i) {
+  return new Promise(res => {
+    const z = ZONES[i]; const m = screen({ title: T(TX.title), chip: `${i + 1}/6` }); sfx.win();
+    m.innerHTML = `${mapSVG(i + 1)}<div class="card" style="text-align:center"><div style="font-size:60px;animation:pop .4s">${z.ani}</div><h2>${T(TX.zoneDone)}</h2><p>${z.ani} ${T(TX.rescued)} ✔</p></div><button class="btn" id="go">${T(TX.next)}</button>`;
+    $('#go').onclick = res; S.rerender = null;
+  });
+}
+
+/* ---------- scoring ---------- */
+function score() {
+  const comp = {}; Object.values(S.results).forEach(r => Object.assign(comp, r.comp));
+  const allT = ZONES.flatMap(z => z.tasks); const sp = {}; SPS.forEach(p => { const cs = [...new Set(allT.filter(t => TASKS[t].sp === p).flatMap(t => TASKS[t].comps))]; sp[p] = Math.round(cs.reduce((a, c) => a + (comp[c] || 0), 0) / cs.length * 100); });
+  const tasksN = ZONES.flatMap(z => z.tasks).length;
+  const attempted = Object.values(S.results).filter(r => Object.values(r.comp).some(v => v > 0)).length;
+  const consistency = attempted / tasksN;
+  const avg = Object.values(sp).reduce((a, b) => a + b, 0) / 6;
+  const fsi = Math.min(900, Math.round(1000 * (0.9 * avg / 100 + 0.1 * consistency)));
+  const star = [...STARS].reverse().find(s => fsi >= s.min);
+  let league = 0; Object.entries(S.results).forEach(([id, r]) => { const c = Object.values(r.comp); const m = c.reduce((a, b) => a + b, 0) / (c.length || 1); league += Math.round(m * 300); if (m >= .8 && !TASKS[id].fixed) league += r.secLeft; });
+  const avgC = Object.values(sp).reduce((a, b) => a + b, 0) / 600;
+  const ending = avgC >= .75 ? L('🌟 Perfect Rescue! Every meter green.', '🌟 परफ़ेक्ट रेस्क्यू! हर मीटर हरा।') : avgC >= .45 ? L('⚠️ Close Call! Sparks on re-entry, but everyone is safe.', '⚠️ बाल-बाल बचे! री-एंट्री में चिंगारियाँ, पर सब सुरक्षित।') : L('🌊 Bumpy Landing! The pod landed far, the navy boat raced to you.', '🌊 ऊबड़-खाबड़ लैंडिंग! पॉड दूर गिरा, नेवी की नाव दौड़कर आई।');
+  const RK = [[0, L('Cadet', 'कैडेट')], [800, L('Pilot', 'पायलट')], [1400, L('Flight Engineer', 'फ़्लाइट इंजीनियर')], [1900, L('Mission Specialist', 'मिशन स्पेशलिस्ट')], [2400, L('Commander', 'कमांडर')]];
+  const D = id => (S.results[id] || {}).detail || {}; const badges = [];
+  if ((D('dock').per || []).length && D('dock').per.every(x => x === 1)) badges.push(L('🛰️ Smooth Docker', '🛰️ स्मूद डॉकर'));
+  if ((D('lamps').bestSpan || 0) >= 7) badges.push(L('🔐 Code Master', '🔐 कोड मास्टर'));
+  if (D('watch').targets && D('watch').falseAlarms === 0 && D('watch').hits / D('watch').targets >= .8) badges.push(L('🦅 Eagle Eye', '🦅 ईगल आई'));
+  if ((D('asteroids').mixAcc || 0) >= .9) badges.push(L('☄️ Asteroid Ace', '☄️ एस्टेरॉयड ऐस'));
+  const f = S.flags; const cred = clamp(100 - Math.min(30, f.hidden * 10) - Math.min(15, f.fsExit * 5) - Math.min(20, f.fast * 2), 0, 100);
+  const rank = [...RK].reverse().find(r => league >= r[0])[1];
+  return { ending, rank, badges, comp, sp, fsi, star, league, consistency, cred, credBand: cred >= 80 ? 'green' : cred >= 60 ? 'amber' : 'red' };
+}
+function results() {
+  const sc = score(); const secs = Math.round((now() - S.started) / 1000);
+  const run = { mission: 'space-station-rescue', band: 'J', round: 'R2', version: 1, mode: S.mode, fsl_id: S.id || null, name: S.name || null, slot: S.slot, seed: S.seed, lang: LANG, started_at: new Date(Date.now() - secs * 1000).toISOString(), duration_s: secs, fsi: sc.fsi, star: sc.star.n.en, league_score: sc.league, sp: sc.sp, competencies: sc.comp, credibility: sc.cred, flags: S.flags };
+  try { const k = 'fsl.missionRuns.ssr'; const arr = JSON.parse(store(k) || '[]'); arr.push({ mission_run: run, task_results: S.results, events: S.events.slice(-600) }); store(k, JSON.stringify(arr.slice(-20))); } catch (e) { }
+  if (S.mode === 'ranked') store(`fsl.ssr.ranked.${S.slot}.${S.id}`, '1');
+  const draw = () => {
+    const m = screen({ title: T(TX.results) }); sfx.win();
+    m.innerHTML = `${mapSVG(6)}
+    <div class="card" style="text-align:center"><div class="stars">${'★'.repeat(sc.star.s)}<span style="opacity:.25">${'★'.repeat(6 - sc.star.s)}</span></div>
+      <p style="color:var(--ink);font-weight:800">${T(sc.ending)}</p><h1>${T(sc.star.n)}</h1><div class="tag">${T(TX.fsi)}</div><div style="font-size:40px;font-weight:900">${sc.fsi}<span class="small"> / 1000</span></div>
+      <p class="small" style="margin-top:4px">${T(TX.estNote)}</p></div>
+    <div class="card">${SPS.map(p => `<div class="sp"><span>${SPI[p]} ${T(SPN[p])}</span><span class="b"><i style="width:${sc.sp[p]}%"></i></span><span>${sc.sp[p]}</span></div>`).join('<div style="height:8px"></div>')}</div>
+    <div class="card"><div class="row" style="justify-content:space-between"><b>🏆 ${T(TX.league)} · ${T(sc.rank)}</b><b style="font-size:22px;color:var(--acc)">${sc.league}</b></div>
+      <p class="small">${fmt(T(L('Time played {t} · League Score adds speed bonus for ranking; Stars use thinking only.', 'खेलने का समय {t} · लीग स्कोर में रैंकिंग के लिए स्पीड बोनस है; स्टार सिर्फ़ सोच से बनते हैं।')), { t: mm(secs) })}</p></div>
+    ${sc.badges.length ? `<div class="row wrap center">${sc.badges.map(b => `<span class="chip acc">${T(b)}</span>`).join('')}</div>` : ''}<div class="card"><table class="res">${Object.keys(COMP).map(c => `<tr><td>${c}</td><td>${T(COMP[c])}</td><td style="text-align:right;font-weight:800">${Math.round((sc.comp[c] || 0) * 100)}</td></tr>`).join('')}</table></div>
+    ${S.mode === 'ranked' ? `<div class="card"><b>${T(TX.fair)}</b>: <span class="chip" style="background:${sc.credBand === 'green' ? '#2f6b3f' : sc.credBand === 'amber' ? '#7a5b12' : '#7a1f1f'};color:#fff">${sc.cred}</span><p class="small">${T(L('Tab switches, full-screen exits and too-fast taps are noted. Low scores get a friendly replay, never a ban.', 'टैब बदलना, फ़ुल-स्क्रीन छोड़ना और बहुत तेज़ टैप नोट होते हैं। कम स्कोर पर दोस्ताना दोबारा खेल होता है, कभी बैन नहीं।'))}</p></div>` : ''}
+    <button class="btn" id="again">${T(TX.playAgain)}</button>`;
+    $('#again').onclick = () => { location.href = location.pathname + (LANG === 'hi' ? '?lang=hi' : ''); };
+  };
+  S.rerender = draw; draw();
+}
+
+/* ---------- intro wizard ---------- */
+function intro() {
+  let step = 0, mode = Q.get('mode') === 'ranked' ? 'ranked' : 'play';
+  const draw = () => {
+    const m = screen({});
+    if (step === 0) {
+      m.innerHTML = `<div style="text-align:center;font-size:64px;margin-top:10px">🚀🛰️👩‍🚀</div><div class="tag" style="text-align:center">${T(TX.tagline)}</div><h1 style="text-align:center">${T(TX.title)}</h1>
+        <div class="card"><p style="color:var(--ink);font-size:16px">${T(TX.story)}</p></div><button class="btn" id="n">${T(TX.next)}</button>
+        <p class="small" style="text-align:center">${T(L('Band J · ages 9 to 13 · हिंदी / English', 'बैंड J · उम्र 9 से 13 · हिंदी / English'))}</p>`;
+      $('#n').onclick = () => { step = 1; draw(); }; say(TX.story);
+    } else if (step === 1) {
+      m.innerHTML = `${mapSVG(0)}<div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <p style="color:var(--ink)">🗺️ ${T(TX.how1)}</p><p>⏱️ ${T(TX.how2)}</p><p>🧪 ${T(TX.how3)}</p><p>⭐ ${T(TX.how4)}</p></div>
+        <div class="row wrap center">${SPS.map(p => `<span class="chip">${SPI[p]} ${T(SPN[p])}</span>`).join('')}</div>
+        <button class="btn" id="n">${T(TX.next)}</button>`;
+      $('#n').onclick = () => { step = 2; draw(); };
+    } else {
+      m.innerHTML = `<h2>${T(L('How do you want to play?', 'कैसे खेलना है?'))}</h2>
+        <div class="card" id="mp" style="cursor:pointer;border:2px solid ${mode === 'play' ? 'var(--acc)' : 'transparent'}"><b>🎮 ${T(TX.practiceMode)}</b><p>${T(TX.practiceDesc)}</p></div>
+        <div class="card" id="mr" style="cursor:pointer;border:2px solid ${mode === 'ranked' ? 'var(--acc)' : 'transparent'}"><b>🏆 ${T(TX.rankedMode)}</b><p>${T(TX.rankedDesc)}</p></div>
+        ${mode === 'ranked' ? `<input type="text" id="fid" placeholder="${T(TX.fslid)}" value="${S.id}" autocomplete="off">
+          <label class="ck"><input type="checkbox" id="pl"> ${T(TX.pledge)}</label>` : `<input type="text" id="nm" placeholder="${T(TX.name)}" value="${S.name}" maxlength="20" autocomplete="off">`}
+        <div id="err" class="sub" style="color:var(--bad)"></div>
+        <button class="btn" id="go">🔦 ${T(TX.start)}</button>`;
+      $('#mp').onclick = () => { mode = 'play'; draw(); }; $('#mr').onclick = () => { mode = 'ranked'; draw(); };
+      const fid = $('#fid'); if (fid) fid.oninput = () => S.id = fid.value.trim().toUpperCase();
+      const nm = $('#nm'); if (nm) nm.oninput = () => S.name = nm.value.trim();
+      $('#go').onclick = () => {
+        S.mode = mode;
+        if (mode === 'ranked') {
+          if (!/^[A-Z0-9-]{4,20}$/.test(S.id)) { $('#err').textContent = T(L('Enter your FSL ID (4 to 20 letters/numbers).', 'अपना FSL ID डालो (4 से 20 अक्षर/अंक)।')); return; }
+          if (!$('#pl').checked) { $('#err').textContent = T(L('Please tick the fair-play promise.', 'कृपया फेयर-प्ले वादे पर टिक करो।')); return; }
+          S.slot = Q.get('slot') || new Date().toISOString().slice(0, 10);
+          if (store(`fsl.ssr.ranked.${S.slot}.${S.id}`)) { $('#err').textContent = T(TX.already); return; }
+          S.seed = hash(S.id + '|' + S.slot + '|ssr');
+          try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => { }); } catch (e) { }
+          const wm = document.createElement('div'); wm.className = 'wm'; wm.textContent = S.id + ' · ' + S.slot; document.body.appendChild(wm);
+        } else { S.slot = 'practice'; S.seed = (Math.random() * 1e9) | 0; }
+        game();
+      };
+    }
+  };
+  S.rerender = draw; draw();
+}
+async function game() {
+  S.started = now(); logEv('start', { mode: S.mode, seed: S.seed });
+  const only = Q.get('zone'); const zs = only != null ? [+only] : [0, 1, 2, 3, 4, 5];
+  for (const i of zs) {
+    S.zone = i; await zoneIntro(i);
+    for (const t of ZONES[i].tasks) await practiceThenReal(t);
+    await zoneDone(i);
+  }
+  results();
+}
+// dev hook: ?test=<taskId>[&real=1] jumps to one task
+if (Q.get('test') && TASKS[Q.get('test')]) { S.seed = +(Q.get('seed') || 7); S.started = now(); runTask(Q.get('test'), !Q.get('real')).then(r => { window.__lastResult = r; app.insertAdjacentHTML('beforeend', `<pre id="out" style="white-space:pre-wrap;font-size:11px">${JSON.stringify(r)}</pre>`); }); }
+else intro();
+window.__zoo = { S, TASKS, score, genDeduce, genRobo, genSee, genRot, R, mulberry };
+</script>
+</body>
+</html>
