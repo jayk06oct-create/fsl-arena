@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paper Bridge · FSL Sim + Real Mission</title>
+<meta name="description" content="FSL Sim + Real mission: test a paper bridge in a sim, predict, build it for real at home, and compare.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&family=Noto+Sans+Devanagari:wght@500;700&display=swap">
+<style>
+:root{--bg:#070b1d;--card:#121a3a;--card2:#18224a;--line:#2c3a70;--acc:#5fd3ff;--y:#ffc93c;--o:#ffb02e;--g:#3ddc84;--r:#ff5f5f;--tx:#dfe6ff;--mut:#9fb0d8}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font-family:Nunito,'Noto Sans Devanagari',system-ui,sans-serif;min-height:100%}
+body{background:radial-gradient(120% 60% at 50% 0%,#1b2250 0%,#070b1d 70%) fixed}
+#app{max-width:460px;margin:0 auto;min-height:100vh;padding:0 14px 28px;display:flex;flex-direction:column}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:10px 0;background:linear-gradient(#0b1130 75%,transparent)}
+.top .nm{font-family:'Baloo 2','Noto Sans Devanagari',sans-serif;font-weight:800;font-size:17px;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{font-weight:800;font-size:13px;border-radius:20px;padding:3px 10px;background:var(--acc);color:#00243a}
+.pill.home{background:var(--o);color:#2a1700}
+.pill.low{background:var(--r);color:#fff}
+.lang{border:1px solid var(--line);background:var(--card);color:#fff;border-radius:10px;padding:4px 9px;font-weight:800;font-size:13px;cursor:pointer}
+.steps{display:flex;gap:4px;margin:0 0 12px}
+.steps i{flex:1;height:5px;border-radius:3px;background:#24305e}
+.steps i.on{background:var(--acc)}.steps i.home{background:#5a4320}.steps i.home.on{background:var(--o)}
+h1{font-family:'Baloo 2','Noto Sans Devanagari',sans-serif;font-size:30px;line-height:1.1;color:#fff}
+h2{font-family:'Baloo 2','Noto Sans Devanagari',sans-serif;font-size:23px;line-height:1.15;color:#fff;margin-bottom:4px}
+.k{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--acc);text-transform:uppercase}
+.k.home{color:var(--o)}
+p{line-height:1.45}
+.mut{color:var(--mut);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:10px}
+.card.hl{border-color:var(--o);background:#221b0e}
+.card.ok{border-color:var(--g);background:#0e2d20}
+.card.bad{border-color:var(--r);background:#2c1220}
+.card.info{border-color:var(--acc);background:#0f2546}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px;font:800 17px Nunito,'Noto Sans Devanagari',sans-serif;cursor:pointer;margin-top:12px;background:linear-gradient(#ffd25e,#ffb02e);color:#2a1700}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.g{background:var(--g);color:#032912}.btn.b{background:#24346e;color:#e5ecff}.btn.sm{padding:10px;font-size:15px;margin-top:8px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.opt{border:2px solid var(--line);background:var(--card2);color:#e5ecff;border-radius:12px;padding:10px 6px;text-align:center;font:700 14px Nunito,'Noto Sans Devanagari',sans-serif;cursor:pointer}
+.opt.sel{border-color:var(--acc);background:#163a5c;color:#fff}
+.opt small{display:block;font-weight:600;color:var(--mut);font-size:11.5px;margin-top:2px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.lbl{font-weight:800;color:#fff;font-size:14.5px;margin:12px 0 6px}
+.chk{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card2);margin-top:6px;cursor:pointer;font-weight:700}
+.chk .bx{width:24px;height:24px;border-radius:7px;border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px}
+.chk.on{border-color:var(--g)}.chk.on .bx{background:var(--g);border-color:var(--g);color:#032912}
+select,input[type=text]{width:100%;background:#0d1640;border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px;font:700 15px Nunito,sans-serif}
+.secret{text-align:center;font-size:15px;line-height:1.5}
+.secret .code{font-family:'Baloo 2';font-size:34px;letter-spacing:8px;color:var(--y);font-weight:800}
+.stage{background:#0d1640;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px}
+.stage svg{display:block;width:100%;height:auto}
+.tries{display:flex;gap:6px;margin-top:8px}
+.tries div{flex:1;border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;font-size:12px;background:var(--card2);color:var(--mut)}
+.tries div b{display:block;font-size:17px;color:#fff}
+.tries div.best{border-color:var(--g)}
+.step{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;margin-top:6px;background:var(--card2);cursor:pointer}
+.step .n{width:26px;height:26px;border-radius:50%;background:#24346e;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.step.on{border-color:var(--g)}.step.on .n{background:var(--g);color:#032912}
+.big{font-family:'Baloo 2';font-weight:800;font-size:46px;color:var(--y);min-width:70px;text-align:center}
+.stp{display:flex;align-items:center;justify-content:center;gap:16px}
+.stp button{width:52px;height:52px;border-radius:14px;border:0;background:#24346e;color:#fff;font-size:26px;font-weight:800;cursor:pointer}
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.cmp div{border:2px solid var(--line);border-radius:12px;padding:8px 4px;background:var(--card2)}
+.cmp b{display:block;font-family:'Baloo 2';font-size:32px;color:#fff;line-height:1.1}
+.cmp span{font-size:12px;font-weight:800}
+.bar{height:12px;border-radius:6px;background:#1c2752;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%}
+.srow{display:flex;justify-content:space-between;font-weight:700;font-size:14.5px;margin-top:10px}
+.tag{display:inline-block;font-size:12px;font-weight:800;border-radius:8px;padding:3px 8px;background:var(--y);color:#2a1700;margin:3px 3px 0 0}
+.tag.c{background:#26336a;color:#e5ecff}
+.preview{width:100%;border-radius:12px;margin-top:8px;max-height:280px;object-fit:contain;background:#000}
+.flag{font-size:13px;color:#ffc46b;margin-top:6px}
+.ftr{margin-top:auto;padding-top:18px;text-align:center;color:#56628c;font-size:12px}
+.hero{font-size:62px;text-align:center;margin:8px 0 2px}
+ul.l{padding-left:20px;margin-top:6px}ul.l li{margin:4px 0;line-height:1.4;font-size:14.5px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#24346e;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:9;max-width:90%;text-align:center}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ============ FSL Paper Bridge · Sim + Real mission (Band J) ============
+   Demo build: all data stays on this device (localStorage). No upload, no server.
+   Stages: 0 Briefing · 1 Kit Check · 2 Sim Lab · 3 Predict · 4 Real Build · 5 Proof · 6 Compare · 7 Report */
+const $=s=>document.querySelector(s);
+const S={lang:'en',mode:'practice',fsl:'',pledge:false,stage:0,stageEnd:0,t0:0,
+  kit:{paper:'a4',coin:'1',items:[0,0,0,0,0]},secret:null,
+  design:{shape:'flat',layers:1,ends:true,seam:false},tries:[],pendingChange:null,final:null,anim:false,
+  pred:{coins:5,sag:null,conf:null},build:[0,0,0,0,0],
+  proof:{file:null,url:null,isVideo:false,coins:null,sag:null,match:null,ts:0},
+  reasons:[],replay:null,result:null,times:{}};
+try{const l=localStorage.getItem('fslpb_lang');if(l)S.lang=l}catch(e){}
+const T=(en,hi)=>S.lang==='hi'?hi:en;
+
+const STAGES=[
+ {id:'brief',sec:60,home:false,en:'Briefing',hi:'ब्रीफ़िंग'},
+ {id:'kit',sec:90,home:true,en:'Kit Check',hi:'किट चेक'},
+ {id:'sim',sec:330,home:false,en:'Sim Lab',hi:'सिम लैब'},
+ {id:'pred',sec:60,home:false,en:'Predict',hi:'अनुमान'},
+ {id:'build',sec:360,home:true,en:'Real Build',hi:'असली ब्रिज'},
+ {id:'proof',sec:120,home:true,en:'Proof',hi:'सबूत'},
+ {id:'cmp',sec:180,home:false,en:'Compare',hi:'तुलना'}];
+
+/* ---------- physics model (simple, deterministic) ----------
+   capacity in grams for one A4 80 gsm sheet over a 20 cm gap */
+const COINS={'1':{g:3.09,en:'₹1',hi:'₹1'},'2':{g:4.07,en:'₹2',hi:'₹2'},'5':{g:6.74,en:'₹5',hi:'₹5'},'10':{g:7.71,en:'₹10',hi:'₹10'}};
+const PAPER={a4:{f:1,en:'A4 printer paper',hi:'A4 प्रिंटर पेपर'},nb:{f:.72,en:'Notebook page',hi:'कॉपी का पन्ना'}};
+const SHAPES={
+ flat:{base:4,en:'Flat',hi:'सीधा'},
+ zig:{base:30,en:'Zigzag',hi:'ज़िगज़ैग'},
+ tube:{base:33,en:'Tube',hi:'ट्यूब'},
+ ubeam:{base:26,en:'U-beam',hi:'U-बीम'}};
+const MAXC=10; // sim stops counting at 10 coins
+function capacity(d,paperF){
+  let c=SHAPES[d.shape].base*(d.layers===2?2:1);
+  if(!d.ends) c*= {flat:.4,zig:.3,tube:.7,ubeam:.6}[d.shape];
+  if(d.shape==='tube') c*= d.seam?1:.35;
+  if(d.shape==='ubeam') c*= d.seam?1:.55;
+  if(d.shape==='zig' && d.seam) c*=1.15;
+  return c*(paperF==null?PAPER[S.kit.paper].f:paperF);
+}
+const coinG=()=>COINS[S.kit.coin].g;
+function coinsHeld(d,paperF){return Math.min(MAXC,Math.floor(capacity(d,paperF)/coinG()))}
+/* fairness: score in "₹1 coins on A4" units, so heavy coins / thin paper are not punished */
+const fair=c=>c*(coinG()/3.09)/PAPER[S.kit.paper].f;
+function limiter(d){
+  if(!d.ends) return T('The ends were not taped, so the paper slid and the folds spread open. Tape holds the shape in place.','सिरे टेप नहीं थे, इसलिए पेपर खिसका और मोड़ खुल गए। टेप आकार को पकड़कर रखता है।');
+  if(d.shape==='flat') return T('Flat paper bends easily in the middle. Folding or rolling gives paper "depth", so it bends much less.','सीधा पेपर बीच से आसानी से मुड़ जाता है। मोड़ने या रोल करने से पेपर में "गहराई" आती है, फिर वो कम झुकता है।');
+  if(d.shape==='tube'&&!d.seam) return T('The tube unrolled under the coins. Tape along the seam keeps it round.','सिक्कों के वज़न से ट्यूब खुल गई। जोड़ पर टेप लगाने से वो गोल रहेगी।');
+  if(d.shape==='ubeam'&&!d.seam) return T('The U walls opened outwards. Tape along the walls keeps them standing.','U की दीवारें बाहर खुल गईं। दीवारों पर टेप उन्हें खड़ा रखेगा।');
+  if(d.layers===1) return T('Close! A second layer doubles strength, but uses one more sheet.','बस थोड़ा सा! दूसरी परत ताकत दोगुनी करती है, पर एक और शीट लगती है।');
+  return T('This shape is near its limit. Try a different fold.','यह आकार अपनी सीमा पर है। कोई दूसरा मोड़ आज़माओ।');
+}
+function sagOf(c,cap){const r=Math.min(1,(c*coinG())/Math.max(cap,.1));return r}
+function sagWord(r){return r<.45?'small':r<.8?'medium':'big'}
+
+/* ---------- secret proof item, fixed per FSL ID ---------- */
+const ITEMS=[['🥄','spoon','चम्मच'],['🪥','toothbrush','टूथब्रश'],['✏️','pencil','पेंसिल'],['🔑','key','चाबी'],['🧦','sock','मोज़ा'],['🍴','fork','कांटा'],['🧢','cap','टोपी'],['🪮','comb','कंघी']];
+function hash(s){let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function makeSecret(){const seed=S.mode==='ranked'&&S.fsl?hash(S.fsl.toUpperCase()+'|PB1'):(Math.random()*1e9)|0;
+  const it=ITEMS[seed%ITEMS.length];return{icon:it[0],en:it[1],hi:it[2],side:(seed>>4)%2?'left':'right',code:String(1000+((seed>>7)%9000))}}
+
+/* ---------- timers ---------- */
+let tick=null;
+function startStage(i){S.stage=i;S.times[i]=Date.now();S.stageEnd=Date.now()+STAGES[Math.min(i,6)].sec*1000;render();window.scrollTo(0,0)}
+function left(){return Math.max(0,Math.round((S.stageEnd-Date.now())/1000))}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+setInterval(()=>{const el=$('#clock');if(!el||S.stage>6)return;const l=left();el.textContent=fmt(l);el.classList.toggle('low',l<=30);
+  if(l===0&&S.mode==='ranked'&&!S.anim)timeUp()},500);
+function timeUp(){const st=STAGES[S.stage].id;
+  if(st==='brief'||st==='kit'){toast(T('Time! Moving on.','समय खत्म! आगे चलें।'));go(S.stage+1)}
+  else if(st==='sim'){if(!S.tries.length){runSimSilent()}S.final=S.final||bestTry();toast(T('Sim time over. Your best design is locked.','सिम का समय खत्म। तुम्हारा सबसे अच्छा डिज़ाइन लॉक।'));go(3)}
+  else if(st==='pred'){if(!S.pred.sag)S.pred.sag='medium';if(!S.pred.conf)S.pred.conf='fair';go(4)}
+  else if(st==='build'){toast(T('Build time over. Take your proof photo now.','बनाने का समय खत्म। अब सबूत फ़ोटो लो।'));go(5)}
+  else if(st==='proof'){if(!S.proof.file){S.proof.missing=true}go(6)}
+  else if(st==='cmp'){finish()}}
+function go(i){if(i===6)prepCompare();startStage(i)}
+function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+
+/* ---------- render ---------- */
+function topbar(){const st=S.stage>=1&&S.stage<=6?STAGES[S.stage]:null;
+  return `<div class="top"><div class="nm">🌉 ${T('Paper Bridge','पेपर ब्रिज')}${st?' · '+st[S.lang]:''}</div>
+  ${st?`<span id="clock" class="pill ${st.home?'home':''}">${fmt(left())}</span>`:''}
+  <button class="lang" onclick="toggleLang()">${S.lang==='en'?'हिंदी':'EN'}</button></div>
+  ${S.stage>=1&&S.stage<=6?`<div class="steps">${STAGES.slice(1).map((s,i)=>`<i class="${s.home?'home':''} ${i+1<=S.stage?'on':''}"></i>`).join('')}</div>`:''}`}
+function toggleLang(){if(S.anim)return;S.lang=S.lang==='en'?'hi':'en';try{localStorage.setItem('fslpb_lang',S.lang)}catch(e){}render()}
+function render(){const v=[vBrief,vKit,vSim,vPred,vBuild,vProof,vCmp,vReport][S.stage]();
+  $('#app').innerHTML=topbar()+v+`<div class="ftr">Future Star League · ${T('Sim + Real mission demo · your data stays on this phone','सिम + रियल मिशन डेमो · डेटा इसी फ़ोन पर रहता है')}</div>`;
+  if(S.stage===2)drawSim(S.lastDraw||{d:S.design,c:0,state:'idle'})}
+
+function vBrief(){return `
+ <div class="hero">🌉</div>
+ <div class="k" style="text-align:center">${T('FSL Round 2 · Sim + Real mission · Band J','FSL राउंड 2 · सिम + रियल मिशन · बैंड J')}</div>
+ <h1 style="text-align:center;margin-top:4px">${T('The village stream needs a bridge!','गाँव की नदी पर पुल चाहिए!')}</h1>
+ <div class="card"><p>${T('Make a <b>paper bridge</b> that holds <b>5 coins</b> over a <b>20 cm gap</b>. First test your design in the sim, then build it for real at home and see if the sim was right.','एक <b>पेपर ब्रिज</b> बनाओ जो <b>20 cm</b> के गैप पर <b>5 सिक्के</b> संभाले। पहले सिम में डिज़ाइन टेस्ट करो, फिर घर पर असली बनाओ और देखो सिम सही था या नहीं।')}</p>
+ <ul class="l">
+  <li>🧰 ${T('Kit Check 1:30: paper, tape, 5 coins, 2 books, ruler','किट चेक 1:30: पेपर, टेप, 5 सिक्के, 2 किताबें, स्केल')}</li>
+  <li>🧪 ${T('Sim Lab 5:30: 3 tries to test designs','सिम लैब 5:30: डिज़ाइन टेस्ट करने के 3 मौके')}</li>
+  <li>🎯 ${T('Predict 1:00: how many coins will the REAL one hold?','अनुमान 1:00: असली ब्रिज कितने सिक्के संभालेगा?')}</li>
+  <li>✂️ ${T('Real Build 6:00 at home','असली ब्रिज 6:00, घर पर')}</li>
+  <li>📸 ${T('Proof 2:00: one photo (or 15 s video)','सबूत 2:00: एक फ़ोटो (या 15 सेकंड वीडियो)')}</li>
+  <li>⚖️ ${T('Compare 3:00: sim vs real','तुलना 3:00: सिम बनाम असली')}</li></ul>
+ <p class="mut" style="margin-top:8px">${T('Score: Sim design 40 + Real result 30 + Prediction 30. Speed only breaks ties.','स्कोर: सिम डिज़ाइन 40 + असली नतीजा 30 + अनुमान 30। स्पीड सिर्फ़ टाई तोड़ती है।')}</p></div>
+ <div class="lbl">${T('Mode','मोड')}</div>
+ <div class="g2"><div class="opt ${S.mode==='practice'?'sel':''}" onclick="S.mode='practice';render()">🎮 ${T('Practice','प्रैक्टिस')}<small>${T('soft timers','टाइमर नरम')}</small></div>
+ <div class="opt ${S.mode==='ranked'?'sel':''}" onclick="S.mode='ranked';render()">🏆 ${T('Ranked','रैंक्ड')}<small>${T('FSL ID + strict timers','FSL ID + सख्त टाइमर')}</small></div></div>
+ ${S.mode==='ranked'?`<div class="lbl">${T('Your FSL ID','तुम्हारी FSL ID')}</div><input type="text" id="fsl" placeholder="e.g. FSL-IND-0427" value="${S.fsl}" oninput="S.fsl=this.value.trim();$('#go').disabled=!(S.fsl.length>=4&&S.pledge)">
+ <div class="chk ${S.pledge?'on':''}" onclick="S.pledge=!S.pledge;render()"><span class="bx">${S.pledge?'✓':''}</span><span>${T('I will build it myself, with only the kit items, and take the photo honestly.','मैं खुद, सिर्फ़ किट के सामान से बनाऊँगा/बनाऊँगी, और फ़ोटो ईमानदारी से लूँगा/लूँगी।')}</span></div>`:''}
+ <button class="btn" id="go" ${S.mode==='ranked'&&!(S.fsl.length>=4&&S.pledge)?'disabled':''} onclick="S.t0=Date.now();S.secret=makeSecret();go(1)">${T('Start mission ▶','मिशन शुरू ▶')}</button>`}
+
+function vKit(){const it=[
+  T('2 sheets of paper','पेपर की 2 शीट'),T('Tape, about 30 cm','टेप, लगभग 30 cm'),T('5 coins, all the same','5 सिक्के, सब एक जैसे'),
+  T('2 books of the same height','एक जैसी ऊँचाई की 2 किताबें'),T('Books 20 cm apart (check with a ruler)','किताबें 20 cm दूर (स्केल से नापो)')];
+  const all=S.kit.items.every(x=>x);
+  return `<div class="k home">${T('Stage 1 · at home','स्टेज 1 · घर पर')}</div><h2>${T('Kit Check','किट चेक')}</h2>
+ <p class="mut">${T('Tick each item when it is on your table.','हर चीज़ टेबल पर आते ही टिक करो।')}</p>
+ ${it.map((x,i)=>`<div class="chk ${S.kit.items[i]?'on':''}" onclick="S.kit.items[${i}]=S.kit.items[${i}]?0:1;render()"><span class="bx">${S.kit.items[i]?'✓':''}</span><span>${x}</span></div>`).join('')}
+ <div class="row" style="margin-top:10px"><div><div class="lbl" style="margin-top:0">${T('Paper','पेपर')}</div><select onchange="S.kit.paper=this.value">${Object.entries(PAPER).map(([k,v])=>`<option value="${k}" ${S.kit.paper===k?'selected':''}>${v[S.lang]}</option>`).join('')}</select></div>
+ <div><div class="lbl" style="margin-top:0">${T('Coin','सिक्का')}</div><select onchange="S.kit.coin=this.value">${Object.entries(COINS).map(([k,v])=>`<option value="${k}" ${S.kit.coin===k?'selected':''}>${v[S.lang]}</option>`).join('')}</select></div></div>
+ <p class="mut" style="margin-top:6px;font-size:12.5px">${T('The sim uses your paper and coin weight, and the score is adjusted so nobody is punished for a heavier coin or thinner paper.','सिम तुम्हारे पेपर और सिक्के का वज़न लेता है, और स्कोर बराबर किया जाता है ताकि भारी सिक्के या पतले पेपर से नुकसान न हो।')}</p>
+ ${all?`<div class="card hl secret">🔐 <b>${T('Your secret proof item','तुम्हारी सीक्रेट सबूत चीज़')}</b><br>${T(`Put a <b>${S.secret.icon} ${S.secret.en}</b> on the <b>${S.secret.side}</b> book`,`<b>${S.secret.side==='left'?'बाईं':'दाईं'}</b> किताब पर एक <b>${S.secret.icon} ${S.secret.hi}</b> रखो`)}<br>${T('and write this code on a paper chit:','और यह कोड एक पर्ची पर लिखो:')}<div class="code">${S.secret.code}</div><span class="mut" style="font-size:12.5px">${T('Both must be in your proof photo. Every FSL ID gets a different one.','दोनों सबूत फ़ोटो में दिखने चाहिए। हर FSL ID को अलग मिलता है।')}</span></div>`:`<div class="card mut" style="text-align:center">🔒 ${T('Tick all 5 to unlock your secret proof item.','अपनी सीक्रेट सबूत चीज़ खोलने के लिए पाँचों टिक करो।')}</div>`}
+ <button class="btn" ${all?'':'disabled'} onclick="go(2)">${T('Kit ready ▶','किट तैयार ▶')}</button>`}
+
+/* ---------- Sim Lab ---------- */
+function shapeIcon(k){return {flat:'<line x1="3" y1="12" x2="37" y2="12" stroke="#e9e3c9" stroke-width="3"/>',
+  zig:'<polyline points="3,16 9,5 15,16 21,5 27,16 33,5 37,12" fill="none" stroke="#e9e3c9" stroke-width="3"/>',
+  tube:'<circle cx="20" cy="11" r="7" fill="none" stroke="#e9e3c9" stroke-width="3"/>',
+  ubeam:'<polyline points="8,3 8,17 32,17 32,3" fill="none" stroke="#e9e3c9" stroke-width="3"/>'}[k]}
+function vSim(){const d=S.design,used=S.tries.length,canTest=used<3&&!S.anim&&!S.pendingChange;
+  const seamLbl={flat:null,zig:T('Tape the folds','मोड़ों पर टेप'),tube:T('Tape the seam','जोड़ पर टेप'),ubeam:T('Tape the walls','दीवारों पर टेप')}[d.shape];
+  return `<div class="k">${T('Stage 2 · on screen','स्टेज 2 · स्क्रीन पर')}</div><h2>${T('Sim Lab','सिम लैब')} <span class="mut" style="font-size:15px">· ${T('Try','मौका')} ${Math.min(used+1,3)}/3</span></h2>
+ <p class="mut">${T('Pick a shape, layers and tape, then TEST. Coins drop one by one until the bridge fails.','आकार, परतें और टेप चुनो, फिर TEST दबाओ। सिक्के एक-एक करके गिरेंगे जब तक ब्रिज टूट न जाए।')}</p>
+ <div class="stage"><svg id="sim" viewBox="0 0 320 190"></svg></div>
+ <div id="simmsg"></div>
+ ${S.pendingChange?vChangeAsk():`
+ <div class="lbl">${T('Shape','आकार')}</div>
+ <div class="g4">${Object.keys(SHAPES).map(k=>`<div class="opt ${d.shape===k?'sel':''}" onclick="setD('shape','${k}')"><svg width="40" height="20">${shapeIcon(k)}</svg><br>${SHAPES[k][S.lang]}</div>`).join('')}</div>
+ <div class="row" style="margin-top:4px"><div><div class="lbl">${T('Layers (sheets)','परतें (शीट)')}</div><div class="g2">${[1,2].map(n=>`<div class="opt ${d.layers===n?'sel':''}" onclick="setD('layers',${n})">${n}</div>`).join('')}</div></div>
+ <div><div class="lbl">${T('Tape','टेप')}</div>
+  <div class="chk ${d.ends?'on':''}" style="margin:0;padding:8px" onclick="setD('ends',${!d.ends})"><span class="bx">${d.ends?'✓':''}</span><span style="font-size:13px">${T('Tape ends to books','सिरे किताबों पर टेप')}</span></div>
+  ${seamLbl?`<div class="chk ${d.seam?'on':''}" style="margin-top:5px;padding:8px" onclick="setD('seam',${!d.seam})"><span class="bx">${d.seam?'✓':''}</span><span style="font-size:13px">${seamLbl}</span></div>`:''}</div></div>
+ <button class="btn" ${canTest?'':'disabled'} onclick="runSim()">▶ TEST ${used<3?'':T('(no tries left)','(मौके खत्म)')}</button>`}
+ ${S.tries.length?`<div class="lbl">${T('Your tries · tap one to build it for real','तुम्हारे मौके · असली बनाने के लिए एक चुनो')}</div><div class="tries">${S.tries.map((t,i)=>`<div class="${S.final===i?'best':''}" onclick="if(!S.anim){S.final=${i};render()}" style="cursor:pointer">${T('Try','मौका')} ${i+1}<b>${t.c}${t.c>=MAXC?'+':''}</b>${SHAPES[t.d.shape][S.lang]} · ${t.d.layers}x${S.final===i?'<br>✅':''}</div>`).join('')}</div>
+ <button class="btn g" ${S.anim||S.final==null||S.pendingChange?'disabled':''} onclick="go(3)">${T('Build this design ▶','यही डिज़ाइन बनाऊँगा ▶')}</button>`:''}`}
+function vChangeAsk(){return `<div class="card info"><b>💡 ${T('Before the next try:','अगले मौके से पहले:')}</b> ${T('what ONE thing will you change?','कौन सी एक चीज़ बदलोगे?')}
+ <div class="g3" style="margin-top:8px">${[['shape',T('Shape','आकार')],['layers',T('Layers','परतें')],['tape',T('Tape','टेप')]].map(([k,l])=>`<div class="opt" onclick="S.said=['${k}'];S.pendingChange=null;render()">${l}</div>`).join('')}</div></div>`}
+function setD(k,v){if(S.anim||S.tries.length>=3)return;S.design={...S.design,[k]:v};if(k==='shape'&&v==='flat')S.design.seam=false;S.lastDraw={d:S.design,c:0,state:'idle'};render()}
+function bestTry(){let b=0;S.tries.forEach((t,i)=>{if(t.c>S.tries[b].c||(t.c===S.tries[b].c&&t.d.layers<S.tries[b].d.layers))b=i});return b}
+function diffCats(a,b){const s=new Set();if(a.shape!==b.shape)s.add('shape');if(a.layers!==b.layers)s.add('layers');if(a.ends!==b.ends||a.seam!==b.seam)s.add('tape');return[...s]}
+function runSimSilent(){const d={...S.design};S.tries.push({d,c:coinsHeld(d),cap:capacity(d)})}
+function runSim(){if(S.anim||S.tries.length>=3)return;const d={...S.design};
+  if(S.tries.length){const prev=S.tries[S.tries.length-1].d;if(!diffCats(prev,d).length){toast(T('Change something first!','पहले कुछ बदलो!'));return}}
+  const c=coinsHeld(d),cap=capacity(d);
+  const t={d,c,cap,changed:S.tries.length?diffCats(S.tries[S.tries.length-1].d,d):null,said:S.said||null};S.said=null;
+  S.anim=true;render();let n=0;const fail=c<MAXC;
+  const step=()=>{ if(n<c){n++;animCoin(d,n,cap,()=>setTimeout(step,120))}
+    else if(fail){animCoin(d,n+1,cap,()=>{drawSim({d,c:n+1,cap,state:'fail'});setTimeout(done,900)},true)}
+    else{drawSim({d,c:n,cap,state:'win'});setTimeout(done,600)}};
+  const done=()=>{S.anim=false;S.tries.push(t);S.final=bestTry();S.lastDraw={d,c:Math.min(c+ (fail?1:0),MAXC),cap,state:fail?'fail':'win'};
+    if(S.tries.length<3&&c<5)S.pendingChange=true;render();showSimMsg(t)};
+  drawSim({d,c:0,cap,state:'idle'});setTimeout(step,300)}
+function showSimMsg(t){const el=$('#simmsg');if(!el)return;const ok=t.c>=5;
+  el.innerHTML=`<div class="card ${ok?'ok':'bad'}"><b>${ok?(t.c>=MAXC?T('🏆 Held all 10 coins!','🏆 सभी 10 सिक्के संभाले!'):T(`✅ Held ${t.c} coins!`,`✅ ${t.c} सिक्के संभाले!`)):T(`❌ Failed at coin ${t.c+1}`,`❌ सिक्का ${t.c+1} पर टूट गया`)}</b>
+  <p style="margin-top:4px;font-size:14px">${ok?(t.d.layers===2?T('Strong! Could you do it with only 1 sheet? Fewer sheets = better score.','मज़बूत! क्या 1 ही शीट से हो सकता है? कम शीट = बेहतर स्कोर।'):T('Great design. Use a spare try to push it further, or build it.','बढ़िया डिज़ाइन। बचे मौके से और बेहतर करो, या इसे बनाओ।')):'💡 '+limiter(t.d)}</p></div>`}
+/* drawing */
+function bridgePath(d,sag,broken){const L=72,R=248,y=92,mid=160,dy=sag*26;
+  if(broken)return `M${L} ${y} L${mid-6} ${y+58} M${mid+6} ${y+58} L${R} ${y}`;
+  return `M${L} ${y} Q${mid} ${y+dy*2} ${R} ${y}`}
+function drawSim(o){const svg=$('#sim');if(!svg)return;S.lastDraw=o;const d=o.d,cap=o.cap||capacity(d);
+  const r=o.state==='fail'?1:sagOf(o.c,cap),broken=o.state==='fail';
+  const col=r<.45?'#3ddc84':r<.8?'#ffc93c':'#ff5f5f';
+  const thick=d.shape==='flat'?3:d.shape==='zig'?7:d.shape==='tube'?9:7;
+  let coins='';const n=broken?0:o.c,midY=92+r*26;
+  for(let i=0;i<n;i++)coins+=`<ellipse cx="160" cy="${midY-thick/2-3-i*4.2}" rx="11" ry="3.4" fill="#ffc93c" stroke="#a8761a"/>`;
+  if(broken)for(let i=0;i<o.c;i++)coins+=`<ellipse cx="${140+(i%5)*10}" cy="${172-Math.floor(i/5)*5}" rx="9" ry="3" fill="#ffc93c" stroke="#a8761a"/>`;
+  svg.innerHTML=`<defs><pattern id="w" width="20" height="8" patternUnits="userSpaceOnUse"><path d="M0 4 Q5 0 10 4 T20 4" fill="none" stroke="#2f7fd0" stroke-width="1.5"/></pattern></defs>
+  <rect x="0" y="150" width="320" height="40" fill="#123a6b"/><rect x="0" y="150" width="320" height="40" fill="url(#w)"/>
+  <rect x="6" y="92" width="72" height="80" rx="4" fill="#7a4dd8"/><rect x="242" y="92" width="72" height="80" rx="4" fill="#d84d7a"/>
+  <rect x="10" y="98" width="64" height="4" fill="#ffffff33"/><rect x="246" y="98" width="64" height="4" fill="#ffffff33"/>
+  <line x1="78" y1="20" x2="242" y2="20" stroke="#ffc93c" stroke-dasharray="4 3"/><text x="160" y="15" fill="#ffc93c" font-size="10" text-anchor="middle" font-weight="700">20 cm</text>
+  <path d="${bridgePath(d,r,broken)}" fill="none" stroke="${broken?'#ff5f5f':'#e9e3c9'}" stroke-width="${thick}" stroke-linecap="round" ${d.shape==='zig'&&!broken?'stroke-dasharray="5 2"':''}/>
+  ${!broken&&r>.2?`<path d="${bridgePath(d,r,false)}" fill="none" stroke="${col}" stroke-width="${thick}" stroke-dasharray="0 60 50 200" opacity=".85"/>`:''}
+  ${d.ends?`<rect x="66" y="86" width="14" height="10" fill="#9fe7ff99"/><rect x="240" y="86" width="14" height="10" fill="#9fe7ff99"/>`:''}
+  ${coins}
+  <g transform="translate(8,8)"><rect width="58" height="34" rx="6" fill="#0b1130" stroke="#2c3a70"/><svg x="9" y="7" width="40" height="20">${shapeIcon(d.shape)}</svg></g>
+  <text x="312" y="16" fill="#fff" font-size="12" text-anchor="end" font-weight="800">🪙 ${broken?o.c:n}</text>
+  <text x="312" y="32" fill="${broken?'#ff5f5f':col}" font-size="10" text-anchor="end" font-weight="700">${broken?T('COLLAPSED at coin '+o.c,'सिक्का '+o.c+' पर टूटा'):T('sag ','झुकाव ')+(r*2).toFixed(1)+' cm'}</text>`}
+function animCoin(d,n,cap,cb,breaking){const svg=$('#sim');const t0=performance.now();
+  const f=now=>{const p=Math.min(1,(now-t0)/380);drawSim({d,c:n-1,cap,state:'idle'});
+    if(svg){const r=sagOf(n-1,cap),y0=30,y1=92+r*26-6-(n-1)*4.2;svg.insertAdjacentHTML('beforeend',`<ellipse cx="160" cy="${y0+(y1-y0)*p*p}" rx="11" ry="3.4" fill="#ffc93c" stroke="#a8761a"/>`)}
+    if(p<1)requestAnimationFrame(f);else{if(!breaking)drawSim({d,c:n,cap,state:'idle'});cb()}};requestAnimationFrame(f)}
+
+/* ---------- Predict ---------- */
+function vPred(){const f=S.tries[S.final];const P=S.pred;
+  return `<div class="k">${T('Stage 3 · on screen','स्टेज 3 · स्क्रीन पर')}</div><h2>${T('Predict','अनुमान')}</h2>
+ <div class="card ok" style="text-align:center">${T('Your sim bridge','तुम्हारा सिम ब्रिज')}: <b>${SHAPES[f.d.shape][S.lang]} · ${f.d.layers} ${T('layer','परत')}</b><br>${T('held','ने संभाले')} <b style="font-size:22px;color:#3ddc84">${f.c}${f.c>=MAXC?'+':''} ${T('coins','सिक्के')}</b></div>
+ <p style="text-align:center;margin-top:12px">${T('Real paper is never perfect.','असली पेपर कभी परफ़ेक्ट नहीं होता।')}<br><b>${T('How many coins will YOUR real bridge hold?','तुम्हारा असली ब्रिज कितने सिक्के संभालेगा?')}</b></p>
+ <div class="stp" style="margin-top:8px"><button onclick="S.pred.coins=Math.max(0,S.pred.coins-1);render()">−</button><span class="big">${P.coins}</span><button onclick="S.pred.coins=Math.min(15,S.pred.coins+1);render()">+</button></div>
+ <div class="lbl" style="text-align:center">${T('How much will it sag before it fails (or with all coins)?','टूटने से पहले (या सब सिक्कों के साथ) कितना झुकेगा?')}</div>
+ <div class="g3">${[['small','〰',T('small','थोड़ा')],['medium','◡',T('medium','मध्यम')],['big','⌣',T('big','बहुत')]].map(([k,i,l])=>`<div class="opt ${P.sag===k?'sel':''}" onclick="S.pred.sag='${k}';render()">${i}<br>${l}</div>`).join('')}</div>
+ <div class="lbl" style="text-align:center">${T('How sure are you?','कितने पक्के हो?')}</div>
+ <div class="g3">${[['guess','😬',T('just a guess','बस अंदाज़ा')],['fair','🙂',T('fairly sure','काफ़ी पक्का')],['very','😎',T('very sure','बिल्कुल पक्का')]].map(([k,i,l])=>`<div class="opt ${P.conf===k?'sel':''}" onclick="S.pred.conf='${k}';render()">${i}<br>${l}</div>`).join('')}</div>
+ <button class="btn" ${P.sag&&P.conf?'':'disabled'} onclick="go(4)">🔒 ${T('Lock prediction','अनुमान लॉक करो')}</button>
+ <p class="mut" style="text-align:center;font-size:12.5px;margin-top:6px">${T('Locked answers cannot change after the build starts.','बनाना शुरू होने के बाद लॉक जवाब नहीं बदलेंगे।')}</p>`}
+
+/* ---------- Real Build ---------- */
+function buildSteps(d){const s=[];
+  const sheets=d.layers===2?T('both sheets, one on top of the other,','दोनों शीट एक के ऊपर एक रखकर'):T('one sheet','एक शीट');
+  if(d.shape==='flat')s.push(T(`Lay ${sheets} flat across the gap.`,`${sheets} गैप पर सीधी रखो।`));
+  if(d.shape==='zig')s.push(T(`Take ${sheets}. Draw lines 2 cm apart along the long side.`,`${sheets} लो। लंबी तरफ़ 2 cm की दूरी पर लाइनें खींचो।`),T('Fold back and forth on the lines like a fan (zigzag). Press each fold sharp.','लाइनों पर पंखे जैसा आगे-पीछे मोड़ो (ज़िगज़ैग)। हर मोड़ को अच्छे से दबाओ।'));
+  if(d.shape==='tube')s.push(T(`Roll ${sheets} along the long side into a tube about 3 cm wide.`,`${sheets} को लंबी तरफ़ से लगभग 3 cm चौड़ी ट्यूब में रोल करो।`));
+  if(d.shape==='ubeam')s.push(T(`Fold 3 cm up on both long sides of ${sheets} to make a U channel.`,`${sheets} की दोनों लंबी तरफ़ 3 cm ऊपर मोड़कर U चैनल बनाओ।`));
+  if(d.seam&&d.shape!=='flat')s.push({zig:T('Put small pieces of tape across the folds so they stay closed.','मोड़ों पर छोटे टेप लगाओ ताकि वो बंद रहें।'),tube:T('Tape the seam all along the tube.','पूरी ट्यूब के जोड़ पर टेप लगाओ।'),ubeam:T('Tape the walls so they stay standing up.','दीवारों पर टेप लगाओ ताकि वो खड़ी रहें।')}[d.shape]);
+  s.push(d.ends?T('Place it across the 20 cm gap and tape both ends to the books.','इसे 20 cm गैप पर रखो और दोनों सिरे किताबों पर टेप करो।'):T('Place it across the 20 cm gap (no tape on the ends, like your sim).','इसे 20 cm गैप पर रखो (सिरों पर टेप नहीं, सिम जैसा)।'));
+  s.push(T('Put coins one by one in the middle. Count how many it holds before it bends down to the table.','सिक्के एक-एक करके बीच में रखो। गिनो कितने संभालता है, जब तक वो नीचे न झुक जाए।'));
+  s.push(T(`Leave it standing, with the ${S.secret.icon} ${S.secret.en} and code chit in place, for the photo.`,`फ़ोटो के लिए इसे ऐसे ही रहने दो, ${S.secret.icon} ${S.secret.hi} और कोड पर्ची के साथ।`));
+  return s}
+function vBuild(){const f=S.tries[S.final],st=buildSteps(f.d);if(S.build.length!==st.length)S.build=st.map(()=>0);
+  return `<div class="k home">${T('Stage 4 · at home','स्टेज 4 · घर पर')}</div><h2>${T('Real Build','असली ब्रिज बनाओ')}</h2>
+ <p class="mut">${T('Build the bridge you tested. Your phone can lie flat, the timer keeps going. Tap each step when done.','जो टेस्ट किया वही ब्रिज बनाओ। फ़ोन नीचे रख सकते हो, टाइमर चलता रहेगा। हर स्टेप पूरा होने पर टैप करो।')}</p>
+ <div class="card hl" style="display:flex;align-items:center;gap:12px"><svg width="54" height="28">${shapeIcon(f.d.shape)}</svg><div><b>${SHAPES[f.d.shape][S.lang]} · ${f.d.layers} ${T('layer','परत')}</b><br><span class="mut" style="font-size:13px">${T('Sim said','सिम ने कहा')} ${f.c}${f.c>=MAXC?'+':''} · ${T('you predicted','तुम्हारा अनुमान')} ${S.pred.coins}</span></div></div>
+ ${st.map((x,i)=>`<div class="step ${S.build[i]?'on':''}" onclick="S.build[${i}]=S.build[${i}]?0:1;render()"><span class="n">${S.build[i]?'✓':i+1}</span><span>${x}</span></div>`).join('')}
+ <button class="btn g" onclick="go(5)">${T("I'm done → Proof","हो गया → सबूत")}</button>`}
+
+/* ---------- Proof ---------- */
+function vProof(){const P=S.proof;const sec=S.secret;
+  const checks=[T(`Both books and the bridge`,`दोनों किताबें और ब्रिज`),T('Coins on the bridge (or fallen, if it failed)','ब्रिज पर सिक्के (या टूटा हो तो गिरे हुए)'),T('Ruler under the gap','गैप के नीचे स्केल'),T(`${sec.icon} ${sec.en} on the ${sec.side} book + code ${sec.code}`,`${sec.side==='left'?'बाईं':'दाईं'} किताब पर ${sec.icon} ${sec.hi} + कोड ${sec.code}`)];
+  const ready=P.file&&P.coins!=null&&P.sag&&P.match;
+  return `<div class="k home">${T('Stage 5 · at home','स्टेज 5 · घर पर')}</div><h2>${T('Proof','सबूत')}</h2>
+ <p class="mut">${T('Take ONE photo that shows all of this:','एक फ़ोटो लो जिसमें यह सब दिखे:')}</p>
+ <ul class="l">${checks.map(c=>`<li>✓ ${c}</li>`).join('')}</ul>
+ <div class="g2" style="margin-top:10px">
+  <label class="btn" style="margin:0;text-align:center">📷 ${T('Photo','फ़ोटो')}<input type="file" accept="image/*" capture="environment" hidden onchange="gotFile(this)"></label>
+  <label class="btn b" style="margin:0;text-align:center">🎥 ${T('15 s video','15 सेकंड वीडियो')}<input type="file" accept="video/*" capture="environment" hidden onchange="gotFile(this)"></label></div>
+ <p class="mut" style="font-size:12.5px;margin-top:6px">${T('Lite mode: a photo is enough for a full score. Video adds a "Verified+" tick.','लाइट मोड: पूरे स्कोर के लिए फ़ोटो काफ़ी है। वीडियो से "Verified+" टिक मिलता है।')}</p>
+ ${P.url?(P.isVideo?`<video class="preview" src="${P.url}" controls playsinline></video>`:`<img class="preview" src="${P.url}" alt="proof">`):''}
+ ${P.flag?`<div class="flag">⚠️ ${P.flag}</div>`:''}
+ <div class="lbl">${T('How many coins did it hold?','कितने सिक्के संभाले?')}</div>
+ <div class="stp"><button onclick="S.proof.coins=Math.max(0,(S.proof.coins??S.pred.coins)-1);render()">−</button><span class="big">${P.coins??'?'}</span><button onclick="S.proof.coins=Math.min(15,(S.proof.coins??S.pred.coins)+1);render()">+</button></div>
+ <div class="lbl">${T('How much did it sag?','कितना झुका?')}</div>
+ <div class="g3">${[['small','〰',T('small','थोड़ा')],['medium','◡',T('medium','मध्यम')],['big','⌣',T('big','बहुत')]].map(([k,i,l])=>`<div class="opt ${P.sag===k?'sel':''}" onclick="S.proof.sag='${k}';render()">${i}<br>${l}</div>`).join('')}</div>
+ <div class="lbl">${T('Is it the same design as your sim?','क्या यह सिम वाला ही डिज़ाइन है?')}</div>
+ <div class="g2">${[['yes',T('Yes, same','हाँ, वही')],['no',T('No, I changed it','नहीं, बदला')]].map(([k,l])=>`<div class="opt ${P.match===k?'sel':''}" onclick="S.proof.match='${k}';render()">${l}</div>`).join('')}</div>
+ <button class="btn" ${ready?'':'disabled'} onclick="go(6)">${T('Submit proof ▶','सबूत भेजो ▶')}</button>
+ ${S.mode==='practice'?`<button class="btn b sm" onclick="S.proof.skip=true;S.proof.coins=S.proof.coins??S.pred.coins;S.proof.sag=S.proof.sag||'medium';S.proof.match=S.proof.match||'yes';go(6)">${T('Practice: skip photo','प्रैक्टिस: फ़ोटो छोड़ो')}</button>`:''}`}
+function gotFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const P=S.proof;if(P.url)URL.revokeObjectURL(P.url);
+  P.file=f.name;P.isVideo=f.type.startsWith('video');P.url=URL.createObjectURL(f);P.ts=f.lastModified||Date.now();P.flag=null;
+  const start=S.times[4]||S.t0;if(P.ts&&P.ts<start-60000)P.flag=T('This file looks older than your build. In Ranked it will be checked by a reviewer.','यह फ़ाइल तुम्हारे बनाने से पहले की लगती है। रैंक्ड में इसे रिव्यूअर जाँचेगा।');
+  if(P.isVideo){const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{if(v.duration>20){P.flag=T('Video is longer than 15 s. Only the first 15 s will be checked.','वीडियो 15 सेकंड से लंबा है। सिर्फ़ पहले 15 सेकंड जाँचे जाएँगे।');render()}};v.src=P.url}
+  render()}
+
+/* ---------- Compare ---------- */
+function prepCompare(){const f=S.tries[S.final];S.replay=null;
+  const real=S.proof.coins;S.cmp={sim:f.c,pred:S.pred.coins,real}}
+const REASONS=[['folds',['Folds were not sharp','मोड़ ठीक से नहीं दबे']],['tape',['Tape came loose','टेप ढीला हो गया']],['centre',['Coins not in the centre','सिक्के बीच में नहीं थे']],['books',['Books slid apart','किताबें खिसक गईं']],['paper',['Real paper is weaker/thinner','असली पेपर कमज़ोर/पतला है']],['same',['It matched the sim','सिम जैसा ही रहा']],['better',['Real was stronger than the sim','असली सिम से मज़बूत था']]];
+function vCmp(){const c=S.cmp,miss=S.proof.missing;
+  const diff=c.real==null?null:Math.abs(c.pred-c.real);
+  const msg=miss?T('No proof was submitted, so the real result cannot count.','कोई सबूत नहीं भेजा, इसलिए असली नतीजा नहीं गिना जाएगा।'):
+    diff===0?T('🎯 Bang on! Your prediction was exact.','🎯 एकदम सही! तुम्हारा अनुमान बिल्कुल ठीक था।'):diff===1?T('👏 So close: just 1 coin off.','👏 बहुत पास: सिर्फ़ 1 सिक्के का फ़र्क।'):T(`Your guess was ${diff} coins off. Let's see why.`,`तुम्हारा अनुमान ${diff} सिक्के दूर था। देखो क्यों।`);
+  const lower=c.real!=null&&c.real<Math.min(c.sim,MAXC);
+  return `<div class="k">${T('Stage 6 · on screen','स्टेज 6 · स्क्रीन पर')}</div><h2>${T('Compare & Reflect','तुलना और सोच')}</h2>
+ <div class="cmp" style="margin-top:8px"><div><span style="color:#8fd8ff">${T('SIM','सिम')}</span><b>${c.sim}${c.sim>=MAXC?'+':''}</b><span class="mut">${T('coins','सिक्के')}</span></div>
+ <div style="border-color:var(--y)"><span style="color:var(--y)">${T('YOU SAID','तुमने कहा')}</span><b>${c.pred}</b><span class="mut">${T('coins','सिक्के')}</span></div>
+ <div style="border-color:var(--g)"><span style="color:var(--g)">${T('REAL','असली')}</span><b>${c.real??'–'}</b><span class="mut">${T('coins','सिक्के')}</span></div></div>
+ <div class="card ${miss?'bad':diff<=1?'ok':'info'}" style="text-align:center;font-weight:700">${msg}</div>
+ ${miss?'':`<div class="lbl">${lower?T('Why did the real bridge hold less than the sim? (pick up to 2)','असली ब्रिज ने सिम से कम क्यों संभाला? (2 तक चुनो)'):T('What happened? (pick up to 2)','क्या हुआ? (2 तक चुनो)')}</div>
+ <div style="display:flex;flex-wrap:wrap;gap:6px">${REASONS.map(([k,l])=>`<div class="opt ${S.reasons.includes(k)?'sel':''}" style="padding:8px 10px;font-size:13.5px" onclick="pickReason('${k}')">${S.lang==='hi'?l[1]:l[0]}</div>`).join('')}</div>`}
+ <div class="card info"><b>🧪 ${T('Replay the sim with "real paper"','"असली पेपर" के साथ सिम दोबारा चलाओ')}</b> <span class="mut" style="font-size:13px">(${T('not scored','स्कोर नहीं')})</span>
+ <p class="mut" style="font-size:13px;margin-top:3px">${T('Real folds are a bit loose and paper a bit uneven, so it is about 20% weaker.','असली मोड़ थोड़े ढीले और पेपर थोड़ा असमान होता है, इसलिए लगभग 20% कमज़ोर।')}</p>
+ ${S.replay!=null?`<p style="margin-top:6px;font-weight:800">${T('Real-paper sim','असली-पेपर सिम')}: ${S.replay} ${T('coins','सिक्के')} ${c.real!=null?(Math.abs(S.replay-c.real)<=1?T('· close to your real result!','· तुम्हारे असली नतीजे के करीब!'):''):''}</p>`:`<button class="btn b sm" onclick="S.replay=Math.min(MAXC,Math.floor(capacity(S.tries[S.final].d)*.8/coinG()));render()">▶ ${T('Replay','दोबारा चलाओ')}</button>`}</div>
+ <button class="btn" ${miss||S.reasons.length?'':'disabled'} onclick="finish()">${T('See Mission Report ▶','मिशन रिपोर्ट देखो ▶')}</button>`}
+function pickReason(k){const i=S.reasons.indexOf(k);if(i>=0)S.reasons.splice(i,1);else{if(S.reasons.length>=2)S.reasons.shift();S.reasons.push(k)}render()}
+
+/* ---------- Scoring (layout v1: 40 / 30 / 30) ---------- */
+function score(){const f=S.tries[S.final],sheets=f.d.layers,simEq=fair(f.c);
+  const s1=20*Math.min(simEq,MAXC)/MAXC;
+  const s2=10*Math.min(1,(simEq/sheets)/MAXC);
+  const changes=S.tries.slice(1);let s3;
+  if(!changes.length)s3=6;else{const good=changes.filter(t=>t.changed&&t.changed.length===1&&(!t.said||t.said[0]===t.changed[0])).length;
+    const improved=S.tries.slice(-1)[0].c>=S.tries[0].c;s3=Math.round(8*good/changes.length)+(improved?2:0)}
+  const sim=Math.round(s1+s2+s3);
+  let real=0,pred=0,parts={};
+  const P=S.proof,valid=!P.missing&&(P.file||P.skip);
+  if(valid){const rEq=fair(P.coins);
+    const r1=rEq>=5?Math.min(24,20+2*Math.floor(rEq-5)):4*rEq;const r2=P.match==='yes'?6:0;real=Math.round(r1+r2);
+    const diff=Math.abs(S.pred.coins-P.coins);const p1=diff===0?20:diff===1?14:diff===2?8:0;
+    const p2=S.pred.sag===P.sag?4:0;
+    const p3=(S.pred.conf==='very'&&diff<=1)||(S.pred.conf==='fair'&&diff<=2)||(S.pred.conf==='guess'&&diff>=2)?3:1;
+    const lower=P.coins<Math.min(f.c,MAXC),higher=P.coins>f.c;
+    const ok=S.reasons.some(r=>lower?!['same','better'].includes(r):higher?r==='better':r==='same');const p4=ok?3:S.reasons.length?1:0;
+    pred=p1+p2+p3+p4;parts={r1:Math.round(r1),r2,p1,p2,p3,p4}}
+  return{sim,real,pred,total:sim+real+pred,s1:Math.round(s1),s2:Math.round(s2),s3,parts,valid,secs:Math.round((Date.now()-S.t0)/1000)}}
+function finish(){S.result=score();S.stage=7;
+  try{const h=JSON.parse(localStorage.getItem('fslpb_runs')||'[]');h.push({at:new Date().toISOString(),mode:S.mode,fsl:S.fsl||null,design:S.tries[S.final].d,sim:S.tries[S.final].c,pred:S.pred,real:S.proof.coins,score:S.result.total,secs:S.result.secs});localStorage.setItem('fslpb_runs',JSON.stringify(h.slice(-20)))}catch(e){}
+  render();window.scrollTo(0,0)}
+function vReport(){const R=S.result,f=S.tries[S.final];
+  const star=R.total>=85?['🌟','Pro Builder','प्रो बिल्डर']:R.total>=70?['⭐','Creator','क्रिएटर']:R.total>=50?['✨','Rising','राइज़िंग']:['🌱','Rookie','रूकी'];
+  const bar=(v,m,c)=>`<div class="bar"><i style="width:${100*v/m}%;background:${c}"></i></div>`;
+  return `<div class="hero">${star[0]}</div><div class="k" style="text-align:center">${T('Mission Report','मिशन रिपोर्ट')}</div>
+ <h1 style="text-align:center">${R.total} / 100</h1><p style="text-align:center;font-weight:800;color:var(--y)">${T(star[1],star[2])} ${T('bridge engineer','ब्रिज इंजीनियर')}</p>
+ ${S.mode==='ranked'&&R.valid&&!S.proof.skip?`<div class="card hl" style="text-align:center;font-size:14px">⏳ ${T('Real result: proof check pending (up to 24 h). Score may change.','असली नतीजा: सबूत की जाँच बाकी (24 घंटे तक)। स्कोर बदल सकता है।')}</div>`:''}
+ ${!R.valid?`<div class="card bad" style="font-size:14px">${T('No valid proof, so Real result and Prediction count 0.','सही सबूत नहीं, इसलिए असली नतीजा और अनुमान 0।')}</div>`:''}
+ <div class="card">
+  <div class="srow"><span>🧪 ${T('Sim design','सिम डिज़ाइन')}</span><span>${R.sim} / 40</span></div>${bar(R.sim,40,'#5fd3ff')}
+  <p class="mut" style="font-size:12.5px;margin-top:3px">${T('coins held','संभाले सिक्के')} ${R.s1}/20 · ${T('paper used','पेपर इस्तेमाल')} ${R.s2}/10 · ${T('test method','टेस्ट का तरीका')} ${R.s3}/10</p>
+  <div class="srow"><span>✂️ ${T('Real result','असली नतीजा')}</span><span>${R.real} / 30</span></div>${bar(R.real,30,'#ffb02e')}
+  ${R.valid?`<p class="mut" style="font-size:12.5px;margin-top:3px">${T('coins held','संभाले सिक्के')} ${R.parts.r1}/24 · ${T('matches sim design','सिम डिज़ाइन जैसा')} ${R.parts.r2}/6</p>`:''}
+  <div class="srow"><span>🎯 ${T('Prediction','अनुमान')}</span><span>${R.pred} / 30</span></div>${bar(R.pred,30,'#3ddc84')}
+  ${R.valid?`<p class="mut" style="font-size:12.5px;margin-top:3px">${T('coin guess','सिक्कों का अनुमान')} ${R.parts.p1}/20 · ${T('sag','झुकाव')} ${R.parts.p2}/4 · ${T('confidence','भरोसा')} ${R.parts.p3}/3 · ${T('reasons','कारण')} ${R.parts.p4}/3</p>`:''}
+  <p class="mut" style="font-size:12.5px;margin-top:10px">⏱ ${T('Total time','कुल समय')} ${fmt(R.secs)} · ${T('used only to break ties','सिर्फ़ टाई तोड़ने के लिए')}</p></div>
+ <div class="card"><b>${T('Superpowers you used','तुमने ये सुपरपावर इस्तेमाल कीं')}</b><div style="margin-top:6px">
+  <span class="tag">🔬 Sci Idea</span><span class="tag c">C4.1 · C4.2 · C4.3</span><span class="tag">🤖 Master Algo</span><span class="tag c">C3.2 · C3.3</span>
+  <span class="tag">🧩 Smart Logic</span><span class="tag c">C1.3</span><span class="tag">🧠 Super Memrix</span><span class="tag c">C2.3</span>
+  <span class="tag">⚡ Speed Flex</span><span class="tag c">C5.3</span><span class="tag">🎯 Pro Focus</span><span class="tag c">C6.2 · C6.3</span></div></div>
+ <div class="card"><b>${T('Your bridge','तुम्हारा ब्रिज')}</b><p class="mut" style="font-size:14px;margin-top:4px">${SHAPES[f.d.shape][S.lang]} · ${f.d.layers} ${T('layer','परत')} · ${T('sim','सिम')} ${f.c}${f.c>=MAXC?'+':''} · ${T('predicted','अनुमान')} ${S.pred.coins} · ${T('real','असली')} ${S.proof.coins??'–'}</p>
+ <p style="font-size:14px;margin-top:6px">💡 ${T('Engineers do exactly this: model it, predict it, build it, then learn from the difference.','इंजीनियर ठीक यही करते हैं: मॉडल बनाओ, अनुमान लगाओ, बनाओ, फिर फ़र्क से सीखो।')}</p></div>
+ <button class="btn" onclick="location.reload()">${T('Play again','फिर से खेलो')}</button>`}
+
+render();
+</script>
+</body>
+</html>
